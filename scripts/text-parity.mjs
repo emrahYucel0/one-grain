@@ -1,4 +1,5 @@
-// Text parity (npm run check:text): overlay text and clock state, port vs the current reference
+// Text parity (npm run check:text): overlay text and clock state, port vs blockout v8 (the text and
+// clock reference; v10 is the reference for the look only)
 // (the act label is not compared: since v8 the rail carries the act and the label is gone),
 // at every hold and at five points in every transition. Positions are matched by (world a → b, t),
 // so the check also works while transition lengths differ between the two.
@@ -8,12 +9,14 @@ import { readFile } from 'node:fs/promises';
 import { referenceFile, routeReference } from './lib/reference.mjs';
 import { startDev } from './lib/servers.mjs';
 
+const TEXT_REFERENCE = 'v8';
+
 const vite = await createServer({ server: { middlewareMode: true }, appType: 'custom', logLevel: 'error' });
 const { WORLDS } = await vite.ssrLoadModule('/src/story/worlds.ts');
 const { TRANSITIONS } = await vite.ssrLoadModule('/src/story/transitions.ts');
 const holds = WORLDS.map((w) => w.hold);
 // the reference's transition lengths, read from its TR table
-const refLens = [...(await readFile(referenceFile(), 'utf8')).matchAll(/\{ g: \d+,\s*cam: '\w+',\s*len: ([\d.]+)/g)].map((m) => +m[1]);
+const refLens = [...(await readFile(referenceFile(TEXT_REFERENCE), 'utf8')).matchAll(/\{ g: \d+,\s*cam: '\w+',\s*len: ([\d.]+)/g)].map((m) => +m[1]);
 if (refLens.length !== WORLDS.length - 1) throw new Error(`expected ${WORLDS.length - 1} reference transitions, found ${refLens.length}`);
 const portLens = TRANSITIONS.map((t) => t.len);
 await vite.close();
@@ -27,7 +30,7 @@ const progress = (lens, i, t, kind) => { // kind: hold → middle of hold i; tr 
 const b = await launch();
 const ctx = await b.newContext({ viewport: { width: 1440, height: 900 } });
 const port = await ctx.newPage(), ref = await ctx.newPage();
-await routeReference(ref, 'http://localhost:5189/__r.html');
+await routeReference(ref, 'http://localhost:5189/__r.html', TEXT_REFERENCE);
 await port.goto('http://localhost:5189/?parity&tier=mid'); await ref.goto('http://localhost:5189/__r.html');
 await ref.waitForFunction(() => window.__DATA, null, { timeout: 90000 });
 await port.waitForFunction(() => window.__PACK, null, { timeout: 90000 });

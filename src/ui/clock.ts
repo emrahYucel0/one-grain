@@ -50,7 +50,7 @@ export class ClockView {
 
   private years(y: number): string {
     if (y >= 1e6) return `${Math.round(y / 1e6)} ${attr(this.el, 'million')}`; // whole millions only
-    const k = Math.pow(10, Math.floor(Math.log10(y))); // one significant figure: "≈ 500,000", not "≈ 470,000"
+    const k = Math.pow(10, Math.max(0, Math.floor(Math.log10(y)) - 1)); // two significant figures (v8)
     return (Math.round(y / k) * k).toLocaleString('en-US');
   }
 }
