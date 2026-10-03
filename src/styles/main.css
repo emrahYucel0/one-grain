@@ -161,7 +161,8 @@ html:not(.gl) #story{max-width:40rem;margin:0 auto;padding:clamp(2rem,8vh,5rem) 
 #story section{margin:0 0 1.75rem}
 #story h3{margin:0 0 .35rem;font-weight:500;font-stretch:100%;font-size:clamp(1.5rem,5vw,2.1rem);line-height:var(--final-title-line)}
 #story p{margin:0;font-family:var(--serif);font-size:var(--body-size);line-height:var(--body-line);color:var(--ink);opacity:var(--body-opacity);max-width:var(--body-measure);font-variation-settings:"opsz" var(--body-opsz)}
-#story p.micro{font-style:italic;font-size:var(--micro-size);opacity:var(--micro-opacity)}
+/* micro lines: the full muted colour instead of the overlay's .62 opacity (4.08:1 → AA contrast on a plain page) */
+#story p.micro{font-style:italic;font-size:var(--micro-size);opacity:1;color:var(--muted)}
 #story p[data-signature]{font-family:var(--sans);font-size:var(--signature-size)}
 #story a{color:var(--ink)}
 #story a:focus-visible{outline:2px solid var(--ink);outline-offset:3px;border-radius:2px}
