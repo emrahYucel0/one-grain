@@ -24,6 +24,8 @@ export interface FrameUniforms {
   loB: string;
   hiB: string;
   grain: number;
+  /** resting restlessness (confinement) */
+  jitter: number;
   /** stage colour (CSS), grains fade into it with distance */
   fog: string;
   /** 0 none · 1 brush the dunes · 2 light the switches */

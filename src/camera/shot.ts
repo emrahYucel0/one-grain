@@ -2,6 +2,7 @@ import { Vector3 } from 'three';
 import { easeCubic, easeQuint, ss } from '../core/ease';
 import type { TransitionDef, Vec3 } from '../story/types';
 import { WORLDS } from '../story/worlds';
+import { CONFINEMENT } from './confinement';
 
 /** Where the camera is, what it looks at, and where the hero grain is, partway through a transition. */
 export interface Shot {
@@ -32,7 +33,8 @@ const WATCH_HERO = new Set(['crackdrop', 'zoom', 'pullback', 'beam', 'breakfall'
  */
 export function shot(tr: TransitionDef, a: number, b: number, t: number, heroes: readonly Vector3[], lean = 0, reduced = false): Shot {
   const hA = heroes[a]!, hB = heroes[b]!, wa = WORLDS[a]!, wb = WORLDS[b]!;
-  const camA = off(hA, wa.cam), camB = off(hB, wb.cam), lookA = off(hA, wa.look), lookB = off(hB, wb.look);
+  // resting cameras as framed for each world's lens (camera/confinement.ts)
+  const camA = off(hA, CONFINEMENT[a]!.cam), camB = off(hB, CONFINEMENT[b]!.cam), lookA = off(hA, wa.look), lookB = off(hB, wb.look);
   let eg = easeCubic(t);
   if (tr.cam === 'cut') eg = t < .5 ? 0 : 1; else if (tr.cam === 'slide') eg = ss(0, 1, t); else if (tr.cam === 'zoom') eg = easeQuint(t);
   const arc = eg <= 0 || eg >= 1 ? 0 : Math.sin(Math.PI * eg), hc = tr.hero ?? NO_HERO; // exactly 0 at rest

@@ -6,7 +6,7 @@ import { Loop } from './core/loop';
 import { pickTier, pixelRatioFor } from './core/quality';
 import { TierManager } from './core/tiers';
 import { createStage } from './core/renderer';
-import { fit, onResize } from './core/resize';
+import { Projection, onResize } from './core/resize';
 import { debugOverlay } from './debug/overlay';
 import { exposePack, flags } from './debug/parity';
 import { updateInteraction } from './input/interact';
@@ -25,6 +25,7 @@ import { readCopy } from './ui/copy';
 import { revealWhenFontsReady } from './ui/fonts';
 import { HeroMarker } from './ui/marker';
 import { TimelineNav } from './ui/nav';
+import { TypeAxes } from './ui/type-axes';
 import { Ending, Intro, chapterOpacity, cutOpacity } from './ui/overlays';
 
 const root = document.documentElement;
@@ -44,7 +45,8 @@ function boot(): void {
   const stage = createStage($<HTMLCanvasElement>('scene'), dpr);
   const grains = new GrainCloud(), hero = new HeroGrain(dpr);
   stage.scene.add(grains.object, ...hero.objects);
-  const resize = (): void => grains.setScale(fit(stage));
+  const projection = new Projection(stage, (s) => grains.setScale(s));
+  const resize = (): void => projection.fit();
   resize();
   onResize(resize);
 
@@ -52,7 +54,7 @@ function boot(): void {
   const timeline = new ScrollTimeline($('track'), { snap: !flags.noSnap });
   const hash = new HashRouter(timeline);
   bindChapterKeys(timeline);
-  const loop = new Loop({ stage, grains, hero, timeline, hash });
+  const loop = new Loop({ stage, grains, hero, timeline, hash, projection, typeAxes: new TypeAxes() });
   const go = (i: number): void => timeline.goTo(i);
 
   // words and instruments

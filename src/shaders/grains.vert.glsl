@@ -18,6 +18,8 @@ void main(){
   c = mix(c, vec3(.95, .97, 1.), m.whiten * .8);
   c = mix(c, vec3(.18, .14, .12), m.darken * .85);
   c *= 1. + arc * .25;
+  // resting restlessness: natural matter never quite settles (confinement)
+  p += vec3(sin(uTime * 1.3 + R.x * 40.), sin(uTime * 1.1 + R.y * 40.), sin(uTime * 1.7 + R.z * 40.)) * uJitter * uMotion;
   vec4 mv = modelViewMatrix * vec4(p, 1.);
   float depth = -mv.z;
   vCol = mix(c, uFog, clamp(1. - exp(-uFogD * depth), 0., .85));

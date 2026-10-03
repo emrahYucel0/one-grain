@@ -25,9 +25,18 @@ export interface WorldDef {
   hi: string;
   /** grain size, world units */
   grain: number;
-  /** camera position and look-at target, as offsets from the hero grain */
+  /** camera position and look-at target, as offsets from the hero grain (blockout composition) */
   cam: Vec3;
   look: Vec3;
+  /**
+   * CONFINEMENT, 0 natural and unbounded … 1 fully controlled. Nature fills the frame; industry
+   * concentrates matter until the crystal stands alone; computation opens the space again; the
+   * end fills your screen. Drives the lens, camera distance, resting restlessness and the type
+   * axes (camera/confinement.ts). Not colour.
+   */
+  conf: number;
+  /** framing against the blockout shot, applied after the lens change (> 1: the subject owns less of the frame) */
+  frame: number;
   /** the last chapter: ending sequence, own nav label, own audio act */
   final?: boolean;
 }

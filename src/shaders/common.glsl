@@ -3,7 +3,7 @@ precision highp sampler2D;
 
 uniform sampler2D uLayer_pos;
 uniform int uRows, uFrom, uTo, uStyle, uInteract;
-uniform float uTime, uT, uMotion, uScale, uGrain, uFogD, uK, uSpan, uSpread, uPress;
+uniform float uTime, uT, uMotion, uScale, uGrain, uFogD, uK, uSpan, uSpread, uPress, uJitter;
 uniform vec3 uHeroA, uHeroB, uDir, uMouseW, uLoA, uHiA, uLoB, uHiB, uFog;
 
 // per-grain stable random from its id

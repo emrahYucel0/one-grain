@@ -1,5 +1,6 @@
 import { Vector3 } from 'three';
 import { frameShot } from '../camera/rig';
+import { CONFINEMENT, towards } from '../camera/confinement';
 import { shot } from '../camera/shot';
 import { progressOverride, reportProgress, timeOverride, transitionOverride } from '../debug/parity';
 import type { GrainCloud } from '../render/grains';
@@ -12,7 +13,9 @@ import type { ScrollTimeline } from '../timeline/scroll';
 import { locate, locateAt, type Located } from '../timeline/segments';
 import { FixedClock } from './clock';
 import { env } from './env';
+import type { TypeAxes } from '../ui/type-axes';
 import type { Stage } from './renderer';
+import type { Projection } from './resize';
 
 export interface LoopDeps {
   stage: Stage;
@@ -20,6 +23,8 @@ export interface LoopDeps {
   hero: HeroGrain;
   timeline: ScrollTimeline;
   hash: HashRouter;
+  projection: Projection;
+  typeAxes: TypeAxes;
 }
 
 /** Per-frame hook for the parts that react to where the story is (UI, input, audio, quality). */
@@ -75,7 +80,7 @@ export class Loop {
   }
 
   private frame(): void {
-    const { stage, grains, hero, timeline, hash } = this.d;
+    const { stage, grains, hero, timeline, hash, projection, typeAxes } = this.d;
     const reduced = env.reduced;
     const v = progressOverride() ?? timeline.state.v;
     reportProgress(v);
@@ -85,7 +90,10 @@ export class Loop {
     const L = at ? locateAt(at.tr, at.t, at.lean) : locate(v), { a, b, tr } = L;
     const t = reduced ? (L.t < .5 ? 0 : 1) : L.t;
     const S = shot(tr, a, b, t, this.heroes, L.lean, reduced);
-    const wa = WORLDS[a]!, wb = WORLDS[b]!;
+    const wa = WORLDS[a]!, wb = WORLDS[b]!, ca = CONFINEMENT[a]!, cb = CONFINEMENT[b]!;
+    // confinement, eased like the camera: lens (and with it uScale), type axes, resting jitter
+    projection.setLens(towards(ca.fov, cb.fov, S.eg));
+    typeAxes.set(towards(ca.wdth, cb.wdth, S.eg), towards(ca.wght, cb.wght, S.eg));
 
     hero.moveTo(S.hero);
     hero.visible = !(tr.cam === 'cut' && t > .2 && t < .8);
@@ -102,7 +110,7 @@ export class Loop {
       from: a, to: b, t, time, motion: reduced ? 0 : 1,
       style: tr.g, k: tr.k ?? 1, span: tr.span ?? .45, spread: tr.spread ?? 30, dir: tr.dir ?? [1, 0, 0],
       heroA: this.heroes[a]!, heroB: this.heroes[b]!,
-      loA: wa.lo, hiA: wa.hi, loB: wb.lo, hiB: wb.hi, grain: S.eg >= 1 ? wb.grain : wa.grain + (wb.grain - wa.grain) * S.eg,
+      loA: wa.lo, hiA: wa.hi, loB: wb.lo, hiB: wb.hi, grain: towards(wa.grain, wb.grain, S.eg), jitter: towards(ca.jitter, cb.jitter, S.eg),
       fog: stage.stageColor, interact: ix.mode, mouse: ix.mode ? ix.at : this.mouse, press: ix.press,
     };
     grains.update(u);

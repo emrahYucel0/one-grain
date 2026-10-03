@@ -23,7 +23,7 @@ export class GrainCloud {
       uHeroA: { value: new Vector3() }, uHeroB: { value: new Vector3() },
       uInteract: { value: 0 }, uMouseW: { value: new Vector3(0, -99, 0) }, uPress: { value: 0 },
       uLoA: { value: new Color() }, uHiA: { value: new Color() }, uLoB: { value: new Color() }, uHiB: { value: new Color() },
-      uFog: { value: new Color() }, uFogD: { value: .02 },
+      uFog: { value: new Color() }, uFogD: { value: .02 }, uJitter: { value: 0 },
       [layerUniform('pos')]: { value: null },
     };
     this.material = new ShaderMaterial({ glslVersion: GLSL3, uniforms: this.u, defines: { TEX_WIDTH: 1024 }, ...grainShaders });
@@ -63,7 +63,7 @@ export class GrainCloud {
     (u.uDir!.value as Vector3).set(f.dir[0], f.dir[1], f.dir[2]);
     (u.uHeroA!.value as Vector3).copy(f.heroA); (u.uHeroB!.value as Vector3).copy(f.heroB);
     this.color(0, 'uLoA', f.loA); this.color(1, 'uHiA', f.hiA); this.color(2, 'uLoB', f.loB); this.color(3, 'uHiB', f.hiB); this.color(4, 'uFog', f.fog);
-    u.uGrain!.value = f.grain;
+    u.uGrain!.value = f.grain; u.uJitter!.value = f.jitter;
     u.uInteract!.value = f.interact; u.uPress!.value = f.press;
     if (f.interact) (u.uMouseW!.value as Vector3).copy(f.mouse);
   }
