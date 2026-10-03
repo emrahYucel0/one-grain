@@ -31,8 +31,11 @@ export interface LoopDeps {
 
 /** Per-frame hook for the parts that react to where the story is (UI, input, audio, quality). */
 export type FrameListener = (f: FrameInfo) => void;
-/** 'camera' runs before the camera is placed (pointer smoothing), 'scene' after it, before drawing. */
-export type FramePhase = 'camera' | 'scene';
+/**
+ * 'story' runs first, once the shot is known and before anything is drawn (the ending's reveal);
+ * 'camera' before the camera is placed (pointer smoothing); 'scene' after it, before drawing.
+ */
+export type FramePhase = 'story' | 'camera' | 'scene';
 
 export interface FrameInfo {
   /** story progress, 0..1 */
@@ -54,13 +57,13 @@ export interface FrameInfo {
 export class Loop {
   heroes: Vector3[] = [];
   private readonly clock = new FixedClock();
-  private readonly listeners: Record<FramePhase, FrameListener[]> = { camera: [], scene: [] };
+  private readonly listeners: Record<FramePhase, FrameListener[]> = { story: [], camera: [], scene: [] };
   private readonly mouse = new Vector3(0, -99, 0);
   private readonly d: LoopDeps;
   private running = false;
   /** set by the interaction listener, applied in the same frame */
   readonly interaction = { mode: 0, at: new Vector3(0, -99, 0), press: 0 };
-  /** the final reveal, 0..1 (set by the ending) */
+  /** the final reveal, 0..1 (set by the ending, in the 'story' phase) */
   reveal = 0;
   /** extra canvas opacity factor (quality swaps) */
   fade = 1;
@@ -95,14 +98,17 @@ export class Loop {
     const t = reduced ? (L.t < .5 ? 0 : 1) : L.t;
     const S = shot(tr, a, b, t, this.heroes, L.lean, reduced);
     const wa = WORLDS[a]!, wb = WORLDS[b]!, ca = CONFINEMENT[a]!, cb = CONFINEMENT[b]!;
-    // confinement, eased like the camera: lens (and with it uScale), type axes, resting jitter
+    const heroVisible = !(tr.cam === 'cut' && t > .2 && t < .8);
+    const info: FrameInfo = { v, L, t, eg: S.eg, hero: S.hero, heroVisible, now: performance.now(), dt };
+    for (const fn of this.listeners.story) fn(info);
+
+    // stage colour per act; confinement, eased like the camera: lens (and uScale), type axes, jitter
     stageColour.update(a, b, S.eg, this.reveal);
     projection.setLens(towards(ca.fov, cb.fov, S.eg));
     typeAxes.set(towards(ca.wdth, cb.wdth, S.eg), towards(ca.wght, cb.wght, S.eg));
 
     hero.moveTo(S.hero);
-    hero.visible = !(tr.cam === 'cut' && t > .2 && t < .8);
-    const info: FrameInfo = { v, L, t, eg: S.eg, hero: S.hero, heroVisible: hero.visible, now: performance.now(), dt };
+    hero.visible = heroVisible;
     for (const fn of this.listeners.camera) fn(info);
     frameShot(stage.camera, S, reduced ? null : this.parallax);
     for (const fn of this.listeners.scene) fn(info);
@@ -116,7 +122,7 @@ export class Loop {
       style: tr.g, k: tr.k ?? 1, span: tr.span ?? .45, spread: tr.spread ?? 30, dir: tr.dir ?? [1, 0, 0],
       heroA: this.heroes[a]!, heroB: this.heroes[b]!,
       loA: wa.lo, hiA: wa.hi, loB: wb.lo, hiB: wb.hi, grain: towards(wa.grain, wb.grain, S.eg), jitter: towards(ca.jitter, cb.jitter, S.eg),
-      fog: stageColour.fog, interact: ix.mode, mouse: ix.mode ? ix.at : this.mouse, press: ix.press,
+      fog: stageColour.fog, last: WORLDS.length - 1, reveal: this.reveal, interact: ix.mode, mouse: ix.mode ? ix.at : this.mouse, press: ix.press,
     };
     grains.update(u);
     hash.update(L.hold);

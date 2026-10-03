@@ -28,6 +28,10 @@ export interface FrameUniforms {
   jitter: number;
   /** stage colour (CSS), grains fade into it with distance */
   fog: Color;
+  /** index of the last world: grains arriving there stay neutral until the reveal */
+  last: number;
+  /** the final reveal, 0..1 */
+  reveal: number;
   /** 0 none · 1 brush the dunes · 2 light the switches */
   interact: number;
   mouse: Vector3;

@@ -74,6 +74,7 @@ function boot(): void {
   const pointer = new Pointer();
   chapter.show(0); nav.setCurrent(0);
 
+  loop.onFrame(({ L, now }) => { loop.reveal = ending.update(L.hold === LAST, now); }, 'story');
   loop.onFrame(() => { pointer.smooth(); loop.parallax = { x: pointer.sx, y: pointer.sy }; }, 'camera');
   loop.onFrame(({ v, L, t, eg, hero: heroPos, heroVisible, now }) => {
     const { a, b, tr, hold } = L;
@@ -83,7 +84,6 @@ function boot(): void {
     clock.update(a, b, eg, t, tr);
     cut.style.opacity = cutOpacity(tr, t).toFixed(3);
     intro.update(v);
-    ending.update(hold === LAST, now);
     marker.update(heroPos, stage.camera, heroVisible, v);
     a11y.rest(hold);
     mixBed(sound.bed, a, b, t, tr);

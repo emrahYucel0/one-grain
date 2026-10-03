@@ -21,18 +21,27 @@ export class Intro {
   update(v: number): void { this.el.style.opacity = (1 - ss(0, .02, v)).toFixed(2); }
 }
 
-/** The ending: the title arrives 1.2 s after resting on the last chapter, the signature at 5.5 s. */
+/**
+ * The ending. The screen arrives neutral, with "Now" on the clock; the sentence comes in 1.2 s
+ * after resting on the last chapter; the sand image fades into the screen from 4 s to 8 s while
+ * the end's stage colour comes in (the reveal); the signature and footnote at 8.5 s.
+ */
 export class Ending {
+  static readonly TITLE_S = 1.2;
+  static readonly REVEAL_S: readonly [number, number] = [4, 8];
+  static readonly SIGNATURE_S = 8.5;
   private since = -1;
-  /** keyboard focus on the signature link shows everything at once */
+  /** keyboard focus on the signature link: everything at once, fully revealed */
   forced = false;
   private readonly chapter: HTMLElement;
   constructor(chapter: HTMLElement) { this.chapter = chapter; }
-  update(atEnd: boolean, now: number): void {
-    if (!atEnd) { this.since = -1; return; }
+  /** Returns the reveal, 0..1. */
+  update(atEnd: boolean, now: number): number {
+    if (!atEnd) { this.since = -1; return 0; }
     if (this.since < 0) this.since = now;
     const el = (now - this.since) / 1000;
-    this.chapter.classList.toggle('in', this.forced || el > 1.2);
-    this.chapter.classList.toggle('sig', this.forced || el > 5.5);
+    this.chapter.classList.toggle('in', this.forced || el > Ending.TITLE_S);
+    this.chapter.classList.toggle('sig', this.forced || el > Ending.SIGNATURE_S);
+    return this.forced ? 1 : ss(Ending.REVEAL_S[0], Ending.REVEAL_S[1], el);
   }
 }

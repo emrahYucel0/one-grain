@@ -133,6 +133,11 @@ body{margin:0;background:var(--stage);color:var(--ink);font-family:var(--sans);f
 .timeline .label{font-family:var(--sans);font-size:var(--rail-size);letter-spacing:var(--rail-track)}
 /* ---------- end of ported block ---------- */
 
+/* The signature waits for the ending's 8.5 s like the footnote. In the reference, the v8 rule
+   ".chapter.final p:not(.micro)" ties in specificity with ".chapter.final:not(.sig) p" and comes
+   later, so its signature shows from the start; this restores the intended order. */
+.chapter.final:not(.sig) p:not(.micro){opacity:0}
+
 /* The experience only exists once WebGL2 is confirmed (main.ts adds .gl). */
 html:not(.gl) :is(#scene,.scrim,.marker,.hud,.intro,.story,.timeline,.cut,#track){display:none}
 

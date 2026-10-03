@@ -13,6 +13,8 @@ void main(){
   float fl = floor(Pc.w + .001), sz = (e < .5 ? sa : sb) * m.size;
   p = brush(p, fl, R);
   vec3 c = e < .5 ? paint(A, uLoA, uHiA, R) : paint(B, uLoB, uHiB, R);
+  // the last world arrives as a neutral screen; the sand image comes in with the reveal
+  if (uTo == uLast && e >= .5) { float n = .4 + .06 * R.y; c = blend(vec3(n * .9, n * .94, n), c, uReveal); }
   c = glow(c, p, fl);
   c = mix(c, vec3(1., .48, .16) * (1.1 + .3 * R.x), m.heat * .75);
   c = mix(c, vec3(.95, .97, 1.), m.whiten * .8);
