@@ -73,7 +73,7 @@ export class Loop {
   /** set by the interaction listener, applied in the same frame */
   readonly interaction = { mode: 0, at: new Vector3(0, -99, 0), press: 0 };
   /** render layers that can be switched (debug panel, tiers) */
-  readonly layers = { light: true };
+  readonly layers = { light: true, shadows: true };
   /** the final reveal, 0..1 (set by the ending, in the 'story' phase) */
   reveal = 0;
   /** extra canvas opacity factor (quality swaps) */
@@ -129,6 +129,9 @@ export class Loop {
     const fade = (reduced ? 1 - Math.sin(Math.PI * L.t) : 1) * this.fade;
     stage.renderer.domElement.style.opacity = fade === 1 ? '1' : fade.toFixed(3);
 
+    // the key light's shadow map, framed around what the camera looks at
+    const shadows = this.layers.light && this.layers.shadows;
+    pipeline.shadow.fit(S.look, this.rigState.keyDir, this.rigState.shadow);
     const ix = this.interaction;
     const u: FrameUniforms = {
       rest: !restPathAllowed() ? 0 : t <= 0 ? 1 : t >= 1 ? 2 : 0,
@@ -136,14 +139,14 @@ export class Loop {
       style: tr.g, k: tr.k ?? 1, span: tr.span ?? .45, spread: tr.spread ?? 30, dir: tr.dir ?? [1, 0, 0],
       heroA: this.heroes[a]!, heroB: this.heroes[b]!,
       loA: wa.lo, hiA: wa.hi, loB: wb.lo, hiB: wb.hi, grain: towards(wa.grain, wb.grain, S.eg), jitter: towards(ca.jitter, cb.jitter, S.eg),
-      fog: stageColour.fog, fogLinear: stageColour.fogLinear, rig: this.rigState, camera: stage.camera, light: this.layers.light, last: WORLDS.length - 1, reveal: this.reveal, interact: ix.mode, mouse: ix.mode ? ix.at : this.mouse, press: ix.press,
+      fog: stageColour.fog, fogLinear: stageColour.fogLinear, rig: this.rigState, camera: stage.camera, light: this.layers.light, shadows, lightVP: pipeline.shadow.viewProjection, shadowPx: pipeline.shadow.pxPerUnit, last: WORLDS.length - 1, reveal: this.reveal, interact: ix.mode, mouse: ix.mode ? ix.at : this.mouse, press: ix.press,
     };
     const overdraw = overdrawView();
     grains.setOverdrawView(overdraw);
     if (overdraw) stageColour.blackout();
     grains.update(u);
     hash.update(L.hold);
-    pipeline.render(stage.scene, stage.overlay, stage.camera);
+    pipeline.render(stage.scene, stage.overlay, stage.camera, shadows && !overdraw);
     timer.tick();
     reportGpu(timer.times());
   }

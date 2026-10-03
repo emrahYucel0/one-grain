@@ -155,3 +155,36 @@ per-fragment shading, not sprite size.
 
 `?off=a,b` switches render layers off for measurements like these; delta 9 turns them into
 the debug panel's toggles.
+
+## Delta 5: shadow map
+
+1024² depth map from the key light, refreshed every other frame, 4-tap PCF in the grain shader.
+Same method; GPU total counts the shadow pass at its full cost, so it is the cost of a frame that
+refreshes the map (the frames in between are about 3 ms cheaper).
+
+| Position | GPU total | shadow | grains | hero |
+|---|---|---|---|---|
+| hold magma | 13.49 ms | 3.14 | 10.29 | 0.07 |
+| hold granite | 13.12 ms | 3.04 | 9.99 | 0.09 |
+| hold river | 12.94 ms | 3.04 | 9.82 | 0.08 |
+| hold coast | 14.96 ms | 3.05 | 11.83 | 0.08 |
+| hold desert | 12.93 ms | 3.18 | 9.68 | 0.07 |
+| hold again | 17.56 ms | 3.04 | 14.41 | 0.10 |
+| hold quarry | 15.26 ms | 3.08 | 12.12 | 0.06 |
+| hold furnace | 16.51 ms | 3.01 | 13.42 | 0.08 |
+| hold purity | 14.65 ms | 2.98 | 11.56 | 0.11 |
+| hold crystal | 11.96 ms | 3.03 | 8.82 | 0.11 |
+| hold wafer | 11.57 ms | 3.15 | 8.36 | 0.07 |
+| hold light | 19.87 ms | 3.42 | 16.36 | 0.09 |
+| hold chip | 10.66 ms | 3.00 | 7.57 | 0.10 |
+| hold display | 15.47 ms | 3.03 | 12.32 | 0.12 |
+| hold now | 18.59 ms | 3.03 | 15.42 | 0.15 |
+
+GPU total: median 13.58 ms, worst 19.87 ms (light). Scrub median 14.08 ms (worst 20.08).
+
+- The shadow pass is about 3 ms whatever the world: it draws all 90 000 points into a small map,
+  so it is the per-point cost again (about 33 ns a point), not fill.
+- Sampling the map (4 taps per fragment) adds about 1–3 ms to the grain pass, more where grains
+  cover more of the screen (light 13.3 → 16.4 ms).
+- Before post, the light hold is already over the 16.7 ms budget on a refreshing frame. The
+  options with numbers are collected after delta 6, once every layer is in.

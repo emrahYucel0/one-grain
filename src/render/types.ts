@@ -1,4 +1,4 @@
-import type { Camera, Color, Vector3 } from 'three';
+import type { Camera, Color, Matrix4, Vector3 } from 'three';
 import type { RigState } from '../core/light-rig';
 import type { Vec3 } from '../story/types';
 
@@ -38,6 +38,10 @@ export interface FrameUniforms {
   camera: Camera;
   /** layer switches */
   light: boolean;
+  shadows: boolean;
+  /** the key light's view-projection and shadow map pixels per world unit (render/shadow.ts) */
+  lightVP: Matrix4;
+  shadowPx: number;
   /** index of the last world: grains arriving there stay neutral until the reveal */
   last: number;
   /** the final reveal, 0..1 */

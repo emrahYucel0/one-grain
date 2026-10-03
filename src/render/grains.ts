@@ -2,9 +2,10 @@ import {
   AdditiveBlending, BufferAttribute, BufferGeometry, Color, GLSL3, Matrix4, NormalBlending, Points, ShaderMaterial, Vector3,
   type DataTexture, type IUniform,
 } from 'three';
-import { grainShaders } from '../shaders';
+import { grainShaders, grainShadowShaders } from '../shaders';
 import type { GrainPack, LayerName } from '../sim/pack';
 import { layerDefines, layerTextures, layerUniform } from './bind';
+import { SHADOW_SIZE, type ShadowMap } from './shadow';
 import type { FrameUniforms } from './types';
 
 /** Until the HDR post pass exists, the grain shader applies the tone curve itself. */
@@ -13,7 +14,10 @@ const OUTPUT_DEFINES: Record<string, string> = { DIRECT_OUTPUT: '' };
 /** The grain cloud: one point per grain, all motion computed on the GPU from the pack layers. */
 export class GrainCloud {
   readonly object: Points;
+  /** the same grains in the key light's shadow map (shares geometry and uniforms) */
+  readonly shadowObject: Points;
   private readonly material: ShaderMaterial;
+  private readonly shadowMaterial: ShaderMaterial;
   private readonly u: Record<string, IUniform>;
   private textures = new Map<LayerName, DataTexture>();
   private colorKeys = ['', '', '', ''];
@@ -40,6 +44,17 @@ export class GrainCloud {
     this.object = new Points(new BufferGeometry(), this.material);
     this.object.frustumCulled = false;
     this.object.visible = false;
+    this.shadowMaterial = new ShaderMaterial({ glslVersion: GLSL3, uniforms: this.u, defines: { TEX_WIDTH: 1024, SHADOW: '' }, ...grainShadowShaders });
+    this.shadowObject = new Points(this.object.geometry, this.shadowMaterial);
+    this.shadowObject.frustumCulled = false;
+    this.shadowObject.visible = false;
+  }
+
+  /** Draw into this shadow map and sample it. */
+  attachShadow(map: ShadowMap): void {
+    map.scene.add(this.shadowObject);
+    this.u.uShadow!.value = map.texture;
+    this.u.uShadowTexel!.value = 1 / SHADOW_SIZE;
   }
 
   /** Swap in a new set of worlds (first build, or a quality tier change). */
@@ -53,14 +68,16 @@ export class GrainCloud {
     this.u.uRows!.value = pack.rows;
     this.material.defines = { ...layerDefines(pack), ...OUTPUT_DEFINES, ...('OVERDRAW' in this.material.defines ? { OVERDRAW: '' } : {}) };
     this.material.needsUpdate = true;
+    this.shadowMaterial.defines = { ...layerDefines(pack), SHADOW: '' };
+    this.shadowMaterial.needsUpdate = true;
 
     const ids = new Float32Array(pack.n * 3);
     for (let i = 0; i < pack.n; i++) ids[i * 3] = i;
     const geo = new BufferGeometry();
     geo.setAttribute('position', new BufferAttribute(ids, 3));
     this.object.geometry.dispose();
-    this.object.geometry = geo;
-    this.object.visible = true;
+    this.object.geometry = this.shadowObject.geometry = geo;
+    this.object.visible = this.shadowObject.visible = true;
   }
 
   /**
@@ -102,6 +119,8 @@ export class GrainCloud {
     u.uSpecA!.value = rig.specA; u.uSpecB!.value = rig.specB;
     (u.uFogLin!.value as Vector3).copy(f.fogLinear);
     u.uUseLight!.value = f.light ? 1 : 0;
+    u.uUseShadow!.value = f.light && f.shadows ? 1 : 0;
+    (u.uLightVP!.value as Matrix4).copy(f.lightVP); u.uPx!.value = f.shadowPx;
     const cam = f.camera;
     cam.updateMatrixWorld();
     const m = cam.matrixWorld.elements;

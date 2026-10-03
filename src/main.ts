@@ -60,7 +60,9 @@ function boot(): void {
   const timeline = new ScrollTimeline($('track'), { snap: !flags.noSnap });
   const hash = new HashRouter(timeline);
   bindChapterKeys(timeline);
-  const loop = new Loop({ stage, grains, hero, timeline, hash, projection, typeAxes: new TypeAxes(), stageColour: new StageColour(stage), pipeline: new Pipeline(stage.renderer, timer), timer });
+  const pipeline = new Pipeline(stage.renderer, timer);
+  grains.attachShadow(pipeline.shadow);
+  const loop = new Loop({ stage, grains, hero, timeline, hash, projection, typeAxes: new TypeAxes(), stageColour: new StageColour(stage), pipeline, timer });
   const go = (i: number): void => timeline.goTo(i);
 
   // words and instruments

@@ -1,6 +1,7 @@
 // Assembles the GLSL sources. Only render/ imports this module.
 import behaviours from './behaviours.glsl?raw';
 import common from './common.glsl?raw';
+import grainsShadowFrag from './grains-shadow.frag.glsl?raw';
 import grainsFrag from './grains.frag.glsl?raw';
 import grainsVert from './grains.vert.glsl?raw';
 import hero from './hero.glsl?raw';
@@ -16,6 +17,9 @@ export const grainShaders: ShaderPair = {
   vertexShader: [common, behaviours, paint, transitions, interact, emission, grainsVert].join('\n'),
   fragmentShader: grainsFrag,
 };
+
+/** The grain cloud drawn into the key light's shadow map (with the SHADOW define). */
+export const grainShadowShaders: ShaderPair = { vertexShader: grainShaders.vertexShader, fragmentShader: grainsShadowFrag };
 
 const sections = new Map<string, string>();
 for (const part of hero.split(/^\/\/#/m).slice(1)) {
