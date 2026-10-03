@@ -78,5 +78,18 @@ vec3 travel(vec4 A, vec4 B, vec3 pa, vec3 pb, vec3 R, out float e, out float arc
     m.whiten = sep * (1. - impure) * (1. - dep); m.darken = impure * sep * (1. - dep);
     m.size = mix(1., .25, impure * sep * (1. - dep)); m.heat = (1. - rise) * .6;
   }
+  else if (uStyle == 20) { // grow: rods melt into the pool, the crystal rises out of it from the seed down
+    float melt = smoothstep(0., .35, uT - R.x * .08);
+    float rp = 3.6 * sqrt(R.x), ra = R.y * 6.2832;
+    vec3 pool = vec3(cos(ra) * rp, -.55 + sin(uTime * uMotion * .5 + R.z * 6.) * .05, sin(ra) * rp);
+    vec3 molten = mix(pa, pool, melt); molten.y -= sin(3.14159 * melt) * 1.2 * R.z;
+    float fb = floor(B.w + .001), inC = 0.;
+    if (fb > 14.5 && fb < 15.5) { // crystal grains lock into the lattice as the interface passes them
+      float cutY = 11.5 * (1. - smoothstep(.45, 1., uT));
+      inC = smoothstep(cutY - .35, cutY + .05, pb.y);
+      p = mix(molten, pb - vec3(0., cutY, 0.), inC); e = max(melt * .49, inC);
+    } else { float k = smoothstep(.35, .75, uT); p = mix(molten, pb, k); e = max(melt * .49, k); inC = k; }
+    arc = sin(3.14159 * uT) * .5 * uMotion; m.heat = melt * (1. - inC) * .85;
+  }
   return p;
 }
