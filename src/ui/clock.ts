@@ -49,7 +49,7 @@ export class ClockView {
   }
 
   private years(y: number): string {
-    if (y >= 1e6) { const m = y / 1e6; return `${m < 100 ? m.toFixed(1) : Math.round(m)} ${attr(this.el, 'million')}`; }
+    if (y >= 1e6) return `${Math.round(y / 1e6)} ${attr(this.el, 'million')}`; // whole millions only
     const k = Math.pow(10, Math.max(0, Math.floor(Math.log10(y)) - 1));
     return (Math.round(y / k) * k).toLocaleString('en-US');
   }
