@@ -159,7 +159,7 @@ alone; computation opens the space again; the end fills your screen. Through
 - the camera distance, keeping each blockout composition under its lens, then the `frame`
   factor;
 - the resting jitter, (1 − c) · 0.022;
-- the title and clock axes, wdth 125 − 63c and wght 300 + 480c.
+- the title and clock axes, wdth 125 − 63c and wght 380 + 250c (the weight only compensates, v15).
 
 All of it is interpolated through transitions with the camera's easing. Colour is not driven by
 it.

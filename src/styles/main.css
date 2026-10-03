@@ -22,7 +22,7 @@
 
   --title-size:clamp(2.2rem,4.6vw,4rem);--title-line:.92;--title-track:-.005em;--title-gap:.55rem;
   --final-title-size:clamp(2.2rem,4.6vw,4.2rem);--final-title-line:1;--final-title-measure:16ch;
-  --body-size:clamp(1.05rem,1.35vw,1.2rem);--body-line:1.55;--body-opacity:.82;--body-measure:38ch;--body-opsz:16;
+  --body-size:clamp(1.1rem,.55vw + .82rem,1.32rem);--body-line:1.5;--body-opacity:.92;--body-measure:38ch;--body-opsz:16;
   --micro-size:clamp(.95rem,1.1vw,1.02rem);--micro-opacity:.62;--micro-gap:.7rem;
   --hint-size:.85rem;--hint-gap:.9rem;--hint-track:.01em;
   --signature-size:.95rem;--signature-opacity:.9;
@@ -107,6 +107,9 @@ body{margin:0;background:var(--stage);color:var(--ink);font-family:var(--sans);f
 .time{transition:opacity .3s}
 .marker{border:2px solid #fff !important;box-shadow:0 0 0 1.5px rgba(0,0,0,.55),inset 0 0 0 1px rgba(0,0,0,.35);opacity:.95 !important}
 .marker span{color:#fff !important;text-shadow:0 1px 3px rgba(0,0,0,.8)}
+/* legibility over bright worlds (v15): a soft shadow under all overlay text; no native scrollbar */
+.hud,.timeline,.time,.story{text-shadow:0 1px 10px rgba(0,0,0,.55),0 0 2px rgba(0,0,0,.35)}
+html{scrollbar-width:none}html::-webkit-scrollbar{display:none}
 .chapter.final h2,.chapter.final p{transition:opacity 1.2s ease}
 .chapter.final:not(.in) h2{opacity:0}
 .chapter.final:not(.sig) p{opacity:0}
