@@ -47,12 +47,12 @@ export interface WorldDef {
  * 16 expose · 17 drift · 18 break · 19 separate · 20 grow
  * (numbers are kept stable; styles no transition used any more were removed and live in git history)
  */
-export type GrainStyle = 0 | 2 | 4 | 5 | 9 | 11 | 12 | 13 | 15 | 16 | 17 | 18 | 19 | 20;
+export type GrainStyle = 0 | 2 | 4 | 5 | 9 | 11 | 12 | 13 | 15 | 16 | 17 | 18 | 19 | 20 | 21;
 
 /** Camera moves (camera/shot.ts). */
 export type CamStyle =
   | 'crane' | 'crackdrop' | 'track' | 'drift' | 'sink' | 'cut' | 'breakfall' | 'rise'
-  | 'orbit' | 'slide' | 'top' | 'zoom' | 'beam' | 'pullback';
+  | 'orbit' | 'slide' | 'top' | 'zoom' | 'beam' | 'pullback' | 'macro';
 
 export interface TransitionDef {
   g: GrainStyle;

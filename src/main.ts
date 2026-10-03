@@ -24,7 +24,7 @@ import { bindChapterKeys } from './timeline/keys';
 import { ScrollTimeline } from './timeline/scroll';
 import { StoryA11y } from './ui/a11y';
 import { ChapterView } from './ui/chapter';
-import { ClockView } from './ui/clock';
+import { ClockView, clockProgress } from './ui/clock';
 import { readCopy } from './ui/copy';
 import { revealWhenFontsReady } from './ui/fonts';
 import { HeroMarker } from './ui/marker';
@@ -93,7 +93,7 @@ function boot(): void {
     updateInteraction(loop.interaction, pointer, { hold, reduced: env.reduced, heroes: loop.heroes, camera: stage.camera, now });
     if (chapter.show(t < .5 ? a : b)) nav.setCurrent(chapter.current);
     chapter.setOpacity(chapterOpacity(tr, t));
-    clock.update(a, b, eg, t, tr);
+    clock.update(a, b, clockProgress(tr, t, eg), t, tr);
     cut.style.opacity = cutOpacity(tr, t).toFixed(3);
     intro.update(v);
     marker.update(heroPos, stage.camera, heroVisible, v, hold, now);

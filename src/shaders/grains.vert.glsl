@@ -37,7 +37,7 @@ void main(){
   vec3 R = vec3(h1(position.x), h1(position.x + 71.3), h1(position.x + 13.7));
   vec3 p, c, n;
   float e, arc, sz, fl, tn, spec;
-  Mods m = Mods(1., 0., 0., 0.);
+  Mods m = Mods(1., 0., 0., 0., 0.);
   if (uRest != 0) {
     // at rest (t = 0 or 1): one world, one position fetch, one normal fetch, no transition. Every
     // transition lands exactly on its worlds at its ends (exact ends), so this is the full path's
@@ -64,6 +64,10 @@ void main(){
     p = brush(p, fl, R);
 #ifndef SHADOW
     c = e < .5 ? paint(A, uLoA, uHiA, R) : paint(B, uLoB, uHiB, R);
+    if (uStyle == 21) { // become: A's colours lose 70 % of their saturation, then the palette turns to sand
+      vec3 ca = paint(A, uLoA, uHiA, R), cb = paint(B, uLoB, uHiB, R);
+      c = blend(blend(ca, vec3(dot(ca, vec3(.299, .587, .114))), m.fade * .7), cb, smoothstep(.34, .72, uT));
+    }
     n = blend(grabSurface(uFrom, id).xyz, grabSurface(uTo, id).xyz, e);
     spec = blend(uSpecA, uSpecB, e);
 #endif
@@ -79,7 +83,7 @@ void main(){
   // the last world arrives as a neutral screen of pixels; the sand image comes in with the reveal (v10)
   float isPix = (uTo == uLast && e >= .5) ? 1. : 0.;
   if (isPix > .5) { float g = .24 + .04 * R.y; c = blend(vec3(g * .9, g * .94, g), c, uReveal); }
-  float em = emission(fl, tn, uTime * uMotion, blend(uRaysA, uRaysB, e), blend(uPixA, uPixB, e));
+  float em = emission(fl, tn, uTime * uMotion, blend(uRaysA, uRaysB, e), blend(uPixA, uPixB, e)) * (1. - m.fade); // the light goes out (style 21)
   c = glow(c, p, fl, em);
   c = mix(c, vec3(1., .48, .16) * (1.1 + .3 * R.x), m.heat * .75);
   c = mix(c, vec3(.95, .97, 1.), m.whiten * .8);

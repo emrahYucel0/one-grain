@@ -10,7 +10,7 @@ import { createServer } from 'vite';
 import { launch } from './lib/browser.mjs';
 import { startDev } from './lib/servers.mjs';
 
-const STYLES = new Set([17, 18, 19, 20]);  // drift, break, separate, grow
+const STYLES = new Set([17, 18, 19, 20, 21]);  // drift, break, separate, grow
 const TS = [.2, .45, .75];
 const SETTLE_MS = 2200;                     // scrub (1 s) plus CSS transitions
 const MAX_PCT = .05;                        // capture noise is ~0.02 %
@@ -27,7 +27,8 @@ const page = await (await browser.newContext({ viewport: { width: 1440, height: 
 page.on('pageerror', (e) => console.log('[pageerror]', e.message));
 await page.goto(`${dev.origin}/?parity&nosnap&tier=mid`);
 await page.waitForFunction(() => window.__PACK, null, { timeout: 90000 });
-await page.evaluate(() => { window.__T = 10; });
+// frozen shader time; the live clock and the time spent in a hold pinned (they count real time)
+await page.evaluate(() => { window.__T = 10; window.__LIVE = 0; window.__FT = 0; });
 
 const max = await page.evaluate(() => document.documentElement.scrollHeight - innerHeight);
 const px = (v) => Math.round(v * max);

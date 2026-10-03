@@ -32,5 +32,5 @@ export const TRANSITIONS: readonly TransitionDef[] = [
   // emit: chip → display
   { g: 12, cam: 'beam', len: .9, k: 1.2, hero: [[0, 6, 0], [0, -6, 0]] },
   // reveal: display → now
-  { g: 13, cam: 'pullback', len: 1.6, span: .25 },
+  { g: 21, cam: 'macro', len: 2.8 }, // become: the light goes out, the sub-pixels come apart, the grains are sand (v15)
 ];

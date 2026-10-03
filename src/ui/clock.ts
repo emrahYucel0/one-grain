@@ -10,6 +10,9 @@ import { attr, type Copy } from './copy';
  * at the very end. Each unit has its own typography (CSS .u-<unit>); a change of unit replays a
  * "punch". The interlude card has no clock.
  */
+/** The clock's progress through a move: on "become" (style 21) "Now" arrives at 74 % of the move (v15). */
+export const clockProgress = (tr: TransitionDef, t: number, eg: number): number => (tr.g === 21 ? (t < .74 ? 0 : 1) : eg);
+
 export class ClockView {
   private unit: ClockUnit = 'years';
   /** when the clock switched to the live count (-1: not live) */

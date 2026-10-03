@@ -55,6 +55,11 @@ export function shot(tr: TransitionDef, a: number, b: number, t: number, heroes:
     case 'pullback': c1 = off(hB, [0, 0, 1.2]); c2 = off(hB, [0, 0, 3]); break;
     default: c1 = camA.clone().lerp(camB, 1 / 3); c2 = camA.clone().lerp(camB, 2 / 3);
   }
+  if (tr.cam === 'macro') { // push in to macro on world B's grain, hold, pull back (v15); no lean, the ends exact
+    if (t <= 0 || t >= 1) return { pos: (t <= 0 ? camA : camB).clone(), look: (t <= 0 ? lookA : lookB).clone(), hero, eg, arc };
+    const M = off(hB, [0, 0, 2.4]), k1 = easeCubic(ss(0, .3, t)), k3 = easeCubic(ss(.55, 1, t));
+    return { pos: camA.clone().lerp(M, k1).lerp(camB, k3), look: lookA.clone().lerp(hB, k1).lerp(lookB, k3), hero, eg, arc };
+  }
   if (tr.cam === 'orbit' && (eg <= 0 || eg >= 1)) pos = (eg <= 0 ? camA : camB).clone(); // the orbit's ends, exactly
   else if (tr.cam === 'orbit') {
     const axis = tr.axis ?? [0, 0], ax = v(axis[0], 0, axis[1]);
