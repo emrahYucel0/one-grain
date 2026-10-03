@@ -12,7 +12,8 @@
     "lint": "eslint .",
     "parity": "node scripts/parity.mjs",
     "check:console": "node scripts/console-gate.mjs",
-    "check:data": "node scripts/data-gate.mjs"
+    "check:data": "node scripts/data-gate.mjs",
+    "check:a11y": "node scripts/a11y-check.mjs"
   },
   "engines": {
     "node": ">=20"

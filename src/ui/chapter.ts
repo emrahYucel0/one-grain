@@ -12,7 +12,8 @@ export class ChapterView {
   private readonly copy: Copy;
   private readonly touchOnly: boolean;
   /** the overlay's copy of the signature link, if the final chapter is showing */
-  signatureLink: HTMLAnchorElement | null = null;
+  private signatureLink: HTMLAnchorElement | null = null;
+  private signatureFocused = false;
 
   constructor(el: HTMLElement, act: HTMLElement, copy: Copy, touchOnly: boolean) {
     this.el = el; this.act = act; this.copy = copy; this.touchOnly = touchOnly;
@@ -34,6 +35,7 @@ export class ChapterView {
       this.body.replaceChildren(...[...c.signature.childNodes].map((n) => n.cloneNode(true)));
       this.signatureLink = this.body.querySelector('a');
       this.signatureLink?.setAttribute('tabindex', '-1'); // reachable from the article instead
+      this.signatureLink?.classList.toggle('kbd-focus', this.signatureFocused);
     }
     this.el.classList.toggle('final', c.final);
     this.el.classList.remove('in', 'sig');
@@ -44,6 +46,12 @@ export class ChapterView {
   }
 
   get current(): number { return this.shown; }
+
+  /** Mirror keyboard focus on the article's signature link onto the visible one (now or when it appears). */
+  setSignatureFocus(focused: boolean): void {
+    this.signatureFocused = focused;
+    this.signatureLink?.classList.toggle('kbd-focus', focused);
+  }
 
   setOpacity(op: number): void {
     if (Math.abs(op - this.lastOpacity) > .01) { this.el.style.opacity = op.toFixed(2); this.lastOpacity = op; }

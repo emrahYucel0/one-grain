@@ -53,6 +53,8 @@ export class Loop {
   private running = false;
   /** set by the interaction listener, applied in the same frame */
   readonly interaction = { mode: 0, at: new Vector3(0, -99, 0), press: 0 };
+  /** extra canvas opacity factor (quality swaps) */
+  fade = 1;
   /** smoothed pointer, for camera parallax (set by input) */
   parallax: { x: number; y: number } = { x: 0, y: 0 };
 
@@ -79,9 +81,7 @@ export class Loop {
     const dt = this.clock.tick(reduced);
     const time = timeOverride() ?? this.clock.time;
     const L = locate(v), { a, b, tr } = L;
-    // reduced motion: worlds swap behind a quick fade instead of morphing
     const t = reduced ? (L.t < .5 ? 0 : 1) : L.t;
-    stage.renderer.domElement.style.opacity = reduced ? (1 - Math.sin(Math.PI * L.t)).toFixed(3) : '1';
     const S = shot(tr, a, b, t, this.heroes);
     const wa = WORLDS[a]!, wb = WORLDS[b]!;
 
@@ -91,6 +91,9 @@ export class Loop {
     for (const fn of this.listeners.camera) fn(info);
     frameShot(stage.camera, S, reduced ? null : this.parallax);
     for (const fn of this.listeners.scene) fn(info);
+    // reduced motion: worlds swap behind a quick fade instead of morphing; times any listener fade
+    const fade = (reduced ? 1 - Math.sin(Math.PI * L.t) : 1) * this.fade;
+    stage.renderer.domElement.style.opacity = fade === 1 ? '1' : fade.toFixed(3);
 
     const ix = this.interaction;
     const u: FrameUniforms = {

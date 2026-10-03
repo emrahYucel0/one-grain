@@ -4,8 +4,10 @@ import { SoundToggle } from './audio/toggle';
 import { env, probeGpu } from './core/env';
 import { Loop } from './core/loop';
 import { pickTier, pixelRatioFor } from './core/quality';
+import { TierManager } from './core/tiers';
 import { createStage } from './core/renderer';
 import { fit, onResize } from './core/resize';
+import { debugOverlay } from './debug/overlay';
 import { exposePack, flags } from './debug/parity';
 import { updateInteraction } from './input/interact';
 import { Pointer } from './input/pointer';
@@ -62,7 +64,7 @@ function boot(): void {
   const sound = new SoundToggle($<HTMLButtonElement>('sound'));
   const a11y = new StoryA11y($('story'), $('status'), copy, {
     go,
-    onSignatureFocus: (focused) => { ending.forced = focused; chapter.signatureLink?.classList.toggle('kbd-focus', focused); },
+    onSignatureFocus: (focused) => { ending.forced = focused; chapter.setSignatureFocus(focused); },
   });
   const pointer = new Pointer();
   chapter.show(0); nav.setCurrent(0);
@@ -82,13 +84,37 @@ function boot(): void {
     mixBed(sound.bed, a, b, t, tr);
   });
 
-  void new SimClient().build(tier.n).then((pack) => {
+  // quality: step down (queued, applied only while resting) if frames stay over budget
+  const sim = new SimClient();
+  const tiers = new TierManager(tier, {
+    auto: !flags.tier, forceDrop: flags.forceDrop,
+    build: (n) => sim.build(n),
+    swap: (pack, pixelRatio) => {
+      stage.renderer.setPixelRatio(pixelRatio);
+      hero.setPixelRatio(pixelRatio);
+      resize();
+      exposePack(pack);
+      loop.setPack(pack);
+    },
+  });
+  loop.onFrame(({ L, now }) => { tiers.frame(now, L.hold); loop.fade = tiers.fade; });
+  if (flags.debug) debugOverlay(tiers, () => stage.renderer.getPixelRatio());
+
+  sim.build(tier.n).then((pack) => {
     exposePack(pack);
     loop.setPack(pack);
     intro.ready();
     hash.restore();
+    tiers.monitor.reset(performance.now());
     loop.start();
-  });
+  }, fallBack);
 }
 
-boot();
+/** Without a working experience, the article is the page. */
+function fallBack(err: unknown): void {
+  root.classList.remove('gl');
+  root.classList.add('nogl');
+  throw err;
+}
+
+try { boot(); } catch (err) { fallBack(err); }
