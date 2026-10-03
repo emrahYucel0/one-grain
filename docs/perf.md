@@ -188,3 +188,81 @@ GPU total: median 13.58 ms, worst 19.87 ms (light). Scrub median 14.08 ms (worst
   cover more of the screen (light 13.3 → 16.4 ms).
 - Before post, the light hold is already over the 16.7 ms budget on a refreshing frame. The
   options with numbers are collected after delta 6, once every layer is in.
+
+## Per-grain lighting (before delta 6)
+
+A grain is at most 9 px wide, and grains overlap, so per-pixel lighting and shadow taps repeated
+the same work across every pixel of a grain. That work now happens once per grain, in the vertex
+shader:
+
+- the shadow lookup (4 samples, at the grain's centre);
+- the point light, its specular, emission and fog;
+- the light vectors (surface normal, half vector and view vector) in camera space.
+
+The fragment shader keeps only the sphere. v10's shading normal is
+`normalize(.62 n + .55 sw)`, where `sw` is the sprite's sphere normal. With the vectors already in
+camera space, every N·X is `(.62 n·X + .55 sw·X) / |N|`, which takes a few dot products and one
+inversesqrt. So key, sky/ground fill, specular, rim and the edge darkening keep v10's exact
+per-pixel shape.
+
+Same method as above (mid tier, 1920×909, Intel UHD Graphics through ANGLE/D3D11). The two runs
+are on the same day.
+
+| Position | Before: GPU total | Before: grains | After: GPU total | After: shadow | After: grains |
+|---|---|---|---|---|---|
+| hold magma | 15.41 ms | 11.81 | 10.23 ms | 3.37 | 6.80 |
+| hold granite | 13.21 ms | 10.04 | 10.82 ms | 3.22 | 7.51 |
+| hold river | 13.32 ms | 10.20 | 9.91 ms | 3.20 | 6.64 |
+| hold coast | 15.41 ms | 12.24 | 12.41 ms | 3.34 | 9.00 |
+| hold desert | 12.93 ms | 9.79 | 10.47 ms | 3.28 | 7.12 |
+| hold again | 17.39 ms | 14.21 | 12.70 ms | 3.07 | 9.53 |
+| hold quarry | 16.45 ms | 12.80 | 10.87 ms | 3.08 | 7.73 |
+| hold furnace | 17.80 ms | 13.97 | 11.71 ms | 3.18 | 8.45 |
+| hold purity | 14.77 ms | 11.65 | 10.36 ms | 3.03 | 7.22 |
+| hold crystal | 11.36 ms | 8.17 | 9.36 ms | 3.25 | 5.99 |
+| hold wafer | 11.74 ms | 8.45 | 8.75 ms | 3.15 | 5.53 |
+| hold light | 19.46 ms | 15.95 | 14.00 ms | 3.52 | 10.40 |
+| hold chip | 10.98 ms | 7.85 | 9.02 ms | 3.07 | 5.84 |
+| hold display | 15.30 ms | 12.14 | 11.49 ms | 3.02 | 8.35 |
+| hold now | 18.69 ms | 15.52 | 12.36 ms | 3.03 | 9.19 |
+
+GPU total, before → after:
+
+- median 14.96 → 10.72 ms;
+- worst 19.46 → 14.00 ms (light);
+- scrub median 14.41 → 10.63 ms.
+
+The grain pass median goes from 11.81 to 7.51 ms. The shadow pass does not change.
+
+Variants measured on the way:
+
+| Variant | GPU median | Light hold | Look vs the old per-pixel shader (pixels that differ, perceptual) |
+|---|---|---|---|
+| **chosen: exact sphere, 4 shadow samples per grain** | 10.72 ms | 14.00 ms | desert 0.00 %, chip 0.00 %, magma 0.15 %, crystal 0.33 %, light 2.2 % (point-light specular is per grain) |
+| exact sphere, 1 shadow sample per grain | 10.09 ms | 13.49 ms | desert 5.4 %: shaded troughs turn binary, with more grains fully dark |
+| linear sphere term (fixed-length N), 1 sample | 9.56 ms | 12.49 ms | light 10 %: the wafer loses its sphere shading and gets a white specular dot in every grain |
+
+- **Shadow samples.** The old shader read the shadow map at the grain's centre too (its varying is
+  constant across a point sprite), so its 4-tap PCF was already a per-grain 4-sample average. One
+  sample makes it binary, which is visible on the desert. Four samples in the vertex shader cost
+  about 0.4 ms. Going back to one sample is a one-line change in `shadowAt()`.
+- **Rest path in the shadow pass.** The shadow variant shares `uRest` and skips colour, normals
+  and emission (`#ifndef SHADOW`). Forcing the full path changes the pass by at most 0.3 ms:
+  3.0–3.5 ms at rest against 3.1–3.7 ms forced. The pass is bound by drawing the points (ANGLE emulates point
+  sprites), not by vertex maths.
+
+### Grain count (not changed; for the decision)
+
+`?grains=N` overrides the tier's count for measurements. Each count was measured with the same
+method and the current shaders (no post yet).
+
+| Grains per world | GPU median | Worst (light hold) | Scrub median | Shadow pass | Grain pass, light hold |
+|---|---|---|---|---|---|
+| 36 000 (low tier) | 6.58 ms | 8.45 ms | 6.60 ms | 2.3–2.5 | 5.08 |
+| 60 000 | 8.28 ms | 12.80 ms | 8.46 ms | 2.7–2.9 | 7.77 |
+| **90 000 (mid tier, current)** | 10.72 ms | 14.00 ms | 10.63 ms | 3.0–3.5 | 10.40 |
+| 120 000 | 13.17 ms | 17.54 ms | 13.16 ms | 3.5–4.3 | 13.20 |
+
+Every 30 000 grains cost about 2–2.5 ms at the median and about 3 ms at the light hold. The
+shadow pass fits a fixed part of about 1.7 ms plus about 17 ns per grain. The mid tier stays at 90 000 until it is decided. These numbers come back in the budget
+report after delta 6, next to point size and DPR.

@@ -5,7 +5,7 @@ import {
 import { grainShaders, grainShadowShaders } from '../shaders';
 import type { GrainPack, LayerName } from '../sim/pack';
 import { layerDefines, layerTextures, layerUniform } from './bind';
-import { SHADOW_SIZE, type ShadowMap } from './shadow';
+import type { ShadowMap } from './shadow';
 import type { FrameUniforms } from './types';
 
 /** Until the HDR post pass exists, the grain shader applies the tone curve itself. */
@@ -36,7 +36,7 @@ export class GrainCloud {
       uKeyDir: { value: new Vector3(0, 1, 0) }, uKeyCol: { value: new Vector3() }, uSky: { value: new Vector3() }, uGround: { value: new Vector3() }, uRim: { value: new Vector3() },
       uPLPos: { value: new Vector3() }, uPLCol: { value: new Vector3() }, uPLRange: { value: 1 },
       uCamPos: { value: new Vector3() }, uCamR: { value: new Vector3() }, uCamU: { value: new Vector3() }, uCamB: { value: new Vector3() }, uFogLin: { value: new Vector3() },
-      uUseShadow: { value: 0 }, uUseLight: { value: 1 }, uShadowTexel: { value: 1 / 1024 }, uShadow: { value: null },
+      uUseShadow: { value: 0 }, uUseLight: { value: 1 }, uShadow: { value: null }, uKeyView: { value: new Vector3(0, 0, 1) }, uUpView: { value: new Vector3(0, 1, 0) },
       [layerUniform('pos')]: { value: null },
       [layerUniform('surface')]: { value: null },
     };
@@ -54,7 +54,6 @@ export class GrainCloud {
   attachShadow(map: ShadowMap): void {
     map.scene.add(this.shadowObject);
     this.u.uShadow!.value = map.texture;
-    this.u.uShadowTexel!.value = 1 / SHADOW_SIZE;
   }
 
   /** Swap in a new set of worlds (first build, or a quality tier change). */
@@ -126,6 +125,10 @@ export class GrainCloud {
     const m = cam.matrixWorld.elements;
     (u.uCamR!.value as Vector3).set(m[0]!, m[1]!, m[2]!); (u.uCamU!.value as Vector3).set(m[4]!, m[5]!, m[6]!); (u.uCamB!.value as Vector3).set(m[8]!, m[9]!, m[10]!);
     (u.uCamPos!.value as Vector3).setFromMatrixPosition(cam.matrixWorld);
+    // the key direction and world up in camera space, for the sphere in the fragment shader
+    const k = rig.keyDir;
+    (u.uKeyView!.value as Vector3).set(k.x * m[0]! + k.y * m[1]! + k.z * m[2]!, k.x * m[4]! + k.y * m[5]! + k.z * m[6]!, k.x * m[8]! + k.y * m[9]! + k.z * m[10]!);
+    (u.uUpView!.value as Vector3).set(m[1]!, m[5]!, m[9]!);
   }
 
   private color(slot: number, name: string, css: string): void {

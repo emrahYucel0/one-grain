@@ -1,21 +1,14 @@
-// A lit grain: a sphere impostor (the point sprite's sphere normal blended with the grain's surface
-// normal), key light with specular and shadow, sky/ground fill, a point light, rim, emission, fog.
+// A lit grain. What depends only on the grain (one shadow sample, the point light, emission, fog)
+// is computed once per grain in the vertex shader: a grain is at most a few pixels wide, so doing it
+// per pixel only repeated it. What stays here is the sphere: v10's shading normal blends the
+// grain's surface normal n with the sprite's sphere normal sw, N = normalize(.62 n + .55 sw). With n
+// and the light vectors handed over in camera space, every N·X is (.62 n·X + .55 sw·X) / |N|, a few
+// dot products, so key, sky/ground fill, specular and rim keep v10's per-pixel shape.
 // Output is linear HDR; DIRECT_OUTPUT applies the tone curve here while there is no post pass.
-uniform vec3 uKeyDir, uKeyCol, uSky, uGround, uRim, uPLPos, uPLCol, uCamPos, uCamR, uCamU, uCamB, uFogLin;
-uniform float uPLRange, uUseShadow, uUseLight, uShadowTexel;
-uniform sampler2D uShadow;
+uniform vec3 uKeyView, uUpView, uKeyCol, uSky, uGround, uRim;
 
-in vec3 vCol; in vec3 vN; in vec3 vW; in float vEmit; in float vSpec; in float vSeed; in float vFog; in float vPix; in vec4 vLS;
+in vec3 vAlb; in vec3 vFlat; in vec3 vNv; in vec3 vHv; in vec3 vVv; in vec4 vDots; in vec4 vMisc; in vec2 vSh;
 out highp vec4 fragColor;
-
-// 4-tap PCF on the key light's shadow map (textureLod: no derivatives inside a loop that can exit early)
-float shadowAt(){
-  vec3 lc = vLS.xyz / vLS.w * .5 + .5;
-  if (lc.x <= 0. || lc.x >= 1. || lc.y <= 0. || lc.y >= 1. || lc.z >= 1.) return 1.;
-  float d = 0.;
-  for (int i = 0; i < 4; i++) { vec2 o = (vec2(float(i % 2), float(i / 2)) - .5) * uShadowTexel * 1.5; d += step(lc.z - .0016, textureLod(uShadow, lc.xy + o, 0.).r); }
-  return d * .25;
-}
 
 #ifdef DIRECT_OUTPUT
 // the tone curve of the post pass (a shoulder only) and display gamma
@@ -31,26 +24,21 @@ void main(){
   return;
 #endif
   float r2 = dot(q, q); if (r2 > 1.) discard;
-  vec3 sn = vec3(q.x, -q.y, sqrt(1. - r2));
-  vec3 sw = normalize(uCamR * sn.x + uCamU * sn.y + uCamB * sn.z);
-  vec3 N = normalize(normalize(vN) * .62 + sw * .55);
-  vec3 V = normalize(uCamPos - vW);
-  vec3 col = vCol;
-  if (uUseLight > .5) {
-    float sh = uUseShadow > .5 ? shadowAt() : 1.;
-    float ndl = max(dot(N, uKeyDir), 0.);
-    vec3 hemi = mix(uGround, uSky, N.y * .5 + .5);
-    vec3 Lp = uPLPos - vW; float dist = max(length(Lp), .001), att = 1. / (1. + dist * dist / (uPLRange * uPLRange));
-    vec3 pl = uPLCol * max(dot(N, Lp / dist), 0.) * att;
-    float gloss = mix(10., 140., vSpec);
-    float spec = pow(max(dot(N, normalize(uKeyDir + V)), 0.), gloss) * vSpec * 1.8;
-    float specPl = pow(max(dot(N, normalize(Lp / dist + V)), 0.), gloss) * vSpec * 1.2 * att;
-    float rim = pow(1. - max(dot(N, V), 0.), 3.);
-    float ao = mix(.62, 1., sn.z);
-    col = vCol * (uKeyCol * ndl * sh + hemi * ao + pl) + uKeyCol * spec * sh + uPLCol * specPl + uRim * rim * .6;
+  vec3 sn = vec3(q.x, -q.y, sqrt(1. - r2)); // sphere normal in camera space
+  vec3 col = vAlb;
+  if (vMisc.z > 0.) {
+    // vDots: .62 n·key, .62 n·half, .62 n·view, .62 n·up (world vectors, per grain)
+    float il = inversesqrt(max(.6869 + .682 * dot(sn, vNv), 1e-4));
+    float ndl = max((vDots.x + .55 * dot(sn, uKeyView)) * il, 0.);
+    float ndh = max((vDots.y + .55 * dot(sn, vHv)) * il, 0.);
+    float ndv = max((vDots.z + .55 * dot(sn, vVv)) * il, 0.);
+    float ny = (vDots.w + .55 * dot(sn, uUpView)) * il;
+    float ao = mix(.62, 1., sn.z), r = 1. - ndv;
+    // vSh: shadow, specular strength · vMisc: gloss, share left after fog, rim strength
+    col = vAlb * (uKeyCol * ndl * vSh.x + mix(uGround, uSky, ny * .5 + .5) * ao)
+        + uKeyCol * (pow(ndh, vMisc.x) * vSh.y) + uRim * (r * r * r * vMisc.z);
   }
-  col += vCol * vEmit * (.88 + .2 * sin(vSeed * 30. + vW.x));
-  col = mix(col, uFogLin, vFog);
+  col = col * vMisc.y + vFlat;
 #ifdef DIRECT_OUTPUT
   col = display(col);
 #endif

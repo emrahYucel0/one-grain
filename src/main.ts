@@ -43,7 +43,8 @@ function boot(): void {
   revealWhenFontsReady();
 
   // stage
-  const tier = pickTier(gpu, flags.tier);
+  const picked = pickTier(gpu, flags.tier);
+  const tier = flags.grains ? { ...picked, n: flags.grains } : picked;
   const dpr = pixelRatioFor(tier);
   const stage = createStage($<HTMLCanvasElement>('scene'), dpr);
   const grains = new GrainCloud(), hero = new HeroGrain(dpr);
