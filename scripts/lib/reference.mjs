@@ -1,4 +1,4 @@
-// Serves reference/blockout-v5.html with a few instrumentation hooks spliced in, so the
+// Serves a reference blockout (v6 by default) with a few instrumentation hooks spliced in, so the
 // harness can drive it exactly like the port's ?parity mode. The file on disk is never touched.
 //
 //   window.__V      scroll progress override (0..1), read every frame
@@ -8,7 +8,9 @@
 import { readFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 
-export const REFERENCE_FILE = fileURLToPath(new URL('../../reference/blockout-v5.html', import.meta.url));
+/** The behavioural spec of the current phase comes first. */
+export const REFERENCES = ['v6', 'v5'];
+export const referenceFile = (version = REFERENCES[0]) => fileURLToPath(new URL(`../../reference/blockout-${version}.html`, import.meta.url));
 
 const PATCHES = [
   ['const dt = Math.min(clock.getDelta(), .05);', 'if (window.__V != null) state.v = window.__V; const dt = Math.min(clock.getDelta(), .05);'],
@@ -16,8 +18,8 @@ const PATCHES = [
   ['U.uData.value = tex;', 'U.uData.value = tex; window.__DATA = data; window.__HEROES = heroes.map(h => [h.x, h.y, h.z]);'],
 ];
 
-export async function patchedReference() {
-  let html = await readFile(REFERENCE_FILE, 'utf8');
+export async function patchedReference(version) {
+  let html = await readFile(referenceFile(version), 'utf8');
   for (const [find, replace] of PATCHES) {
     const count = html.split(find).length - 1;
     if (count !== 1) throw new Error(`reference patch target found ${count}× (expected 1): ${find}`);
@@ -27,8 +29,8 @@ export async function patchedReference() {
 }
 
 /** Answers `url` with the patched reference in this page. */
-export async function routeReference(page, url) {
-  const body = await patchedReference();
+export async function routeReference(page, url, version) {
+  const body = await patchedReference(version);
   await page.route(url, (route) => route.fulfill({ status: 200, contentType: 'text/html; charset=utf-8', body }));
 }
 
