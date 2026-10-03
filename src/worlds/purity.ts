@@ -1,3 +1,4 @@
+import { nz3 } from './normals';
 import { GrainWriter, type BaseWorld } from './types';
 
 // A grid of distillation columns; deposition grains (behaviour 14) settling on them.
@@ -14,6 +15,13 @@ export const purity: BaseWorld = {
       g.add(x, y, z, rnd() < .16 ? 14 + rnd() * .99 : tone(.35 + .5 * rnd(), 0));
     }
     return g.done();
+  },
+  // the columns' legs and cross-pipes: round
+  normal: (_ctx, x, y, z) => {
+    const cz = Math.round((z + 3.6) / 2.4) * 2.4 - 3.6;
+    if (y > 4.6) return nz3([0, y - 5, z - cz]);
+    const a1 = Math.round((x - 1.2) / 2.4) * 2.4 + 1.2, a2 = Math.round((x + 1.2) / 2.4) * 2.4 - 1.2, lx = Math.abs(x - a1) < Math.abs(x - a2) ? a1 : a2;
+    return nz3([x - lx, 0, z - cz]);
   },
   hero: () => [-1.2 + .36, 2.5, 2.4 * 1.5],
 };

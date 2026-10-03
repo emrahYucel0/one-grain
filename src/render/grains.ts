@@ -25,6 +25,7 @@ export class GrainCloud {
       uLoA: { value: new Color() }, uHiA: { value: new Color() }, uLoB: { value: new Color() }, uHiB: { value: new Color() },
       uFog: { value: new Color() }, uFogD: { value: .02 }, uJitter: { value: 0 },
       [layerUniform('pos')]: { value: null },
+      [layerUniform('surface')]: { value: null },
     };
     this.material = new ShaderMaterial({ glslVersion: GLSL3, uniforms: this.u, defines: { TEX_WIDTH: 1024 }, ...grainShaders });
     this.object = new Points(new BufferGeometry(), this.material);

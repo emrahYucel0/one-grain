@@ -1,3 +1,4 @@
+import { heightNormal } from './normals';
 import { GrainWriter, type BaseWorld } from './types';
 
 // Dunes; wind streamers (behaviour 10) along the crests and hopping grains (behaviour 3).
@@ -21,6 +22,7 @@ export const desert: BaseWorld = {
     }
     return g.done();
   },
+  normal: ({ shapes }, x, _y, z) => heightNormal(shapes.desertH, x, z),
   // the grain rests on the highest crest near the origin
   hero: ({ shapes }) => {
     let bx = 0, by = -9;

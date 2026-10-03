@@ -1,3 +1,4 @@
+import { UP } from './normals';
 import { fr } from './math';
 import type { DerivedWorld } from './types';
 
@@ -28,5 +29,6 @@ export const light: DerivedWorld = {
     }
     return { P, W };
   },
+  normal: () => UP, // flat, upward-facing
   hero: () => [0, .03, 1.12],
 };

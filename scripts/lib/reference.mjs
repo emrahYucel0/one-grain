@@ -5,6 +5,7 @@
 //   window.__T      shader time override (seconds), read every frame
 //   window.__DATA   the packed grain texture (Float32Array) once built
 //   window.__HEROES hero positions [[x, y, z] × 15] once built
+//   window.__NDATA  the surface normals (Float32Array, xyz per grain), where the reference has them (v10)
 import { readFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 
@@ -18,6 +19,10 @@ const PATCHES = [
   ['if (!reduced) time += dt;', 'if (!reduced) time += dt; if (window.__T != null) time = window.__T;'],
   ['U.uData.value = tex;', 'U.uData.value = tex; window.__DATA = data; window.__HEROES = heroes.map(h => [h.x, h.y, h.z]);'],
 ];
+/** Hooks that only apply to references that have the thing they expose. */
+const OPTIONAL_PATCHES = [
+  ['U.uNorm.value = ntex;', 'U.uNorm.value = ntex; window.__NDATA = ndata;'],
+];
 
 export async function patchedReference(version) {
   let html = await readFile(referenceFile(version), 'utf8');
@@ -26,6 +31,7 @@ export async function patchedReference(version) {
     if (count !== 1) throw new Error(`reference patch target found ${count}× (expected 1): ${find}`);
     html = html.replace(find, replace);
   }
+  for (const [find, replace] of OPTIONAL_PATCHES) if (html.split(find).length === 2) html = html.replace(find, replace);
   return html;
 }
 

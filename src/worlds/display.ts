@@ -1,3 +1,4 @@
+import { FRONT } from './normals';
 import { GrainWriter, type BaseWorld } from './types';
 
 // A pane of glass in front of a screen's sub-pixel grid (behaviour 9).
@@ -17,5 +18,6 @@ export const display: BaseWorld = {
     }
     return g.done();
   },
+  normal: () => FRONT, // facing the viewer
   hero: () => [0, 0, .03],
 };

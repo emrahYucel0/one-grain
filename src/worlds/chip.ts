@@ -1,3 +1,4 @@
+import { UP } from './normals';
 import type { GenContext } from './context';
 import { fr } from './math';
 import type { V3 } from './shapes';
@@ -76,5 +77,6 @@ export const chip: BaseWorld = {
     }
     return g.done();
   },
+  normal: () => UP, // flat, upward-facing
   hero: (): V3 => [q(.5 + 11, .24) - 11, .15, .1],
 };

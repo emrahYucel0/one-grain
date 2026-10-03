@@ -1,3 +1,4 @@
+import { heightNormal } from './normals';
 import { GrainWriter, type BaseWorld } from './types';
 
 // A granite mountain; a few bright quartz grains among the rock.
@@ -12,5 +13,6 @@ export const granite: BaseWorld = {
     }
     return g.done();
   },
+  normal: ({ shapes }, x, _y, z) => heightNormal(shapes.mountainH, x, z),
   hero: ({ shapes }) => [2, shapes.mountainH(2, 6) + .06, 6],
 };

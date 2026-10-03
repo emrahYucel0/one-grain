@@ -1,3 +1,4 @@
+import { UP, behaviourOf, nz3 } from './normals';
 import { GrainWriter, type BaseWorld } from './types';
 
 // Czochralski growth: crucible, melt (13), and a turning single-crystal ingot (15).
@@ -27,6 +28,14 @@ export const crystal: BaseWorld = {
       }
     }
     return g.done();
+  },
+  // crucible, cylinder, seed cone
+  normal: (_ctx, x, y, z, w) => {
+    if (behaviourOf(w) === 13) return UP;
+    const r = Math.hypot(x, z) || 1;
+    if (y < -.5) return nz3([x, y + .6, z]);
+    if (y > 9) return nz3([x / r * 2.4, 1.6, z / r * 2.4]);
+    return [x / r, 0, z / r];
   },
   hero: () => [0, 1, 1.63],
 };

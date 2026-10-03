@@ -1,3 +1,4 @@
+import { UP, behaviourOf, heightNormal } from './normals';
 import { meander } from './shapes';
 import { GrainWriter, type BaseWorld } from './types';
 
@@ -18,5 +19,6 @@ export const river: BaseWorld = {
     }
     return g.done();
   },
+  normal: ({ shapes }, x, _y, z, w) => (behaviourOf(w) === 1 ? UP : heightNormal(shapes.riverH, x, z)),
   hero: ({ shapes }) => [-1, shapes.riverH(-1, meander(-1)) + .06, meander(-1)],
 };

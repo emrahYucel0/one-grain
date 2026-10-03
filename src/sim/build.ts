@@ -1,5 +1,7 @@
 import { WORLDS } from '../story/worlds';
 import { createContext, GENERATORS, type Carry, type Grains } from '../worlds';
+import { materialOf } from '../worlds/materials';
+import { toHalf } from './half';
 import { PACK_VERSION, TEX_WIDTH, rowsFor, type GrainPack } from './pack';
 
 /**
@@ -12,16 +14,16 @@ import { PACK_VERSION, TEX_WIDTH, rowsFor, type GrainPack } from './pack';
 export function buildPack(n: number): GrainPack {
   const ctx = createContext();
   const CH = WORLDS.length, rows = rowsFor(n);
-  const pos = new Float32Array(TEX_WIDTH * rows * CH * 4);
+  const pos = new Float32Array(TEX_WIDTH * rows * CH * 4), surface = new Uint16Array(TEX_WIDTH * rows * CH * 4);
   const heroes = new Float64Array(CH * 3);
   let prev: (Grains & Carry) | null = null;
 
-  WORLDS.forEach((w, c) => {
-    const gen = GENERATORS[w.slug];
-    if (!gen) throw new Error(`no generator for world "${w.slug}"`);
+  WORLDS.forEach((world, c) => {
+    const gen = GENERATORS[world.slug];
+    if (!gen) throw new Error(`no generator for world "${world.slug}"`);
     let cur: Grains & Carry;
     if (gen.kind === 'derived') {
-      if (!prev) throw new Error(`"${w.slug}" derives from a previous world`);
+      if (!prev) throw new Error(`"${world.slug}" derives from a previous world`);
       cur = gen.derive(ctx, prev, n);
     } else {
       cur = sortAlongX(gen.generate(ctx, n), n, ctx.rnd);
@@ -30,13 +32,16 @@ export function buildPack(n: number): GrainPack {
     for (let r = 0; r < n; r++) {
       const o = base + r * 4;
       pos[o] = P[r * 3]!; pos[o + 1] = P[r * 3 + 1]!; pos[o + 2] = P[r * 3 + 2]!; pos[o + 3] = W[r]!;
+      // surface: the normal at the resting position (as v10, from the stored float32 values), the material
+      const x = pos[o]!, y = pos[o + 1]!, z = pos[o + 2]!, w = pos[o + 3]!, nrm = gen.normal(ctx, x, y, z, w);
+      surface[o] = toHalf(nrm[0]); surface[o + 1] = toHalf(nrm[1]); surface[o + 2] = toHalf(nrm[2]); surface[o + 3] = toHalf(materialOf(world.slug, y, w));
     }
     const h = gen.hero(ctx);
     heroes[c * 3] = h[0]; heroes[c * 3 + 1] = h[1]; heroes[c * 3 + 2] = h[2];
     prev = cur;
   });
 
-  return { version: PACK_VERSION, n, texWidth: TEX_WIDTH, rows, worlds: CH, heroes, layers: [{ name: 'pos', format: 'rgba32f', data: pos }] };
+  return { version: PACK_VERSION, n, texWidth: TEX_WIDTH, rows, worlds: CH, heroes, layers: [{ name: 'pos', format: 'rgba32f', data: pos }, { name: 'surface', format: 'rgba16f', data: surface }] };
 }
 
 function sortAlongX(g: Grains<Float64Array>, n: number, rnd: () => number): Grains {

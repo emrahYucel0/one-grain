@@ -1,3 +1,4 @@
+import { FRONT, UP, behaviourOf } from './normals';
 import { band } from './math';
 import { GrainWriter, type BaseWorld } from './types';
 
@@ -19,6 +20,14 @@ export const again: BaseWorld = {
       g.add(x, y, z, 11 + tone(band(x, y)));
     }
     return g.done();
+  },
+  // the cut-away block: front face, top, sides
+  normal: (_ctx, x, y, z, w) => {
+    if (behaviourOf(w) === 4) return UP;
+    if (Math.abs(z - 3) < .01) return FRONT;
+    if (Math.abs(y - 3) < .01) return UP;
+    if (Math.abs(x) > 13.99) return [Math.sign(x), 0, 0];
+    return UP;
   },
   hero: () => [0, -2, 3.08],
 };

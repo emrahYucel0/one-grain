@@ -1,3 +1,4 @@
+import { UP } from './normals';
 import type { DerivedWorld } from './types';
 
 // Same grains, same crystal, now in slices. Records which disc each grain ended up in (−1 = saw dust).
@@ -20,5 +21,6 @@ export const wafer: DerivedWorld = {
     }
     return { P, W, disc };
   },
+  normal: () => UP, // flat, upward-facing
   hero: () => [0, .03, 1.12],
 };

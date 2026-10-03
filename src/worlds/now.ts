@@ -1,3 +1,4 @@
+import { FRONT } from './normals';
 import { ss } from './math';
 import { GrainWriter, type BaseWorld } from './types';
 
@@ -14,5 +15,6 @@ export const now: BaseWorld = {
     }
     return g.done();
   },
+  normal: () => FRONT, // facing the viewer
   hero: () => [0, 0, .02],
 };

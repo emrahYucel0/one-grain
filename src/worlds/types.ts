@@ -34,10 +34,14 @@ export class GrainWriter {
 /** Extra state a derived world hands to the next one (wafer → light: which disc each grain is in). */
 export interface Carry { disc?: Int8Array }
 
+/** Surface normal at a resting grain (x, y, z, w as stored in the pos layer), as in v10. */
+export type NormalFn = (ctx: GenContext, x: number, y: number, z: number, w: number) => V3;
+
 /** A world built from scratch. Generation order inside generate() is part of the spec. */
 export interface BaseWorld {
   kind: 'base';
   generate(ctx: GenContext, N: number): Grains<Float64Array>;
+  normal: NormalFn;
   hero(ctx: GenContext): V3;
 }
 
@@ -45,6 +49,7 @@ export interface BaseWorld {
 export interface DerivedWorld {
   kind: 'derived';
   derive(ctx: GenContext, prev: Grains & Carry, N: number): Grains & Carry;
+  normal: NormalFn;
   hero(ctx: GenContext): V3;
 }
 

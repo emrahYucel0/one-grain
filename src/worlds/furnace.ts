@@ -1,3 +1,4 @@
+import { UP, behaviourOf, nz3 } from './normals';
 import { GrainWriter, type BaseWorld } from './types';
 
 // An arc furnace: back wall, front lip, convecting melt (13), sparks (7), three electrodes.
@@ -30,6 +31,13 @@ export const furnace: BaseWorld = {
       }
     }
     return g.done();
+  },
+  // electrodes face outwards, the wall faces the centre
+  normal: (_ctx, x, _y, z, w) => {
+    const f = behaviourOf(w);
+    if (f === 13 || f === 7) return UP;
+    for (const a of [0, 2.094, 4.189]) { const ex = Math.cos(a) * 2.8, ez = Math.sin(a) * 2.8; if (Math.hypot(x - ex, z - ez) < .9) return nz3([x - ex, 0, z - ez]); }
+    return nz3([-x, 0, -z]);
   },
   hero: () => [0, -1.95, 1],
 };

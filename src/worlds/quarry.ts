@@ -1,3 +1,4 @@
+import { UP, behaviourOf } from './normals';
 import { GrainWriter, type BaseWorld } from './types';
 
 // A stepped open pit with a conveyor belt (behaviour 12) climbing out of it.
@@ -30,6 +31,12 @@ export const quarry: BaseWorld = {
       }
     }
     return g.done();
+  },
+  // bench floors face up, bench walls face into the pit
+  normal: (_ctx, x, y, z, w) => {
+    if (behaviourOf(w) === 12 || Math.abs(y / 1.2 - Math.round(y / 1.2)) < .002) return UP;
+    const j = Math.floor(-y / 1.2), hx = 14 - 2 * j;
+    return Math.abs(Math.abs(x) - hx) < .02 ? [-Math.sign(x), 0, 0] : [0, 0, -Math.sign(z)];
   },
   hero: () => [0, -3.6, (8.4 + 6.8) / 2],
 };

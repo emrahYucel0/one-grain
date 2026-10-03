@@ -1,3 +1,4 @@
+import { UP, behaviourOf, heightNormal } from './normals';
 import { GrainWriter, type BaseWorld } from './types';
 
 // Sea (behaviour 2), the wet sand under it, and the dry beach.
@@ -13,5 +14,6 @@ export const coast: BaseWorld = {
     }
     return g.done();
   },
+  normal: ({ shapes }, x, _y, z, w) => (behaviourOf(w) === 2 ? UP : heightNormal(shapes.beachH, x, z)),
   hero: ({ shapes }) => [0, shapes.beachH(0, -.6) + .06, -.6],
 };

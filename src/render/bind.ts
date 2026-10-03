@@ -1,11 +1,11 @@
-import { DataTexture, FloatType, NearestFilter, RGBAFormat } from 'three';
+import { DataTexture, FloatType, HalfFloatType, NearestFilter, RGBAFormat } from 'three';
 import type { GrainPack, LayerName } from '../sim/pack';
 
-/** One float texture per pack layer, sampled with texelFetch (no filtering, no mips). */
+/** One float texture per pack layer (32- or 16-bit), sampled with texelFetch (no filtering, no mips). */
 export function layerTextures(pack: GrainPack): Map<LayerName, DataTexture> {
   const out = new Map<LayerName, DataTexture>();
   for (const layer of pack.layers) {
-    const tex = new DataTexture(layer.data, pack.texWidth, pack.rows * pack.worlds, RGBAFormat, FloatType);
+    const tex = new DataTexture(layer.data, pack.texWidth, pack.rows * pack.worlds, RGBAFormat, layer.format === 'rgba16f' ? HalfFloatType : FloatType);
     tex.minFilter = tex.magFilter = NearestFilter;
     tex.generateMipmaps = false;
     tex.needsUpdate = true;
