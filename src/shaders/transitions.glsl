@@ -52,5 +52,20 @@ vec3 travel(vec4 A, vec4 B, vec3 pa, vec3 pb, vec3 R, out float e, out float arc
     // sea grains (behaviour 2) recede and thin out as the water goes
     if (fa > 1.5 && fa < 2.5) { p.z += smoothstep(0., .35, e) * 3. * (1. - wnd); m.size = mix(1., .45, sin(3.14159 * smoothstep(0., .6, e))); }
   }
+  // the styles below take over the whole move: they replace p, e and arc computed above
+  if (uStyle == 18) { // break: blocks crack apart, tumble into the hopper, heat up as they feed the furnace
+    vec2 cell = floor(pa.xz / 2.4);                                   // block identity: a spatial hash, no data layer
+    float hb = fract(sin(dot(cell, vec2(12.9898, 78.233))) * 43758.5453);
+    vec3 bc = vec3((cell.x + .5) * 2.4, pa.y, (cell.y + .5) * 2.4);
+    float tb = clamp((uT - hb * .45) / .55, 0., 1.);
+    float crack = smoothstep(0., .18, tb), fall = smoothstep(.15, .7, tb), feed = smoothstep(.65, 1., tb);
+    vec3 loc = (pa - bc) * (1. - .55 * fall) * (1. + .12 * crack);
+    float an = fall * 2.4 * (hb - .5) * uMotion, ca = cos(an), sa2 = sin(an); loc.xz = vec2(loc.x * ca - loc.z * sa2, loc.x * sa2 + loc.z * ca);
+    vec3 hop = uHeroB + vec3(0., 6., -.5), c1 = bc + vec3(0., 3., 0.), c2 = hop + vec3(0., 5., 0.);
+    float u = fall, iu = 1. - u;
+    vec3 ctr = iu * iu * iu * bc + 3. * iu * iu * u * c1 + 3. * iu * u * u * c2 + u * u * u * hop;
+    p = mix(ctr + loc, pb, feed);
+    e = feed; arc = sin(3.14159 * tb) * uMotion; m.heat = smoothstep(.45, .85, tb) * (1. - smoothstep(.95, 1., tb) * .5);
+  }
   return p;
 }
