@@ -85,8 +85,10 @@ vec3 travel(vec4 A, vec4 B, vec3 pa, vec3 pb, vec3 R, out float e, out float arc
     vec3 molten = mix(pa, pool, melt); molten.y -= sin(3.14159 * melt) * 1.2 * R.z;
     float fb = floor(B.w + .001), inC = 0.;
     if (fb > 14.5 && fb < 15.5) { // crystal grains lock into the lattice as the interface passes them
-      float cutY = 11.5 * (1. - smoothstep(.45, 1., uT));
-      inC = smoothstep(cutY - .35, cutY + .05, pb.y);
+      // the crystal rises out of the pool by cutY; a separate inclusion threshold makes sure no
+      // crystal grain is included at t = 0 (seed tip at y ≤ 11.4) and every one is at t = 1 (y ≥ 0)
+      float grow = smoothstep(.45, 1., uT), cutY = 11.5 * (1. - grow), thr = mix(12., -.4, grow);
+      inC = smoothstep(thr - .35, thr + .05, pb.y);
       p = mix(molten, pb - vec3(0., cutY, 0.), inC); e = max(melt * .49, inC);
     } else { float k = smoothstep(.35, .75, uT); p = mix(molten, pb, k); e = max(melt * .49, k); inC = k; }
     arc = sin(3.14159 * uT) * .5 * uMotion; m.heat = melt * (1. - inC) * .85;
