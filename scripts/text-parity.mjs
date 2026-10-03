@@ -1,4 +1,5 @@
-// Text parity (npm run check:text): overlay text and clock state, port vs the current reference,
+// Text parity (npm run check:text): overlay text and clock state, port vs the current reference
+// (the act label is not compared: since v8 the rail carries the act and the label is gone),
 // at every hold and at five points in every transition. Positions are matched by (world a → b, t),
 // so the check also works while transition lengths differ between the two.
 import { createServer } from 'vite';
@@ -34,7 +35,7 @@ const read = (p) => p.evaluate(() => {
   const ch = document.getElementById('chapter'), q = (s) => ch.querySelector(s)?.textContent ?? '';
   const t = document.getElementById('time');
   return [document.getElementById('clock').textContent, document.getElementById('clockUnit').textContent,
-    [...t.classList].filter((c) => c !== 'punch').sort().join(' '), document.getElementById('act').textContent,
+    [...t.classList].filter((c) => c !== 'punch').sort().join(' '),
     q('h2'), ch.querySelector('p').textContent, document.getElementById('micro').textContent, getComputedStyle(document.getElementById('micro')).display].join(' | ');
 });
 let diffs = 0, n = 0;

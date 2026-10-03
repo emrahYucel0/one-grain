@@ -3,10 +3,10 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>One Grain · blockout v6</title>
+<title>One Grain · blockout v8</title>
 <link rel="icon" href="data:,">
 <meta name="description" content="The story of one grain of sand, from magma to the screen you are reading this on.">
-<script>if ('noModule' in HTMLScriptElement.prototype) document.documentElement.classList.add('js');</script>
+<script>if ('noModule' in HTMLScriptElement.prototype) document.documentElement.classList.add('js', 'fonts-pending');</script>
 <script type="module" src="/src/main.ts"></script>
 </head>
 <body>
@@ -15,7 +15,7 @@
 <div class="marker" id="marker" aria-hidden="true"><span id="markerLabel">this grain</span></div>
 
 <header class="hud">
-  <div class="brand" aria-hidden="true">One Grain<span>blockout v6</span></div>
+  <div class="brand" aria-hidden="true">One Grain<span>blockout v8</span></div>
   <div class="hud-side">
     <div class="time u-years" id="time" aria-hidden="true"
       data-years="years" data-approx="≈ " data-million="million" data-now="Now"><b id="clock">0</b><span id="clockUnit">years</span></div>
@@ -30,8 +30,7 @@
 </div>
 
 <div class="story" aria-hidden="true">
-  <p class="act" id="act"></p>
-  <div class="chapter" id="chapter"><h2></h2><p></p><p class="hint" id="hint"></p><p class="micro" id="micro"></p></div>
+  <div class="chapter" id="chapter"><h2></h2><p></p><p class="micro" id="micro"></p><p class="hint" id="hint"></p></div>
 </div>
 <nav class="timeline" id="timeline" aria-label="Chapters" data-go="Go to {title}" data-go-final="Go to the end"></nav>
 

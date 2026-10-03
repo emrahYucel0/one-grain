@@ -22,6 +22,7 @@ import { StoryA11y } from './ui/a11y';
 import { ChapterView } from './ui/chapter';
 import { ClockView } from './ui/clock';
 import { readCopy } from './ui/copy';
+import { revealWhenFontsReady } from './ui/fonts';
 import { HeroMarker } from './ui/marker';
 import { TimelineNav } from './ui/nav';
 import { Ending, Intro, chapterOpacity, cutOpacity } from './ui/overlays';
@@ -35,6 +36,7 @@ function boot(): void {
   if (!gpu.webgl2) { root.classList.add('nogl'); return; }
   const copy = readCopy($('story'));
   root.classList.add('gl');
+  revealWhenFontsReady();
 
   // stage
   const tier = pickTier(gpu, flags.tier);
@@ -54,7 +56,7 @@ function boot(): void {
   const go = (i: number): void => timeline.goTo(i);
 
   // words and instruments
-  const chapter = new ChapterView($('chapter'), $('act'), copy, env.touchOnly);
+  const chapter = new ChapterView($('chapter'), copy, env.touchOnly);
   const nav = new TimelineNav($('timeline'), copy, go);
   const clock = new ClockView($('time'), $('clock'), $('clockUnit'), copy);
   const intro = new Intro($('intro'), $('introHint'));

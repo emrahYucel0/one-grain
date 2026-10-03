@@ -1,6 +1,42 @@
 @import '@fontsource-variable/archivo/wdth.css';
+@import '@fontsource-variable/newsreader/opsz.css';
+@import '@fontsource-variable/newsreader/opsz-italic.css';
 
-/* ---------- ported from reference/blockout-v6.html (keep in sync for parity) ---------- */
+/* Metric-matched local fallbacks, so text keeps (nearly) its size if a web font is late or fails.
+   Measured against the latin subsets (size-adjust = width ratio over a long sample; ascent and
+   descent from the web font's metrics, divided by size-adjust). The experience's text also waits
+   for the fonts before it is shown (html.fonts-pending, see ui/fonts.ts). */
+@font-face{font-family:"Archivo Fallback";src:local("Arial");size-adjust:98.66%;ascent-override:89.2%;descent-override:21.29%;line-gap-override:0%}
+@font-face{font-family:"Newsreader Fallback";src:local("Georgia");size-adjust:102.11%;ascent-override:72.47%;descent-override:26.44%;line-gap-override:0%}
+@font-face{font-family:"Newsreader Fallback";font-style:italic;src:local("Georgia Italic"),local("Georgia-Italic");size-adjust:92.67%;ascent-override:79.86%;descent-override:29.14%;line-gap-override:0%}
+
+/* ---------- type system: every type value in one place (values from reference/blockout-v8.html) ----------
+   Archivo carries the interface and the clock; its width and weight follow the story
+   (--wdth/--wght, driven per frame by confinement). Newsreader carries the narrative voice. */
+:root{
+  --sans:"Archivo Variable","Archivo Fallback",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --serif:"Newsreader Variable","Newsreader Fallback",Georgia,"Times New Roman",serif;
+  --wdth:125;--wght:330;
+
+  --title-size:clamp(2.2rem,4.6vw,4rem);--title-line:.92;--title-track:-.005em;--title-gap:.55rem;
+  --final-title-size:clamp(2.2rem,4.6vw,4.2rem);--final-title-line:1;--final-title-measure:16ch;
+  --body-size:clamp(1.05rem,1.35vw,1.2rem);--body-line:1.55;--body-opacity:.82;--body-measure:38ch;--body-opsz:16;
+  --micro-size:clamp(.95rem,1.1vw,1.02rem);--micro-opacity:.62;--micro-gap:.7rem;
+  --hint-size:.85rem;--hint-gap:.9rem;--hint-track:.01em;
+  --signature-size:.95rem;--signature-opacity:.9;
+
+  --clock-years:clamp(1.8rem,3.4vw,3rem);--clock-label:clamp(1.2rem,2.2vw,1.8rem);
+  --clock-prod:clamp(2rem,3.8vw,3.4rem);--clock-now:clamp(2.8rem,6vw,5.2rem);
+  --clock-unit-size:.95rem;--clock-unit-opacity:.62;
+
+  --brand-stretch:125%;--brand-weight:500;--brand-track:.01em;
+  --intro-stretch:125%;--intro-weight:300;--intro-size:clamp(3rem,9vw,8.5rem);--intro-track:-.01em;
+  --intro-line-size:1.15rem;--intro-line-opacity:.75;
+  --cut-weight:300;--cut-size:clamp(2.6rem,7vw,6rem);--cut-opsz:72;
+  --rail-size:.75rem;--rail-track:.01em;
+}
+
+/* ---------- ported from reference/blockout-v8.html (keep in sync for parity) ---------- */
 :root{
   --stage:#d3d7d2;--ink:#13201e;--muted:#4a5754;--rule:rgba(19,32,30,.25);
   color-scheme:light dark;box-sizing:border-box;
@@ -10,7 +46,7 @@
 :root[data-theme="dark"]{--stage:#0d181c;--ink:#ece3d3;--muted:#8d9d99;--rule:rgba(236,227,211,.22)}
 html{scroll-padding-top:env(safe-area-inset-top,0px)}
 *,*::before,*::after{box-sizing:border-box}
-body{margin:0;background:var(--stage);color:var(--ink);font-family:"Archivo Variable","Archivo",system-ui,-apple-system,"Segoe UI",sans-serif;font-size:1.0625rem;line-height:1.5;-webkit-font-smoothing:antialiased}
+body{margin:0;background:var(--stage);color:var(--ink);font-family:var(--sans);font-size:1.0625rem;line-height:1.5;-webkit-font-smoothing:antialiased}
 #scene{position:fixed;top:0;left:0;width:100%;height:100%;display:block;z-index:0}
 #track{height:2000vh}
 .cut{position:fixed;inset:0;z-index:4;background:#06090a;color:#ece3d3;display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none}
@@ -29,7 +65,6 @@ body{margin:0;background:var(--stage);color:var(--ink);font-family:"Archivo Vari
 .time span{color:var(--muted);font-size:.85rem}
 
 .story{position:fixed;z-index:3;left:clamp(1.25rem,5vw,4.5rem);bottom:calc(env(safe-area-inset-bottom,0px) + 2.2rem);max-width:min(34rem,70vw);pointer-events:none}
-.act{color:var(--muted);font-size:.9rem;margin:0 0 .3rem}
 .chapter h2{margin:0 0 .35rem;font-weight:800;font-stretch:125%;font-size:clamp(1.9rem,4vw,3.4rem);line-height:.95}
 .chapter.final h2{font-size:clamp(2rem,4.6vw,4rem);max-width:14ch}
 .chapter p{margin:0;color:var(--muted);max-width:40ch}
@@ -74,10 +109,33 @@ body{margin:0;background:var(--stage);color:var(--ink);font-family:"Archivo Vari
 .chapter.final h2,.chapter.final p{transition:opacity 1.2s ease}
 .chapter.final:not(.in) h2{opacity:0}
 .chapter.final:not(.sig) p{opacity:0}
+
+/* v8 typography (the reference's last rules; same order and specificity, values from the tokens) */
+.chapter h2{font-family:var(--sans);font-stretch:calc(var(--wdth) * 1%);font-weight:var(--wght);font-size:var(--title-size);line-height:var(--title-line);letter-spacing:var(--title-track);margin:0 0 var(--title-gap)}
+.chapter p{font-family:var(--serif);font-size:var(--body-size);line-height:var(--body-line);color:var(--ink);opacity:var(--body-opacity);max-width:var(--body-measure);font-variation-settings:"opsz" var(--body-opsz)}
+.chapter .micro{font-style:italic;font-size:var(--micro-size);opacity:var(--micro-opacity);margin-top:var(--micro-gap) !important}
+.chapter .hint{font-family:var(--sans);font-size:var(--hint-size);opacity:1;color:var(--ink) !important;margin-top:var(--hint-gap) !important;letter-spacing:var(--hint-track)}
+.chapter.final h2{font-stretch:calc(var(--wdth) * 1%);font-weight:var(--wght);font-size:var(--final-title-size);max-width:var(--final-title-measure);line-height:var(--final-title-line)}
+.chapter.final p:not(.micro){font-family:var(--sans);font-size:var(--signature-size);opacity:var(--signature-opacity)}
+.time b{font-stretch:calc(var(--wdth) * 1%) !important;font-weight:var(--wght) !important}
+.time span{font-family:var(--serif);font-style:italic;font-size:var(--clock-unit-size);color:var(--ink);opacity:var(--clock-unit-opacity)}
+.time.u-years b{font-size:var(--clock-years)}
+.time.u-years.is-label b{font-size:var(--clock-label)}
+.time.u-prod b{font-size:var(--clock-prod)}
+.time.u-now b{font-size:var(--clock-now)}
+.brand{font-stretch:var(--brand-stretch) !important;font-weight:var(--brand-weight) !important;letter-spacing:var(--brand-track)}
+.brand span{font-family:var(--serif);font-style:italic;font-stretch:100% !important}
+.intro .intro-title{font-family:var(--sans);font-style:normal;opacity:1;font-stretch:var(--intro-stretch);font-weight:var(--intro-weight);font-size:var(--intro-size);letter-spacing:var(--intro-track)}
+.intro p{font-family:var(--serif);font-style:italic;font-size:var(--intro-line-size);color:var(--ink);opacity:var(--intro-line-opacity)}
+.cut p{font-family:var(--serif) !important;font-style:italic;font-weight:var(--cut-weight) !important;font-stretch:100% !important;font-size:var(--cut-size) !important;font-variation-settings:"opsz" var(--cut-opsz)}
+.timeline .label{font-family:var(--sans);font-size:var(--rail-size);letter-spacing:var(--rail-track)}
 /* ---------- end of ported block ---------- */
 
 /* The experience only exists once WebGL2 is confirmed (main.ts adds .gl). */
 html:not(.gl) :is(#scene,.scrim,.marker,.hud,.intro,.story,.timeline,.cut,#track){display:none}
+
+/* Its text waits for the web fonts (at most a few seconds), so nothing visible reflows when they arrive. */
+html.fonts-pending :is(.hud,.intro,.story,.timeline,.cut,.marker){visibility:hidden}
 
 /* Visually hidden, still read by assistive tech. */
 .sr-only,
@@ -88,13 +146,15 @@ html.js:not(.nogl) #story{position:absolute !important;width:1px !important;heig
 /* Keyboard focus on the (visually hidden) article link is mirrored onto the visible link. */
 .chapter a.kbd-focus{outline:2px solid var(--ink);outline-offset:3px;border-radius:2px}
 
-/* ---------- readable fallback: no WebGL2 or no JS ---------- */
+/* ---------- readable fallback: no WebGL2 or no JS (same type system) ---------- */
 html:not(.gl) #story{max-width:40rem;margin:0 auto;padding:clamp(2rem,8vh,5rem) clamp(1.25rem,5vw,2rem) 4rem}
-#story h1{margin:0 0 2.5rem;font-weight:800;font-stretch:125%;font-size:clamp(2.6rem,9vw,4.5rem);line-height:.9}
+#story h1{margin:0 0 2.5rem;font-weight:var(--intro-weight);font-stretch:var(--intro-stretch);font-size:clamp(2.6rem,9vw,4.5rem);line-height:.9;letter-spacing:var(--intro-track)}
 #story .act-group{margin:0 0 2.5rem}
-#story .act-group > h2{margin:0 0 1rem;color:var(--muted);font-size:.9rem;font-weight:500;text-transform:none}
+#story .act-group > h2{margin:0 0 1rem;color:var(--muted);font-size:var(--rail-size);font-weight:500;letter-spacing:var(--rail-track);text-transform:none}
 #story section{margin:0 0 1.75rem}
-#story h3{margin:0 0 .35rem;font-weight:800;font-stretch:125%;font-size:clamp(1.5rem,5vw,2.1rem);line-height:1}
-#story p{margin:0;color:var(--muted);max-width:40ch}
+#story h3{margin:0 0 .35rem;font-weight:500;font-stretch:100%;font-size:clamp(1.5rem,5vw,2.1rem);line-height:var(--final-title-line)}
+#story p{margin:0;font-family:var(--serif);font-size:var(--body-size);line-height:var(--body-line);color:var(--ink);opacity:var(--body-opacity);max-width:var(--body-measure);font-variation-settings:"opsz" var(--body-opsz)}
+#story p.micro{font-style:italic;font-size:var(--micro-size);opacity:var(--micro-opacity)}
+#story p[data-signature]{font-family:var(--sans);font-size:var(--signature-size)}
 #story a{color:var(--ink)}
 #story a:focus-visible{outline:2px solid var(--ink);outline-offset:3px;border-radius:2px}

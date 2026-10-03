@@ -9,15 +9,14 @@ export class ChapterView {
   private readonly body: HTMLElement;
   private readonly hint: HTMLElement;
   private readonly micro: HTMLElement;
-  private readonly act: HTMLElement;
   private readonly copy: Copy;
   private readonly touchOnly: boolean;
   /** the overlay's copy of the signature link, if the final chapter is showing */
   private signatureLink: HTMLAnchorElement | null = null;
   private signatureFocused = false;
 
-  constructor(el: HTMLElement, act: HTMLElement, copy: Copy, touchOnly: boolean) {
-    this.el = el; this.act = act; this.copy = copy; this.touchOnly = touchOnly;
+  constructor(el: HTMLElement, copy: Copy, touchOnly: boolean) {
+    this.el = el; this.copy = copy; this.touchOnly = touchOnly;
     this.title = el.querySelector('h2')!;
     this.body = el.querySelector('p:not(.hint):not(.micro)')!;
     this.hint = el.querySelector('.hint')!;
@@ -29,7 +28,6 @@ export class ChapterView {
     if (this.shown === i) return false;
     this.shown = i;
     const c = this.copy.chapters[i]!;
-    this.act.textContent = c.actLabel;
     this.title.textContent = c.title;
     this.body.textContent = c.text;
     this.signatureLink = null;
