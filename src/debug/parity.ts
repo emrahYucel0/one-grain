@@ -10,6 +10,7 @@
 //   ?off=a,b         switch render layers off (light, shadows, dof, bloom, grade), for measurements
 //   with ?parity, window.__AT = { tr, t, lean } renders transition tr at t with that camera lean
 //   with ?parity, window.__LIVE = ms pins the display's live clock (it counts real time otherwise)
+//   with ?parity, window.__FT = s pins the seconds spent in the current hold (ring fade, final hold)
 import type { GpuTimes } from '../core/gpu-timer';
 import type { GrainPack } from '../sim/pack';
 
@@ -24,6 +25,7 @@ declare global {
     __noRest?: boolean;
     __overdraw?: boolean;
     __LIVE?: number | null;
+    __FT?: number | null;
   }
 }
 
@@ -49,6 +51,8 @@ export const transitionOverride = (): { tr: number; t: number; lean: number } | 
 /** ?parity: window.__noRest forces the full vertex path at rest (to prove the cheap path equal). */
 export const restPathAllowed = (): boolean => !(flags.parity && window.__noRest);
 /** ?parity or ?debug: window.__overdraw shows how many grains cover each pixel. */
+/** ?parity: window.__FT pins the seconds spent in the current hold. */
+export const holdTimeOverride = (): number | null => (flags.parity && typeof window.__FT === 'number' ? window.__FT : null);
 /** ?parity: window.__LIVE pins the live clock's count, in milliseconds. */
 export const liveOverride = (): number | null => (flags.parity && typeof window.__LIVE === 'number' ? window.__LIVE : null);
 export const overdrawView = (): boolean => (flags.parity || flags.debug) && !!window.__overdraw;

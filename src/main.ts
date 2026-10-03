@@ -96,7 +96,7 @@ function boot(): void {
     clock.update(a, b, eg, t, tr);
     cut.style.opacity = cutOpacity(tr, t).toFixed(3);
     intro.update(v);
-    marker.update(heroPos, stage.camera, heroVisible, v);
+    marker.update(heroPos, stage.camera, heroVisible, v, hold, now);
     a11y.rest(hold);
     mixBed(sound.bed, a, b, t, tr);
   });
