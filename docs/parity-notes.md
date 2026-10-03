@@ -160,6 +160,15 @@ uniform, which only spiral read. They live in git history.
   in both versions. In Phase 1 the two hover shots differed slightly (0.073 % and 0.028 %) for
   that reason; with each page in its own window they now match too.
 
+## History
+
+- **Commit `2f23bb9` ("Exact rest states") does not typecheck on its own.** Two lines in
+  `src/core/loop.ts` call `transitionOverride` and `locateAt`, which only arrive in the next
+  commit, `6335f88` ("check:seams"). The history is left as it is (no force push). When checking
+  out or bisecting, use `6335f88` or later, or skip `2f23bb9` (`git bisect skip 2f23bb9`).
+- Since then a versioned pre-commit hook typechecks and lints the staged state of every commit
+  (see the README), so this cannot happen again unnoticed.
+
 ## Not verified here
 - Visual parity was measured in Chromium only. Firefox passed the console gate and runs
   WebGL2, but no pixel diffs were taken there.

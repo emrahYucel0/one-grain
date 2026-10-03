@@ -1,0 +1,24 @@
+#!/bin/sh
+# Typecheck and lint exactly what is about to be committed (the index), not the working tree.
+# Enabled by `npm install` (the "prepare" script runs `git config core.hooksPath .githooks`).
+root=$(git rev-parse --show-toplevel)
+tmp="$(git rev-parse --absolute-git-dir)/precommit-index"
+rm -rf "$tmp" && mkdir -p "$tmp"
+
+# The staged copies of everything typecheck and lint read. Inside .git, module resolution
+# still walks up to the repository's node_modules.
+git ls-files -z -- src scripts index.html eslint.config.js vite.config.ts tsconfig.json package.json \
+  | git checkout-index -z --stdin --prefix="$tmp/"
+
+status=0
+cd "$tmp" || exit 1
+echo "pre-commit: typecheck (staged files)"
+node "$root/node_modules/typescript/bin/tsc" --noEmit -p . || status=1
+echo "pre-commit: lint (staged files)"
+node "$root/node_modules/eslint/bin/eslint.js" . || status=1
+cd "$root" && rm -rf "$tmp"
+
+if [ "$status" -ne 0 ]; then
+  echo "pre-commit: typecheck or lint failed on the staged files; commit blocked." >&2
+  exit 1
+fi

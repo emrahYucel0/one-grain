@@ -32,6 +32,12 @@ npm run lint
 | `npm run check:a11y` | axe WCAG 2.1 AA, keyboard chapter steps, status line, focus ring, reduced motion, no-WebGL2 and no-JS fallbacks |
 | `npm run perf` | Frame times at every position, headed, on this machine's GPU |
 
+**Pre-commit hook.** `npm install` runs the `prepare` script, which points git at the
+versioned hooks (`git config core.hooksPath .githooks`). `.githooks/pre-commit` typechecks
+and lints the *staged* state, the files as they will be committed, not the working tree, and
+blocks the commit if either fails. In a checkout made without `npm install`, run
+`npm run prepare` once.
+
 The harness scripts use Playwright. Run `npx playwright install chromium firefox` once.
 `parity` and the data gate load the reference, which pulls three r149 and GSAP from CDNs,
 so they need network access.

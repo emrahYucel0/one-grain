@@ -10,6 +10,7 @@
     "preview": "vite preview",
     "typecheck": "tsc --noEmit",
     "lint": "eslint .",
+    "prepare": "node scripts/setup-hooks.mjs",
     "parity": "vite build && node scripts/parity.mjs",
     "check:console": "vite build && node scripts/console-gate.mjs",
     "check:data": "node scripts/data-gate.mjs",
