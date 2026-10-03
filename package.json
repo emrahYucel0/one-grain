@@ -16,7 +16,8 @@
     "check:a11y": "node scripts/a11y-check.mjs",
     "perf": "vite build && node scripts/perf.mjs",
     "check:text": "node scripts/text-parity.mjs",
-    "check:reverse": "node scripts/reverse-scrub.mjs"
+    "check:reverse": "node scripts/reverse-scrub.mjs",
+    "check:seams": "node scripts/seams.mjs"
   },
   "engines": {
     "node": ">=20"

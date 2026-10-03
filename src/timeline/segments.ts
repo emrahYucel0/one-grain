@@ -58,6 +58,15 @@ export function locate(v: number): Located {
   return { a: seg.i, b: seg.i + 1, t: 0, tr: TRANSITIONS[seg.i]!, hold: seg.i, lean: ss(0, 1, (s - seg.start) / seg.len) };
 }
 
+/**
+ * A transition at a given point, as locate() would report it, with the camera lean chosen
+ * explicitly. At t = 0 or 1 it describes the resting world (used by the seam check).
+ */
+export function locateAt(trIndex: number, t: number, lean: number): Located {
+  const hold = t === 0 ? trIndex : t === 1 ? trIndex + 1 : -1;
+  return { a: trIndex, b: trIndex + 1, t, tr: TRANSITIONS[trIndex]!, hold, lean };
+}
+
 /** The chapter whose snap point is nearest to progress v. */
 export const nearestChapter = (v: number): number => {
   let best = 0;

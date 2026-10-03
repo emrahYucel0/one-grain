@@ -3,6 +3,7 @@
 //   ?tier=low|mid|high  force a quality tier
 //   ?debug           frame-time / tier overlay
 //   ?nosnap          scrolling does not settle on chapters (to hold a position mid-transition)
+//   with ?parity, window.__AT = { tr, t, lean } renders transition tr at t with that camera lean
 import type { GrainPack } from '../sim/pack';
 
 declare global {
@@ -11,6 +12,7 @@ declare global {
     __T?: number | null;
     __PACK?: GrainPack;
     __progress?: number;
+    __AT?: { tr: number; t: number; lean: number } | null;
   }
 }
 
@@ -26,6 +28,7 @@ export const flags = {
 };
 
 export const progressOverride = (): number | null => (flags.parity && typeof window.__V === 'number' ? window.__V : null);
+export const transitionOverride = (): { tr: number; t: number; lean: number } | null => (flags.parity && window.__AT ? window.__AT : null);
 export const timeOverride = (): number | null => (flags.parity && typeof window.__T === 'number' ? window.__T : null);
 
 /** In parity mode, publish the story progress actually rendered (for the reverse-scrub check). */
