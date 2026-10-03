@@ -6,6 +6,7 @@ import { Loop } from './core/loop';
 import { pickTier, pixelRatioFor } from './core/quality';
 import { TierManager } from './core/tiers';
 import { createStage } from './core/renderer';
+import { StageColour } from './core/stage-colour';
 import { Projection, onResize } from './core/resize';
 import { debugOverlay } from './debug/overlay';
 import { exposePack, flags } from './debug/parity';
@@ -54,7 +55,7 @@ function boot(): void {
   const timeline = new ScrollTimeline($('track'), { snap: !flags.noSnap });
   const hash = new HashRouter(timeline);
   bindChapterKeys(timeline);
-  const loop = new Loop({ stage, grains, hero, timeline, hash, projection, typeAxes: new TypeAxes() });
+  const loop = new Loop({ stage, grains, hero, timeline, hash, projection, typeAxes: new TypeAxes(), stageColour: new StageColour(stage) });
   const go = (i: number): void => timeline.goTo(i);
 
   // words and instruments

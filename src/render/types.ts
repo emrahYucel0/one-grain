@@ -1,4 +1,4 @@
-import type { Vector3 } from 'three';
+import type { Color, Vector3 } from 'three';
 import type { Vec3 } from '../story/types';
 
 /** Everything the grain layer needs to draw one frame. Filled by core/loop.ts. */
@@ -27,7 +27,7 @@ export interface FrameUniforms {
   /** resting restlessness (confinement) */
   jitter: number;
   /** stage colour (CSS), grains fade into it with distance */
-  fog: string;
+  fog: Color;
   /** 0 none · 1 brush the dunes · 2 light the switches */
   interact: number;
   mouse: Vector3;

@@ -13,7 +13,7 @@ export class GrainCloud {
   private readonly material: ShaderMaterial;
   private readonly u: Record<string, IUniform>;
   private textures = new Map<LayerName, DataTexture>();
-  private colorKeys = ['', '', '', '', ''];
+  private colorKeys = ['', '', '', ''];
 
   constructor() {
     this.u = {
@@ -62,7 +62,8 @@ export class GrainCloud {
     u.uStyle!.value = f.style; u.uK!.value = f.k; u.uSpan!.value = f.span; u.uSpread!.value = f.spread;
     (u.uDir!.value as Vector3).set(f.dir[0], f.dir[1], f.dir[2]);
     (u.uHeroA!.value as Vector3).copy(f.heroA); (u.uHeroB!.value as Vector3).copy(f.heroB);
-    this.color(0, 'uLoA', f.loA); this.color(1, 'uHiA', f.hiA); this.color(2, 'uLoB', f.loB); this.color(3, 'uHiB', f.hiB); this.color(4, 'uFog', f.fog);
+    this.color(0, 'uLoA', f.loA); this.color(1, 'uHiA', f.hiA); this.color(2, 'uLoB', f.loB); this.color(3, 'uHiB', f.hiB);
+    (u.uFog!.value as Color).copy(f.fog);
     u.uGrain!.value = f.grain; u.uJitter!.value = f.jitter;
     u.uInteract!.value = f.interact; u.uPress!.value = f.press;
     if (f.interact) (u.uMouseW!.value as Vector3).copy(f.mouse);

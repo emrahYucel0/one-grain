@@ -8,8 +8,6 @@ export interface Stage {
   renderer: WebGLRenderer;
   scene: Scene;
   camera: PerspectiveCamera;
-  /** current --stage colour (CSS), also the fog colour */
-  stageColor: string;
 }
 
 export function createStage(canvas: HTMLCanvasElement, pixelRatio: number): Stage {
@@ -17,15 +15,6 @@ export function createStage(canvas: HTMLCanvasElement, pixelRatio: number): Stag
   renderer.outputColorSpace = LinearSRGBColorSpace;
   renderer.debug.checkShaderErrors = import.meta.env.DEV;
   renderer.setPixelRatio(pixelRatio);
-  const stage: Stage = { renderer, scene: new Scene(), camera: new PerspectiveCamera(40, 1, .05, 200), stageColor: '#000' };
-
-  const root = document.documentElement;
-  const readTheme = (): void => {
-    stage.stageColor = getComputedStyle(root).getPropertyValue('--stage').trim();
-    renderer.setClearColor(stage.stageColor, 1);
-  };
-  readTheme();
-  new MutationObserver(readTheme).observe(root, { attributes: true, attributeFilter: ['data-theme'] });
-  matchMedia('(prefers-color-scheme: dark)').addEventListener('change', readTheme);
-  return stage;
+  // the clear colour follows the act from the first frame on (core/stage-colour.ts)
+  return { renderer, scene: new Scene(), camera: new PerspectiveCamera(40, 1, .05, 200) };
 }

@@ -16,6 +16,7 @@ import { env } from './env';
 import type { TypeAxes } from '../ui/type-axes';
 import type { Stage } from './renderer';
 import type { Projection } from './resize';
+import type { StageColour } from './stage-colour';
 
 export interface LoopDeps {
   stage: Stage;
@@ -25,6 +26,7 @@ export interface LoopDeps {
   hash: HashRouter;
   projection: Projection;
   typeAxes: TypeAxes;
+  stageColour: StageColour;
 }
 
 /** Per-frame hook for the parts that react to where the story is (UI, input, audio, quality). */
@@ -58,6 +60,8 @@ export class Loop {
   private running = false;
   /** set by the interaction listener, applied in the same frame */
   readonly interaction = { mode: 0, at: new Vector3(0, -99, 0), press: 0 };
+  /** the final reveal, 0..1 (set by the ending) */
+  reveal = 0;
   /** extra canvas opacity factor (quality swaps) */
   fade = 1;
   /** smoothed pointer, for camera parallax (set by input) */
@@ -80,7 +84,7 @@ export class Loop {
   }
 
   private frame(): void {
-    const { stage, grains, hero, timeline, hash, projection, typeAxes } = this.d;
+    const { stage, grains, hero, timeline, hash, projection, typeAxes, stageColour } = this.d;
     const reduced = env.reduced;
     const v = progressOverride() ?? timeline.state.v;
     reportProgress(v);
@@ -92,6 +96,7 @@ export class Loop {
     const S = shot(tr, a, b, t, this.heroes, L.lean, reduced);
     const wa = WORLDS[a]!, wb = WORLDS[b]!, ca = CONFINEMENT[a]!, cb = CONFINEMENT[b]!;
     // confinement, eased like the camera: lens (and with it uScale), type axes, resting jitter
+    stageColour.update(a, b, S.eg, this.reveal);
     projection.setLens(towards(ca.fov, cb.fov, S.eg));
     typeAxes.set(towards(ca.wdth, cb.wdth, S.eg), towards(ca.wght, cb.wght, S.eg));
 
@@ -111,7 +116,7 @@ export class Loop {
       style: tr.g, k: tr.k ?? 1, span: tr.span ?? .45, spread: tr.spread ?? 30, dir: tr.dir ?? [1, 0, 0],
       heroA: this.heroes[a]!, heroB: this.heroes[b]!,
       loA: wa.lo, hiA: wa.hi, loB: wb.lo, hiB: wb.hi, grain: towards(wa.grain, wb.grain, S.eg), jitter: towards(ca.jitter, cb.jitter, S.eg),
-      fog: stage.stageColor, interact: ix.mode, mouse: ix.mode ? ix.at : this.mouse, press: ix.press,
+      fog: stageColour.fog, interact: ix.mode, mouse: ix.mode ? ix.at : this.mouse, press: ix.press,
     };
     grains.update(u);
     hash.update(L.hold);
