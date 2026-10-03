@@ -177,15 +177,21 @@ uniform, which only spiral read. They live in git history.
   self-hosted face fails.
 
 ### Quality tiers (new, as specified)
-- **Low** (36 000 grains, DPR cap 1.5) is the reference's small-screen setting. **Mid**
-  (90 000, 1.75) is its desktop setting and the parity baseline. **High** (160 000, 2.0) is
-  new, so it has no reference to match. The reference chose between small and desktop only
+- **Low** (36 000 grains, DPR cap 1.25, no shadows, no depth of field) is v10's small-screen
+  setting. **Mid** (90 000, 1.4, every layer) is its desktop setting and the parity baseline.
+  Until Phase 4a the caps were v5–v8's 1.5 and 1.75; v10 lowered them because post costs per
+  pixel. **High** (160 000, 1.75) is new, so it has no reference to match. Its cap came down
+  from 2.0 for the same reason. The reference chose between small and desktop only
   by `innerWidth < 760`. The port also drops to low on a software or "major performance
   caveat" GPU, and starts on high only with a discrete GPU, at least 8 cores and enough
   memory.
 - **A tier drop changes the grain layout.** The single random stream depends on the grain
   count, so 36 000 grains are not a subset of 90 000. That is also true in the reference
   (small vs desktop). The swap happens only while resting on a chapter, behind a 250 ms fade.
+- **The adaptive downgrade is new in Phase 4a** (v10 has a manual layer panel and a benchmark,
+  no automatic downgrade). It switches off depth of field, then shadows, then drops to the next
+  tier's grains, one step per warm-up and only while resting. v10's `.fx` panel becomes the
+  `?debug` panel's toggles.
 
 ### Behaviour added on purpose
 - **Readable fallback.** Without WebGL2, the reference showed an empty HUD. The port shows the

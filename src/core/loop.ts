@@ -8,6 +8,7 @@ import { overdrawView, progressOverride, reportGpu, reportProgress, restPathAllo
 import type { GrainCloud } from '../render/grains';
 import type { Pipeline } from '../render/pipeline';
 import type { GpuTimer } from './gpu-timer';
+import type { RenderLayers } from './layers';
 import type { HeroGrain } from '../render/hero';
 import type { FrameUniforms } from '../render/types';
 import type { GrainPack } from '../sim/pack';
@@ -33,6 +34,8 @@ export interface LoopDeps {
   stageColour: StageColour;
   pipeline: Pipeline;
   timer: GpuTimer;
+  /** what to draw: tier, downgrade, overrides (core/layers.ts) */
+  layers: RenderLayers;
 }
 
 /** Per-frame hook for the parts that react to where the story is (UI, input, audio, quality). */
@@ -72,8 +75,6 @@ export class Loop {
   private running = false;
   /** set by the interaction listener, applied in the same frame */
   readonly interaction = { mode: 0, at: new Vector3(0, -99, 0), press: 0 };
-  /** render layers that can be switched (debug panel, tiers) */
-  readonly layers = { light: true, shadows: true, dof: true, bloom: true, grade: true };
   /** the final reveal, 0..1 (set by the ending, in the 'story' phase) */
   reveal = 0;
   /** extra canvas opacity factor (quality swaps) */
@@ -98,7 +99,7 @@ export class Loop {
   }
 
   private frame(): void {
-    const { stage, grains, hero, timeline, hash, projection, typeAxes, stageColour, pipeline, timer } = this.d;
+    const { stage, grains, hero, timeline, hash, projection, typeAxes, stageColour, pipeline, timer, layers } = this.d;
     const reduced = env.reduced;
     const v = progressOverride() ?? timeline.state.v;
     reportProgress(v);
@@ -130,7 +131,7 @@ export class Loop {
     stage.renderer.domElement.style.opacity = fade === 1 ? '1' : fade.toFixed(3);
 
     // the key light's shadow map, framed around what the camera looks at
-    const shadows = this.layers.light && this.layers.shadows;
+    const light = layers.on('light'), shadows = light && layers.on('shadows');
     pipeline.shadow.fit(S.look, this.rigState.keyDir, this.rigState.shadow);
     const ix = this.interaction;
     const u: FrameUniforms = {
@@ -139,16 +140,16 @@ export class Loop {
       style: tr.g, k: tr.k ?? 1, span: tr.span ?? .45, spread: tr.spread ?? 30, dir: tr.dir ?? [1, 0, 0],
       heroA: this.heroes[a]!, heroB: this.heroes[b]!,
       loA: wa.lo, hiA: wa.hi, loB: wb.lo, hiB: wb.hi, grain: towards(wa.grain, wb.grain, S.eg), jitter: towards(ca.jitter, cb.jitter, S.eg),
-      fog: stageColour.fog, fogLinear: stageColour.fogLinear, rig: this.rigState, camera: stage.camera, light: this.layers.light, shadows, lightVP: pipeline.shadow.viewProjection, shadowPx: pipeline.shadow.pxPerUnit, last: WORLDS.length - 1, reveal: this.reveal, interact: ix.mode, mouse: ix.mode ? ix.at : this.mouse, press: ix.press,
+      fog: stageColour.fog, fogLinear: stageColour.fogLinear, rig: this.rigState, camera: stage.camera, light, shadows, lightVP: pipeline.shadow.viewProjection, shadowPx: pipeline.shadow.pxPerUnit, last: WORLDS.length - 1, reveal: this.reveal, interact: ix.mode, mouse: ix.mode ? ix.at : this.mouse, press: ix.press,
     };
     const overdraw = overdrawView();
     grains.setOverdrawView(overdraw);
     grains.update(u);
     hash.update(L.hold);
-    const cam = stage.camera, ly = this.layers;
+    const cam = stage.camera;
     pipeline.render({
       grains: stage.scene, overlay: stage.overlay, camera: cam, shadows: shadows && !overdraw, clear: stageColour.fogLinear, direct: overdraw,
-      post: { bloom: ly.bloom, dof: ly.dof, grade: ly.grade, near: cam.near, far: cam.far, focus: cam.position.distanceTo(S.hero), time, grainMoves: !reduced },
+      post: { bloom: layers.on('bloom'), dof: layers.on('dof'), grade: layers.on('grade'), near: cam.near, far: cam.far, focus: cam.position.distanceTo(S.hero), time, grainMoves: !reduced },
     });
     timer.tick();
     reportGpu(timer.times());

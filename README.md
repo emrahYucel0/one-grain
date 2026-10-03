@@ -30,7 +30,7 @@ npm run lint
 | `npm run check:reverse` | Scrolling backwards through drift, break, separate and grow renders exactly what scrolling forwards does |
 | `npm run check:seams` | No transition leaves a trace on a resting chapter: the previous transition at t = 1 and the next at t = 0 render byte-identical frames, equal to the hold |
 | `npm run check:fonts` | No layout shift when the web fonts arrive (on the built site, fonts held back 1.5 s), and the wdth axis really renders |
-| `npm run check:tiers` | A quality drop is queued mid-transition and only swapped in while resting |
+| `npm run check:tiers` | The downgrade is queued mid-transition, applied only while resting, in order (depth of field, shadows, grains); the low tier's layers; the debug panel's toggles |
 | `npm run check:console` | Zero console warnings or errors in dev and build, Chromium and Firefox |
 | `npm run check:a11y` | axe WCAG 2.1 AA, keyboard chapter steps, status line, focus ring, reduced motion, no-WebGL2 and no-JS fallbacks |
 | `npm run perf` | Frame times at every position and while scrubbing through the whole story, headed, on this machine's GPU |
@@ -195,21 +195,29 @@ Without WebGL2 or without JavaScript, the article is the page.
 
 ## Quality tiers
 
-| Tier | Grains per world | DPR cap | Chosen when |
-|---|---|---|---|
-| low | 36 000 | 1.5 | window narrower than 760 px, a software or "major performance caveat" GPU, or the texture would not fit |
-| mid | 90 000 | 1.75 | default (the reference's desktop setting; the parity baseline) |
-| high | 160 000 | 2.0 | discrete GPU (from the renderer string), at least 8 cores and enough memory |
+| Tier | Grains per world | DPR cap | Layers | Chosen when |
+|---|---|---|---|---|
+| low | 36 000 | 1.25 | no shadows, no depth of field | window narrower than 760 px, a software or "major performance caveat" GPU, or the texture would not fit |
+| mid | 90 000 | 1.4 | all | default (v10's desktop setting; the parity baseline) |
+| high | 160 000 | 1.75 | all | discrete GPU (from the renderer string), at least 8 cores and enough memory |
 
-`core/quality.ts` tracks the median frame time in 2 s windows. After two windows in a row
-over 25 ms, a one-tier drop is **queued**:
+The layers and pixel-ratio caps follow v10: post costs per pixel. Layers are light, shadows,
+depth of field, bloom and grade (vignette and film grain); `core/layers.ts` combines the tier,
+the downgrade and overrides.
 
-- the new worlds are built in the worker only while the visitor rests on a chapter;
-- they are swapped in, together with the new pixel ratio, behind a 250 ms canvas dip, again
-  only while resting;
-- nothing changes mid-transition.
+`core/quality.ts` tracks the median frame time in 2 s windows. After two windows in a row over
+25 ms, the next step down is **queued** (`core/tiers.ts`):
 
-The tier never goes back up.
+1. depth of field off;
+2. shadows off;
+3. fewer grains: the next tier's worlds and pixel ratio.
+
+- A step is applied only while the visitor rests on a chapter, behind a 250 ms canvas dip.
+  Nothing changes mid-transition.
+- New worlds are built in the worker, also only while resting.
+- Each step restarts the 3 s warm-up, so the next one needs fresh evidence.
+
+Quality never goes back up.
 
 Phase 1 measurement with `npm run perf`, headed Chromium, Intel UHD Graphics (i5-12450H laptop,
 144 Hz panel):
@@ -246,8 +254,11 @@ the Phase 1 numbers.
 | Switch | Effect |
 |---|---|
 | `?tier=low\|mid\|high` | Force a tier (also turns off the automatic drop) |
-| `?debug` | Corner readout: tier, grains, DPR, fps, median frame time |
-| `?debug&forceDrop` | Act as if the frame budget were blown, to watch a queued drop |
+| `?debug` | Corner panel: tier, grains, DPR, fps, median frame time, GPU time per pass and per frame (live), and a toggle per render layer (overrides tier and downgrade until Reset) |
+| `?debug&forceDrop` | Act as if the frame budget stayed blown, to watch the downgrade walk its steps |
+| `?perf` | Time every render pass on the GPU (`window.__gpu`, with the last 240 raw frames) |
+| `?off=a,b` | Switch render layers off (light, shadows, dof, bloom, grade), for measurements |
+| `?grains=N` · `?pointcap=N` · `?shadowstride=N` | Measurements: grains per world, largest grain in pixels, every N-th grain casts shadows (default 2) |
 | `?parity` | Let a harness drive progress (`window.__V`) and shader time (`window.__T`), or render a transition point directly (`window.__AT = { tr, t, lean }`); the rendered progress is published as `window.__progress` |
 | `?nosnap` | Scrolling does not settle on chapters, so a position mid-transition can be held |
 | `#magma` … `#now` | Open at that chapter |

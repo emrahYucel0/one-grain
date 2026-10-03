@@ -1,4 +1,5 @@
 import type { GpuCaps } from './env';
+import type { LayerSet } from './layers';
 
 export type TierName = 'low' | 'mid' | 'high';
 
@@ -8,13 +9,18 @@ export interface Tier {
   n: number;
   /** device-pixel-ratio cap */
   dpr: number;
+  /** the render layers this tier draws */
+  fx: LayerSet;
 }
 
-// low = the reference on small screens, mid = the reference on desktop (parity baseline).
+const ALL: LayerSet = { light: true, shadows: true, dof: true, bloom: true, grade: true };
+
+// low = v10 on small screens (no shadows, no depth of field), mid = v10 on desktop (the parity
+// baseline). The pixel-ratio caps are v10's: post costs per pixel. high is ours.
 export const TIERS: Readonly<Record<TierName, Tier>> = {
-  low: { name: 'low', n: 36000, dpr: 1.5 },
-  mid: { name: 'mid', n: 90000, dpr: 1.75 },
-  high: { name: 'high', n: 160000, dpr: 2 },
+  low: { name: 'low', n: 36000, dpr: 1.25, fx: { ...ALL, shadows: false, dof: false } },
+  mid: { name: 'mid', n: 90000, dpr: 1.4, fx: ALL },
+  high: { name: 'high', n: 160000, dpr: 1.75, fx: ALL },
 };
 
 const ORDER: readonly TierName[] = ['low', 'mid', 'high'];
@@ -65,6 +71,9 @@ export class FrameMonitor {
   private quietUntil = 0;
   /** median of the last complete window, for the debug overlay */
   median = 0;
+
+  /** Past the warm-up after a (re)build or a step down. */
+  warm(now: number): boolean { return now >= this.quietUntil; }
 
   constructor() {
     document.addEventListener('visibilitychange', () => this.reset(performance.now()));

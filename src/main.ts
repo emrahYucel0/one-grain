@@ -8,6 +8,7 @@ import { TierManager } from './core/tiers';
 import { GpuTimer } from './core/gpu-timer';
 import { createStage } from './core/renderer';
 import { StageColour } from './core/stage-colour';
+import { isLayerName, RenderLayers } from './core/layers';
 import { Projection, onResize } from './core/resize';
 import { debugOverlay } from './debug/overlay';
 import { exposePack, flags } from './debug/parity';
@@ -64,7 +65,9 @@ function boot(): void {
   bindChapterKeys(timeline);
   const pipeline = new Pipeline(stage.renderer, timer);
   grains.attachShadow(pipeline.shadow);
-  const loop = new Loop({ stage, grains, hero, timeline, hash, projection, typeAxes: new TypeAxes(), stageColour: new StageColour(), pipeline, timer });
+  const layers = new RenderLayers(tier.fx);
+  for (const k of flags.off) if (isLayerName(k)) layers.override[k] = false;
+  const loop = new Loop({ stage, grains, hero, timeline, hash, projection, typeAxes: new TypeAxes(), stageColour: new StageColour(), pipeline, timer, layers });
   const go = (i: number): void => timeline.goTo(i);
 
   // words and instruments
@@ -100,7 +103,7 @@ function boot(): void {
 
   // quality: step down (queued, applied only while resting) if frames stay over budget
   const sim = new SimClient();
-  const tiers = new TierManager(tier, {
+  const tiers = new TierManager(tier, layers, {
     auto: !flags.tier, forceDrop: flags.forceDrop,
     build: (n) => sim.build(n),
     swap: (pack, pixelRatio) => {
@@ -112,8 +115,7 @@ function boot(): void {
     },
   });
   loop.onFrame(({ L, now }) => { tiers.frame(now, L.hold); loop.fade = tiers.fade; });
-  for (const k of flags.off) if (k in loop.layers) (loop.layers as Record<string, boolean>)[k] = false;
-  if (flags.debug) debugOverlay(tiers, () => stage.renderer.getPixelRatio(), timer);
+  if (flags.debug) debugOverlay(tiers, layers, () => stage.renderer.getPixelRatio(), timer);
 
   sim.build(tier.n).then((pack) => {
     exposePack(pack);
