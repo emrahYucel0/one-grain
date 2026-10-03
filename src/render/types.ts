@@ -42,10 +42,9 @@ export interface FrameUniforms {
   /** the key light's view-projection and shadow map pixels per world unit (render/shadow.ts) */
   lightVP: Matrix4;
   shadowPx: number;
-  /** index of the last world: grains arriving there stay neutral until the reveal */
-  last: number;
-  /** the final reveal, 0..1 */
-  reveal: number;
+  /** the final grain landing, 0..1, and where (its neighbours make room) */
+  land: number;
+  landPos: Vector3;
   /** 0 none · 1 brush the dunes · 2 light the switches */
   interact: number;
   mouse: Vector3;

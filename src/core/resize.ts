@@ -11,6 +11,8 @@ const buffer = new Vector2();
  */
 export class Projection {
   private lens = 40;
+  /** pixels per world unit at distance 1 (drawing-buffer height / (2·tan(fov/2))) */
+  scale = 1;
   private portrait = false;
   private readonly stage: Stage;
   private readonly onScale: (pxPerUnit: number) => void;
@@ -36,7 +38,8 @@ export class Projection {
     camera.fov = fov + (this.portrait ? PORTRAIT_EXTRA_DEG : 0);
     camera.updateProjectionMatrix();
     renderer.getDrawingBufferSize(buffer);
-    this.onScale(buffer.y / (2 * Math.tan(MathUtils.degToRad(camera.fov / 2))));
+    this.scale = buffer.y / (2 * Math.tan(MathUtils.degToRad(camera.fov / 2)));
+    this.onScale(this.scale);
   }
 }
 

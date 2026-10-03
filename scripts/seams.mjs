@@ -12,6 +12,9 @@
 // Also: the vertex shader's cheap rest path renders exactly what the full transition path renders
 // at t = 1 of the previous transition and t = 0 of the next.
 //
+// The final chapter has no next move: its hold is compared with the previous transition at t = 1,
+// at the hold's first instant (window.__FT = 0: the grain still hovering, in full light).
+//
 // Exact comparison: any differing byte counts. Diff masks of failures go to the OS temp folder.
 import { mkdir, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
@@ -57,16 +60,29 @@ const compare = async (A, B, name) => {
 };
 
 let failed = 0;
-for (let i = 1; i < WORLDS.length - 1; i++) {
+for (let i = 1; i < WORLDS.length; i++) {
   const hold = SEGMENTS.find((s) => s.type === 'hold' && s.i === i);
   const snap = SNAP_POINTS[i], holdStart = (hold.start + 1e-7) / TOTAL;
+  const slug = WORLDS[i].slug, last = i === WORLDS.length - 1;
   const a = await render(snap, { tr: i - 1, t: 1, lean: 1 });
-  const b0 = await render(snap, { tr: i, t: 0, lean: 0 });
   const h0 = await render(holdStart, null);
+  const aFull = await render(snap, { tr: i - 1, t: 1, lean: 1 }, true);
+  if (last) {
+    const hs = await render(snap, null);
+    for (const [what, r] of [
+      ['end of previous = hold as scrolled into', await compare(a, h0, `${String(i).padStart(2, '0')}-${slug}-a-vs-hold-start`)],
+      ['end of previous = hold screenshot', await compare(a, hs, `${String(i).padStart(2, '0')}-${slug}-a-vs-hold`)],
+      ['rest path = full path (t = 1 of previous)', await compare(a, aFull, `${String(i).padStart(2, '0')}-${slug}-rest-vs-full-a`)],
+    ]) {
+      const ok = r.n === 0; if (!ok) failed++;
+      console.log(`${ok ? 'PASS' : 'FAIL'}  ${slug.padEnd(8)} ${what.padEnd(44)} ${r.pct.toFixed(3)} %${r.n ? `  (${r.n} px, ${r.box})` : ''}`);
+    }
+    continue;
+  }
+  const b0 = await render(snap, { tr: i, t: 0, lean: 0 });
   const bH = await render(snap, { tr: i, t: 0, lean: locate(snap).lean });
   const hs = await render(snap, null);
-  const aFull = await render(snap, { tr: i - 1, t: 1, lean: 1 }, true), bFull = await render(snap, { tr: i, t: 0, lean: 0 }, true);
-  const slug = WORLDS[i].slug;
+  const bFull = await render(snap, { tr: i, t: 0, lean: 0 }, true);
   const rows = [
     ['end of previous = start of next', await compare(a, b0, `${String(i).padStart(2, '0')}-${slug}-a-vs-b`)],
     ['start of next = hold as scrolled into', await compare(b0, h0, `${String(i).padStart(2, '0')}-${slug}-b-vs-hold-start`)],

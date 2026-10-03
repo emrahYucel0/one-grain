@@ -36,7 +36,7 @@ export class GrainCloud {
       uTime: { value: 0 }, uT: { value: 0 }, uMotion: { value: 1 }, uScale: { value: 1 }, uGrain: { value: .1 },
       uStyle: { value: 0 }, uK: { value: 1 }, uSpan: { value: .45 }, uSpread: { value: 30 }, uDir: { value: new Vector3(1, 0, 0) },
       uHeroA: { value: new Vector3() }, uHeroB: { value: new Vector3() },
-      uInteract: { value: 0 }, uLast: { value: 0 }, uReveal: { value: 0 }, uMouseW: { value: new Vector3(0, -99, 0) }, uPress: { value: 0 },
+      uInteract: { value: 0 }, uLand: { value: 0 }, uLandPos: { value: new Vector3() }, uMouseW: { value: new Vector3(0, -99, 0) }, uPress: { value: 0 },
       uLoA: { value: new Color() }, uHiA: { value: new Color() }, uLoB: { value: new Color() }, uHiB: { value: new Color() },
       uFog: { value: new Color() }, uFogD: { value: .02 }, uJitter: { value: 0 },
       // lighting (v10)
@@ -124,7 +124,7 @@ export class GrainCloud {
     this.color(0, 'uLoA', f.loA); this.color(1, 'uHiA', f.hiA); this.color(2, 'uLoB', f.loB); this.color(3, 'uHiB', f.hiB);
     (u.uFog!.value as Color).copy(f.fog);
     u.uGrain!.value = f.grain; u.uJitter!.value = f.jitter;
-    u.uLast!.value = f.last; u.uReveal!.value = f.reveal;
+    u.uLand!.value = f.land; (u.uLandPos!.value as Vector3).copy(f.landPos);
     u.uInteract!.value = f.interact; u.uPress!.value = f.press;
     if (f.interact) (u.uMouseW!.value as Vector3).copy(f.mouse);
     // lighting

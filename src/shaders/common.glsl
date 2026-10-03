@@ -3,9 +3,10 @@ precision highp sampler2D;
 
 uniform sampler2D uLayer_pos;     // xyz position, w behaviour + tone
 uniform sampler2D uLayer_surface; // xyz surface normal, w material id
-uniform int uRows, uFrom, uTo, uStyle, uInteract, uLast;
+uniform int uRows, uFrom, uTo, uStyle, uInteract;
 uniform int uRest; // 0 moving · 1 resting in world A (t = 0) · 2 resting in world B (t = 1)
-uniform float uReveal;
+uniform float uLand;   // the final grain landing, 0..1 (its neighbours make room)
+uniform vec3 uLandPos; // where it lands
 uniform float uPointMax; // largest grain, in pixels, before the per-grain size factor
 uniform float uSpecA, uSpecB; // each world's gloss
 uniform float uGlowA, uGlowB, uRaysA, uRaysB, uPixA, uPixB, uWaterA, uWaterB; // each world's material look (story/lights.ts)

@@ -86,9 +86,9 @@ function boot(): void {
   const pointer = new Pointer();
   chapter.show(0); nav.setCurrent(0);
 
-  loop.onFrame(({ L, now }) => { loop.reveal = ending.update(L.hold === LAST, now); }, 'story');
+  loop.onFrame(({ L, now }) => { loop.finalTime = ending.update(L.hold === LAST, now); }, 'story');
   loop.onFrame(() => { pointer.smooth(); loop.parallax = { x: pointer.sx, y: pointer.sy }; }, 'camera');
-  loop.onFrame(({ v, L, t, eg, hero: heroPos, heroVisible, now }) => {
+  loop.onFrame(({ v, L, t, eg, hero: heroPos, heroVisible, heroLight, now }) => {
     const { a, b, tr, hold } = L;
     updateInteraction(loop.interaction, pointer, { hold, reduced: env.reduced, heroes: loop.heroes, camera: stage.camera, now });
     if (chapter.show(t < .5 ? a : b)) nav.setCurrent(chapter.current);
@@ -96,7 +96,7 @@ function boot(): void {
     clock.update(a, b, clockProgress(tr, t, eg), t, tr);
     cut.style.opacity = cutOpacity(tr, t).toFixed(3);
     intro.update(v);
-    marker.update(heroPos, stage.camera, heroVisible, v, hold, now);
+    marker.update(heroPos, stage.camera, heroVisible, v, hold, now, heroLight);
     a11y.rest(hold);
     mixBed(sound.bed, a, b, t, tr);
   });

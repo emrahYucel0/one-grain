@@ -1,3 +1,4 @@
+import { holdTimeOverride } from '../debug/parity';
 import { ss } from '../core/ease';
 import type { TransitionDef } from '../story/types';
 import { attr } from './copy';
@@ -27,21 +28,22 @@ export class Intro {
  * the end's stage colour comes in (the reveal); the signature and footnote at 8.5 s.
  */
 export class Ending {
-  static readonly TITLE_S = 1.2;
-  static readonly REVEAL_S: readonly [number, number] = [4, 8];
-  static readonly SIGNATURE_S = 8.5;
+  static readonly TITLE_S = .4;
+  static readonly SIGNATURE_S = 8;
+  /** keyboard focus on the signature link: the end state at once */
+  static readonly FORCED_S = 99;
   private since = -1;
-  /** keyboard focus on the signature link: everything at once, fully revealed */
+  /** keyboard focus on the signature link: everything at once */
   forced = false;
   private readonly chapter: HTMLElement;
   constructor(chapter: HTMLElement) { this.chapter = chapter; }
-  /** Returns the reveal, 0..1. */
+  /** Seconds since the final chapter was reached (-1 elsewhere); the grain's light and landing follow it. */
   update(atEnd: boolean, now: number): number {
-    if (!atEnd) { this.since = -1; return 0; }
+    if (!atEnd) { this.since = -1; return -1; }
     if (this.since < 0) this.since = now;
-    const el = (now - this.since) / 1000;
-    this.chapter.classList.toggle('in', this.forced || el > Ending.TITLE_S);
-    this.chapter.classList.toggle('sig', this.forced || el > Ending.SIGNATURE_S);
-    return this.forced ? 1 : ss(Ending.REVEAL_S[0], Ending.REVEAL_S[1], el);
+    const el = this.forced ? Ending.FORCED_S : holdTimeOverride() ?? (now - this.since) / 1000;
+    this.chapter.classList.toggle('in', el > Ending.TITLE_S);
+    this.chapter.classList.toggle('sig', el > Ending.SIGNATURE_S);
+    return el;
   }
 }
