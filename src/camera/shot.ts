@@ -22,7 +22,7 @@ const bez = (p0: Vector3, p1: Vector3, p2: Vector3, p3: Vector3, t: number): Vec
 };
 const NO_HERO: readonly [Vec3, Vec3] = [[0, 0, 0], [0, 0, 0]];
 /** shots that turn to look at the grain on the way */
-const WATCH_HERO = new Set(['crackdrop', 'zoom', 'pour', 'pullback', 'beam', 'breakfall']);
+const WATCH_HERO = new Set(['crackdrop', 'zoom', 'pullback', 'beam', 'breakfall']);
 
 /**
  * The shot director. Each world has a resting camera (cam/look offsets from its hero grain);
@@ -43,13 +43,10 @@ export function shot(tr: TransitionDef, a: number, b: number, t: number, heroes:
     case 'crane': c1 = off(camA, [0, 6, 6]); c2 = off(camB, [0, 10, 8]); break;
     case 'crackdrop': c1 = camA.clone().lerp(hA, .82); c2 = off(hB, [1, 4, 2.5]); break;
     case 'track': c1 = camA.clone().addScaledVector(d, 4); c2 = camB.clone().addScaledVector(d, -4); break;
-    case 'fly': c1 = off(hA, [-3, 2.5, 3]); c2 = off(hB, [-5, 6, 6]); break;
     case 'drift': c1 = off(camA, [2, 1, 3]); c2 = off(camB, [-4, 4, 8]); break;
     case 'breakfall': c1 = off(hA, [0, 6, 8]); c2 = off(hB, [0, 12, 7]); break;
     case 'rise': c1 = off(camA, [0, 9, 2]); c2 = off(camB, [0, 8, 4]); break;
     case 'sink': c1 = off(camA, [0, -1, -2]); c2 = off(camB, [0, -8, 0]); break;
-    case 'pour': c1 = off(hA, [0, 8, 5]); c2 = off(hB, [0, 11, 6]); break;
-    case 'heat': c1 = off(camA, [0, 7, 0]); c2 = off(camB, [0, 7, 2]); break;
     case 'top': c1 = off(camA, [0, 3, 0]); c2 = off(hB, [0, 6, .5]); break;
     case 'zoom': c1 = camA.clone().lerp(hA, .97); c2 = camB.clone().lerp(hB, .97); break;
     case 'beam': c1 = off(camA, [0, 5, 0]); c2 = off(camB, [0, -5, 0]); break;

@@ -34,16 +34,16 @@ export interface WorldDef {
 
 /**
  * Grain transition styles (uStyle in the shader):
- * 0 rise · 1 fall · 2 flow · 4 bury · 5 cut · 9 slice · 11 dive · 12 beam · 13 raster
- * 15 crack · 16 expose · 17 drift · 18 break · 19 separate · 20 grow
- * (3 wind · 6 pour · 7 heat · 8 spiral are still in the shader but unused since blockout v6)
+ * 0 rise · 2 flow · 4 bury · 5 cut · 9 slice · 11 dive · 12 beam · 13 raster · 15 crack
+ * 16 expose · 17 drift · 18 break · 19 separate · 20 grow
+ * (numbers are kept stable; styles no transition used any more were removed and live in git history)
  */
-export type GrainStyle = 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 11 | 12 | 13 | 15 | 16 | 17 | 18 | 19 | 20;
+export type GrainStyle = 0 | 2 | 4 | 5 | 9 | 11 | 12 | 13 | 15 | 16 | 17 | 18 | 19 | 20;
 
-/** Camera moves (camera/shot.ts). fly, pour and heat are unused since blockout v6. */
+/** Camera moves (camera/shot.ts). */
 export type CamStyle =
   | 'crane' | 'crackdrop' | 'track' | 'drift' | 'sink' | 'cut' | 'breakfall' | 'rise'
-  | 'orbit' | 'slide' | 'top' | 'zoom' | 'beam' | 'pullback' | 'fly' | 'pour' | 'heat';
+  | 'orbit' | 'slide' | 'top' | 'zoom' | 'beam' | 'pullback';
 
 export interface TransitionDef {
   g: GrainStyle;
@@ -54,7 +54,7 @@ export interface TransitionDef {
   span?: number;
   spread?: number;
   dir?: Vec3;
-  /** orbit centre (x, z) */
+  /** orbit centre (x, z), for the camera */
   axis?: readonly [number, number];
   /** bezier handles for the hero grain, offsets from hero A and hero B */
   hero?: readonly [Vec3, Vec3];

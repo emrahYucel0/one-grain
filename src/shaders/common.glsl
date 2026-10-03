@@ -5,7 +5,6 @@ uniform sampler2D uLayer_pos;
 uniform int uRows, uFrom, uTo, uStyle, uInteract;
 uniform float uTime, uT, uMotion, uScale, uGrain, uFogD, uK, uSpan, uSpread, uPress;
 uniform vec3 uHeroA, uHeroB, uDir, uMouseW, uLoA, uHiA, uLoB, uHiB, uFog;
-uniform vec2 uAxis;
 
 // per-grain stable random from its id
 float h1(float n){ return fract(sin(n * 12.9898 + 4.1) * 43758.5453); }

@@ -100,7 +100,7 @@ export class Loop {
     const ix = this.interaction;
     const u: FrameUniforms = {
       from: a, to: b, t, time, motion: reduced ? 0 : 1,
-      style: tr.g, k: tr.k ?? 1, span: tr.span ?? .45, spread: tr.spread ?? 30, dir: tr.dir ?? [1, 0, 0], axis: tr.axis,
+      style: tr.g, k: tr.k ?? 1, span: tr.span ?? .45, spread: tr.spread ?? 30, dir: tr.dir ?? [1, 0, 0],
       heroA: this.heroes[a]!, heroB: this.heroes[b]!,
       loA: wa.lo, hiA: wa.hi, loB: wb.lo, hiB: wb.hi, grain: S.eg >= 1 ? wb.grain : wa.grain + (wb.grain - wa.grain) * S.eg,
       fog: stage.stageColor, interact: ix.mode, mouse: ix.mode ? ix.at : this.mouse, press: ix.press,

@@ -1,5 +1,5 @@
 import {
-  BufferAttribute, BufferGeometry, Color, GLSL3, Points, ShaderMaterial, Vector2, Vector3,
+  BufferAttribute, BufferGeometry, Color, GLSL3, Points, ShaderMaterial, Vector3,
   type DataTexture, type IUniform,
 } from 'three';
 import { grainShaders } from '../shaders';
@@ -19,7 +19,7 @@ export class GrainCloud {
     this.u = {
       uRows: { value: 1 }, uFrom: { value: 0 }, uTo: { value: 1 },
       uTime: { value: 0 }, uT: { value: 0 }, uMotion: { value: 1 }, uScale: { value: 1 }, uGrain: { value: .1 },
-      uStyle: { value: 0 }, uK: { value: 1 }, uSpan: { value: .45 }, uSpread: { value: 30 }, uDir: { value: new Vector3(1, 0, 0) }, uAxis: { value: new Vector2() },
+      uStyle: { value: 0 }, uK: { value: 1 }, uSpan: { value: .45 }, uSpread: { value: 30 }, uDir: { value: new Vector3(1, 0, 0) },
       uHeroA: { value: new Vector3() }, uHeroB: { value: new Vector3() },
       uInteract: { value: 0 }, uMouseW: { value: new Vector3(0, -99, 0) }, uPress: { value: 0 },
       uLoA: { value: new Color() }, uHiA: { value: new Color() }, uLoB: { value: new Color() }, uHiB: { value: new Color() },
@@ -61,7 +61,6 @@ export class GrainCloud {
     u.uFrom!.value = f.from; u.uTo!.value = f.to; u.uT!.value = f.t; u.uTime!.value = f.time; u.uMotion!.value = f.motion;
     u.uStyle!.value = f.style; u.uK!.value = f.k; u.uSpan!.value = f.span; u.uSpread!.value = f.spread;
     (u.uDir!.value as Vector3).set(f.dir[0], f.dir[1], f.dir[2]);
-    if (f.axis) (u.uAxis!.value as Vector2).set(f.axis[0], f.axis[1]);
     (u.uHeroA!.value as Vector3).copy(f.heroA); (u.uHeroB!.value as Vector3).copy(f.heroB);
     this.color(0, 'uLoA', f.loA); this.color(1, 'uHiA', f.hiA); this.color(2, 'uLoB', f.loB); this.color(3, 'uHiB', f.hiB); this.color(4, 'uFog', f.fog);
     u.uGrain!.value = f.grain;

@@ -17,7 +17,6 @@ export interface FrameUniforms {
   span: number;
   spread: number;
   dir: Vec3;
-  axis: readonly [number, number] | undefined;
   heroA: Vector3;
   heroB: Vector3;
   loA: string;
