@@ -65,7 +65,7 @@ vec3 travel(vec4 A, vec4 B, vec3 pa, vec3 pb, vec3 R, out float e, out float arc
     float u = fall, iu = 1. - u;
     vec3 ctr = iu * iu * iu * bc + 3. * iu * iu * u * c1 + 3. * iu * u * u * c2 + u * u * u * hop;
     p = mix(ctr + loc, pb, feed);
-    e = feed; arc = sin(3.14159 * tb) * uMotion; m.heat = smoothstep(.45, .85, tb) * (1. - smoothstep(.95, 1., tb) * .5);
+    e = feed; arc = sin(3.14159 * tb) * uMotion; m.heat = smoothstep(.45, .85, tb) * (1. - smoothstep(.85, 1., tb));
   }
   else if (uStyle == 19) { // separate: rise as vapour into channels, impurities fall away, the rest whitens and deposits
     float rise = smoothstep(0., .45, uT - R.x * .1), sep = smoothstep(.3, .65, uT), dep = smoothstep(.55, .92, uT - (1. - R.y) * .08);
