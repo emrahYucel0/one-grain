@@ -2,15 +2,24 @@
 
 export type Vec3 = readonly [number, number, number];
 export type ActId = 'nature' | 'industry' | 'now';
-export type ClockUnit = 'years' | 'days' | 'ns' | 'ms' | 'now';
+export type ClockUnit = 'years' | 'prod' | 'now';
+
+/**
+ * The clock has one meaning: time elapsed on the grain's journey.
+ * years: a number, log-interpolated between chapters; a chapter may also carry a label in
+ *   index.html (data-clock), shown instead while resting there.
+ * prod: production time; the label always comes from index.html.
+ * now: the final chapter only.
+ */
+export type WorldClock = { unit: 'years'; value: number } | { unit: 'prod' } | { unit: 'now' };
 
 export interface WorldDef {
   slug: string;
   act: ActId;
   /** scroll length of the resting segment, in screen heights */
   hold: number;
-  /** what the clock reads in this world */
-  clock: readonly [value: number, unit: ClockUnit];
+  /** what the clock reads in this world (labels live in index.html) */
+  clock: WorldClock;
   /** palette ramp for grains that use the world palette */
   lo: string;
   hi: string;

@@ -1,7 +1,7 @@
 import { GrainWriter, type BaseWorld } from './types';
 
 // A pane of glass in front of a screen's sub-pixel grid (behaviour 9).
-export const glass: BaseWorld = {
+export const display: BaseWorld = {
   kind: 'base',
   generate({ rnd, tone }, N) {
     const g = new GrainWriter(N);

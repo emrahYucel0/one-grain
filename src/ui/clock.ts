@@ -1,46 +1,54 @@
-import type { ClockUnit } from '../story/types';
+import type { ClockUnit, TransitionDef } from '../story/types';
 import { WORLDS } from '../story/worlds';
-import { attr, fill } from './copy';
+import { attr, type Copy } from './copy';
 
 /**
- * The clock is the idea: deep time, production days, a clock tick, a frame, now.
- * Each unit has its own typography (CSS .u-<unit>); changing unit replays a "punch".
+ * The clock has one meaning: time elapsed on the grain's journey. Deep time in years
+ * (log-interpolated, or a chapter's own label while resting there), production time as
+ * labels, and "Now" at the very end. Each unit has its own typography (CSS .u-<unit>);
+ * a change of unit replays a "punch". The interlude card has no clock.
  */
 export class ClockView {
   private unit: ClockUnit = 'years';
   private readonly el: HTMLElement;
   private readonly value: HTMLElement;
   private readonly label: HTMLElement;
+  private readonly copy: Copy;
 
-  constructor(el: HTMLElement, value: HTMLElement, label: HTMLElement) {
-    this.el = el; this.value = value; this.label = label;
+  constructor(el: HTMLElement, value: HTMLElement, label: HTMLElement, copy: Copy) {
+    this.el = el; this.value = value; this.label = label; this.copy = copy;
   }
 
-  /** Clock between worlds a and b at eased progress eg. Years interpolate on a log scale. */
-  update(a: number, b: number, eg: number): void {
-    const [va, ua] = WORLDS[a]!.clock, [vb, ub] = WORLDS[b]!.clock;
-    let v: number, u: ClockUnit;
-    if (ua === ub) { u = ua; v = ua === 'years' ? Math.pow(10, Math.log10(va + 1) + (Math.log10(vb + 1) - Math.log10(va + 1)) * eg) - 1 : va + (vb - va) * eg; }
-    else [v, u] = eg < .5 ? [va, ua] : [vb, ub];
-    if (u !== this.unit) {
-      this.el.className = `time u-${u}`;
-      void this.el.offsetWidth; // restart the punch animation
-      this.el.classList.add('punch');
-      this.unit = u;
-    }
+  /** Clock between worlds a and b: eg is the camera's eased progress, t the transition progress (0/1 = resting). */
+  update(a: number, b: number, eg: number, t: number, tr: TransitionDef): void {
     const el = this.el;
-    const [value, label] =
-      u === 'years' ? [(v < 1 ? '' : attr(el, 'yearsApprox')) + this.years(v), attr(el, 'years')]
-      : u === 'days' ? [fill(attr(el, 'days'), { n: Math.max(1, Math.round(v)) }), attr(el, 'daysUnit')]
-      : u === 'ns' ? [fill(attr(el, 'ns'), { n: v.toFixed(2) }), attr(el, 'nsUnit')]
-      : u === 'ms' ? [fill(attr(el, 'ms'), { n: v.toFixed(1) }), attr(el, 'msUnit')]
-      : [attr(el, 'now'), ''];
+    el.classList.toggle('hide', tr.cam === 'cut' && t > .2 && t < .8);
+    const A = WORLDS[a]!.clock, B = WORLDS[b]!.clock;
+    const near = eg < .5 ? a : b, C = eg < .5 ? A : B, resting = t === 0 || t === 1;
+    if (C.unit !== this.unit) {
+      el.className = `time u-${C.unit}`;
+      void el.offsetWidth; // restart the punch animation
+      el.classList.add('punch');
+      this.unit = C.unit;
+    }
+    const chapter = this.copy.chapters[near]!;
+    let value: string, label: string;
+    if (C.unit === 'years') {
+      let v = C.value;
+      if (A.unit === 'years' && B.unit === 'years') v = Math.pow(10, Math.log10(A.value + 1) + (Math.log10(B.value + 1) - Math.log10(A.value + 1)) * eg) - 1;
+      const own = resting ? chapter.clockLabel : '';
+      el.classList.toggle('is-label', !!own);
+      value = own ? attr(el, 'approx') + own : v < 1 ? '0' : attr(el, 'approx') + this.years(v);
+      label = attr(el, 'years');
+    } else {
+      el.classList.remove('is-label');
+      [value, label] = C.unit === 'prod' ? [chapter.clockLabel, chapter.clockSub] : [attr(el, 'now'), ''];
+    }
     if (this.value.textContent !== value) this.value.textContent = value;
     if (this.label.textContent !== label) this.label.textContent = label;
   }
 
   private years(y: number): string {
-    if (y < 1) return '0';
     if (y >= 1e6) { const m = y / 1e6; return `${m < 100 ? m.toFixed(1) : Math.round(m)} ${attr(this.el, 'million')}`; }
     const k = Math.pow(10, Math.max(0, Math.floor(Math.log10(y)) - 1));
     return (Math.round(y / k) * k).toLocaleString('en-US');

@@ -2,7 +2,7 @@ import { ss } from './math';
 import { GrainWriter, type BaseWorld } from './types';
 
 // The grains become a screen: a 16:9 grid showing a desert under a dark sky.
-export const you: BaseWorld = {
+export const now: BaseWorld = {
   kind: 'base',
   generate({ rnd, tone }, N) {
     const cols = Math.round(Math.sqrt(N * 16 / 9)), rows = Math.floor(N / cols), s = 20 / cols;

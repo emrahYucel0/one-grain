@@ -177,4 +177,4 @@ Measured with `npm run perf`, headed Chromium, Intel UHD Graphics (i5-12450H lap
 | `?debug` | Corner readout: tier, grains, DPR, fps, median frame time |
 | `?debug&forceDrop` | Act as if the frame budget were blown, to watch a queued drop |
 | `?parity` | Let a harness drive progress (`window.__V`) and shader time (`window.__T`) |
-| `#magma` … `#you` | Open at that chapter |
+| `#magma` … `#now` | Open at that chapter |

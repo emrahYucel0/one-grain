@@ -14,7 +14,8 @@
     "check:console": "vite build && node scripts/console-gate.mjs",
     "check:data": "node scripts/data-gate.mjs",
     "check:a11y": "node scripts/a11y-check.mjs",
-    "perf": "vite build && node scripts/perf.mjs"
+    "perf": "vite build && node scripts/perf.mjs",
+    "check:text": "node scripts/text-parity.mjs"
   },
   "engines": {
     "node": ">=20"

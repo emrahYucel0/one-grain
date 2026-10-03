@@ -15,6 +15,11 @@ export interface ChapterCopy {
   signature: HTMLElement | null;
   hintMouse: string;
   hintTouch: string;
+  /** a small aside under the text (empty if none) */
+  micro: string;
+  /** clock label for this chapter (years: shown only while resting; prod: always) and its sub-line */
+  clockLabel: string;
+  clockSub: string;
   /** label in the timeline nav */
   navLabel: string;
   final: boolean;
@@ -39,10 +44,13 @@ export function readCopy(story: HTMLElement): Copy {
       const title = text(s.querySelector('h3'));
       chapters.push({
         slug: s.dataset.slug!, act: id, actLabel: label, title,
-        text: final ? '' : text(s.querySelector('p:not([data-hint]):not([data-signature])')),
+        text: final ? '' : text(s.querySelector('p:not([data-hint]):not([data-signature]):not([data-micro])')),
         signature,
         hintMouse: text(s.querySelector('[data-hint="mouse"]')),
         hintTouch: text(s.querySelector('[data-hint="touch"]')),
+        micro: text(s.querySelector('[data-micro]')),
+        clockLabel: s.dataset.clock ?? '',
+        clockSub: s.dataset.clockSub ?? '',
         navLabel: s.dataset.nav ?? title,
         final,
       });
@@ -50,6 +58,9 @@ export function readCopy(story: HTMLElement): Copy {
   }
   const order = chapters.map((c) => c.slug).join(), expected = WORLDS.map((w) => w.slug).join();
   if (order !== expected) throw new Error(`index.html chapters (${order}) do not match story/worlds.ts (${expected})`);
+  WORLDS.forEach((w, i) => {
+    if (w.clock.unit === 'prod' && !chapters[i]!.clockLabel) throw new Error(`chapter "${w.slug}" needs a data-clock label (production time)`);
+  });
   return { chapters, acts };
 }
 

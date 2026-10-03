@@ -68,7 +68,7 @@ try {
   await page.locator('#story a').focus();
   await page.waitForTimeout(3500);
   const sig = await page.evaluate(() => ({ hash: location.hash, mirrored: document.querySelector('#chapter a')?.classList.contains('kbd-focus') }));
-  check('signature link focus → final chapter, ring mirrored', sig.hash === '#you' && sig.mirrored === true, JSON.stringify(sig));
+  check('signature link focus → final chapter, ring mirrored', sig.hash === '#now' && sig.mirrored === true, JSON.stringify(sig));
   await page.close();
 
   // --- reduced motion: a quarter into the first transition the canvas is fading, not morphing

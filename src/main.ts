@@ -56,7 +56,7 @@ function boot(): void {
   // words and instruments
   const chapter = new ChapterView($('chapter'), $('act'), copy, env.touchOnly);
   const nav = new TimelineNav($('timeline'), copy, go);
-  const clock = new ClockView($('time'), $('clock'), $('clockUnit'));
+  const clock = new ClockView($('time'), $('clock'), $('clockUnit'), copy);
   const intro = new Intro($('intro'), $('introHint'));
   const ending = new Ending($('chapter'));
   const marker = new HeroMarker($('marker'), $('markerLabel'));
@@ -75,7 +75,7 @@ function boot(): void {
     updateInteraction(loop.interaction, pointer, { hold, reduced: env.reduced, heroes: loop.heroes, camera: stage.camera, now });
     if (chapter.show(t < .5 ? a : b)) nav.setCurrent(chapter.current);
     chapter.setOpacity(chapterOpacity(tr, t));
-    clock.update(a, b, eg);
+    clock.update(a, b, eg, t, tr);
     cut.style.opacity = cutOpacity(tr, t).toFixed(3);
     intro.update(v);
     ending.update(hold === LAST, now);

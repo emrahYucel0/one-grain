@@ -8,6 +8,7 @@ export class ChapterView {
   private readonly title: HTMLElement;
   private readonly body: HTMLElement;
   private readonly hint: HTMLElement;
+  private readonly micro: HTMLElement;
   private readonly act: HTMLElement;
   private readonly copy: Copy;
   private readonly touchOnly: boolean;
@@ -18,8 +19,9 @@ export class ChapterView {
   constructor(el: HTMLElement, act: HTMLElement, copy: Copy, touchOnly: boolean) {
     this.el = el; this.act = act; this.copy = copy; this.touchOnly = touchOnly;
     this.title = el.querySelector('h2')!;
-    this.body = el.querySelector('p:not(.hint)')!;
+    this.body = el.querySelector('p:not(.hint):not(.micro)')!;
     this.hint = el.querySelector('.hint')!;
+    this.micro = el.querySelector('.micro')!;
   }
 
   /** Shows chapter i (no-op if already shown). Returns true when it changed. */
@@ -42,6 +44,8 @@ export class ChapterView {
     const hint = this.touchOnly ? c.hintTouch : c.hintMouse;
     this.hint.textContent = hint;
     this.hint.style.display = hint ? '' : 'none';
+    this.micro.textContent = c.micro;
+    this.micro.style.display = c.micro ? '' : 'none';
     return true;
   }
 

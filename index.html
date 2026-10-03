@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>One Grain · blockout v5</title>
+<title>One Grain · blockout v6</title>
 <link rel="icon" href="data:,">
 <meta name="description" content="The story of one grain of sand, from magma to the screen you are reading this on.">
 <script>if ('noModule' in HTMLScriptElement.prototype) document.documentElement.classList.add('js');</script>
@@ -15,14 +15,10 @@
 <div class="marker" id="marker" aria-hidden="true"><span id="markerLabel">this grain</span></div>
 
 <header class="hud">
-  <div class="brand" aria-hidden="true">One Grain<span>blockout v5</span></div>
+  <div class="brand" aria-hidden="true">One Grain<span>blockout v6</span></div>
   <div class="hud-side">
     <div class="time u-years" id="time" aria-hidden="true"
-      data-years="years" data-years-approx="≈ " data-million="million"
-      data-days="Day {n}" data-days-unit="of production"
-      data-ns="{n} ns" data-ns-unit="one clock tick"
-      data-ms="{n} ms" data-ms-unit="one frame on your screen"
-      data-now="Now"><b id="clock">0</b><span id="clockUnit">years</span></div>
+      data-years="years" data-approx="≈ " data-million="million" data-now="Now"><b id="clock">0</b><span id="clockUnit">years</span></div>
     <button class="sound" id="sound" type="button" aria-pressed="false"
       data-on="Sound on" data-off="Sound off" data-unavailable="Sound unavailable">Sound off</button>
   </div>
@@ -35,7 +31,7 @@
 
 <div class="story" aria-hidden="true">
   <p class="act" id="act"></p>
-  <div class="chapter" id="chapter"><h2></h2><p></p><p class="hint" id="hint"></p></div>
+  <div class="chapter" id="chapter"><h2></h2><p></p><p class="hint" id="hint"></p><p class="micro" id="micro"></p></div>
 </div>
 <nav class="timeline" id="timeline" aria-label="Chapters" data-go="Go to {title}" data-go-final="Go to the end"></nav>
 
@@ -43,7 +39,9 @@
 <p class="sr-only" id="status" role="status" data-format="{title}. {act}, chapter {n} of {total}."></p>
 
 <!-- The story itself. Read by the experience, read aloud by assistive tech, and the
-     whole page when WebGL2 is not available. -->
+     whole page when WebGL2 is not available.
+     data-clock: what the clock reads in this chapter (years chapters: shown only while resting;
+     production chapters: always). data-clock-sub: the line under it. -->
 <main id="story">
   <h1>One Grain</h1>
 
@@ -51,75 +49,78 @@
     <h2>Nature</h2>
     <section data-slug="magma" aria-labelledby="ch-magma">
       <h3 id="ch-magma">Magma</h3>
-      <p>Deep underground, molten rock cools very slowly. Inside it, a quartz crystal begins to grow.</p>
+      <p>Deep underground, molten rock cools slowly. Quartz begins to crystallize.</p>
     </section>
-    <section data-slug="granite" aria-labelledby="ch-granite">
+    <section data-slug="granite" data-clock="hundreds of thousands" aria-labelledby="ch-granite">
       <h3 id="ch-granite">Granite</h3>
-      <p>Over millions of years the rock is pushed upward. The crystal is now part of a mountain.</p>
+      <p>The crystal is locked inside granite, waiting for uplift and erosion.</p>
     </section>
     <section data-slug="river" aria-labelledby="ch-river">
       <h3 id="ch-river">River</h3>
-      <p>Frost cracks the rock and sets it free. The river carries it downstream, tumbling and chipping as it goes.</p>
+      <p>Weathering frees the grain. Running water carries it downstream.</p>
     </section>
     <section data-slug="coast" aria-labelledby="ch-coast">
       <h3 id="ch-coast">Coast</h3>
-      <p>Waves throw it onto the beach and pull it back, over and over.</p>
+      <p>Waves sort and tumble it, moving it along the shore.</p>
     </section>
     <section data-slug="desert" aria-labelledby="ch-desert">
       <h3 id="ch-desert">Desert</h3>
-      <p>Wind drives it inland. Bouncing across the dunes, it is worn round and frosted.</p>
+      <p>Wind lifts it in short hops, rounding and frosting its surface.</p>
       <p data-hint="mouse" hidden>Move your cursor across the dunes.</p>
       <p data-hint="touch" hidden>Tap the dunes.</p>
     </section>
     <section data-slug="again" aria-labelledby="ch-again">
       <h3 id="ch-again">Again</h3>
-      <p>Buried, pressed into stone, lifted and worn away, again and again, until it settles in a bed of almost pure quartz.</p>
+      <p>Buried. Cemented into stone. Lifted. Freed. Buried again, until heat and pressure turn the sandstone into quartzite.</p>
     </section>
   </div>
 
   <div class="act-group" data-act="industry">
     <h2>Industry</h2>
-    <section data-slug="quarry" aria-labelledby="ch-quarry">
+    <section data-slug="quarry" data-clock="Day 1" data-clock-sub="of production" aria-labelledby="ch-quarry">
       <h3 id="ch-quarry">Quarry</h3>
-      <p>One day, a machine digs that bed open.</p>
+      <p>The cycle breaks. Silica-rich rock is taken from the ground.</p>
     </section>
-    <section data-slug="furnace" aria-labelledby="ch-furnace">
+    <section data-slug="furnace" data-clock="Days later" aria-labelledby="ch-furnace">
       <h3 id="ch-furnace">Furnace</h3>
-      <p>In an arc furnace far hotter than lava, carbon pulls the oxygen away. What is left is silicon.</p>
+      <p>Quartz meets carbon at extreme heat. Oxygen leaves; silicon remains.</p>
     </section>
-    <section data-slug="purity" aria-labelledby="ch-purity">
+    <section data-slug="purity" data-clock="Weeks later" aria-labelledby="ch-purity">
       <h3 id="ch-purity">Purity</h3>
-      <p>It is purified again and again, until fewer than one atom in a billion is anything else.</p>
+      <p>Converted, distilled, deposited again. The silicon becomes hyperpure.</p>
     </section>
-    <section data-slug="crystal" aria-labelledby="ch-crystal">
+    <section data-slug="crystal" data-clock="Weeks later" aria-labelledby="ch-crystal">
       <h3 id="ch-crystal">Crystal</h3>
-      <p>From the melt, one flawless crystal is slowly pulled upward and turned. The grain is part of a crystal again.</p>
+      <p>Melted above 1,414 °C, it grows upward from a single seed.</p>
     </section>
-    <section data-slug="wafer" aria-labelledby="ch-wafer">
+    <section data-slug="wafer" data-clock="Weeks later" aria-labelledby="ch-wafer">
       <h3 id="ch-wafer">Wafer</h3>
-      <p>The crystal itself is cut, into discs about as thick as a credit card, then polished to a mirror.</p>
+      <p>The ingot is ground, sliced, etched, and polished into mirror-flat wafers.</p>
     </section>
-    <section data-slug="light" aria-labelledby="ch-light">
+    <section data-slug="light" data-clock="Months later" aria-labelledby="ch-light">
       <h3 id="ch-light">Light</h3>
-      <p>On one of those discs, patterns are printed with light, layer upon layer.</p>
+      <p>Light projects a pattern onto a photosensitive layer.</p>
     </section>
   </div>
 
   <div class="act-group" data-act="now">
     <h2>Now</h2>
-    <section data-slug="chip" aria-labelledby="ch-chip">
+    <section data-slug="chip" data-clock="≈ 2–4 months" aria-labelledby="ch-chip">
       <h3 id="ch-chip">Chip</h3>
-      <p>Now the grain is one of billions of tiny switches, wired in perfect order.</p>
+      <p>Layer by layer, patterns become transistors and the connections between them.</p>
       <p data-hint="mouse" hidden>Move your cursor over the circuit.</p>
       <p data-hint="touch" hidden>Tap the circuit.</p>
+      <p class="micro" data-micro>Millions of years to arrive. Nanoseconds to act.</p>
     </section>
-    <section data-slug="glass" aria-labelledby="ch-glass">
-      <h3 id="ch-glass">Glass</h3>
-      <p>Their signals become light, and the light passes through glass. The glass is sand too.</p>
+    <section data-slug="display" data-clock="≈ 2–4 months" aria-labelledby="ch-display">
+      <h3 id="ch-display">Display</h3>
+      <p>Silicon computes. Pixels turn its signals into light.</p>
+      <p class="micro" data-micro>Even the glass in front of the pixels is mostly silica.</p>
     </section>
-    <section data-slug="you" data-final data-nav="You" aria-labelledby="ch-you">
-      <h3 id="ch-you">You are looking at sand right now.</h3>
+    <section data-slug="now" data-final data-nav="You" aria-labelledby="ch-now">
+      <h3 id="ch-now">You are looking at sand right now.</h3>
       <p data-signature>Made by <a href="https://yucelemrah.com">Emrah Yücel</a>.</p>
+      <p class="micro" data-micro>One plausible journey; real timescales vary widely.</p>
     </section>
   </div>
 </main>
