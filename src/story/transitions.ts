@@ -9,7 +9,7 @@ export const TRANSITIONS: readonly TransitionDef[] = [
   // carry: river → coast
   { g: 2, cam: 'track', len: 1.0, k: 1.2, dir: [1, 0, 0], hero: [[4, 0, 0], [-4, 0, 0]] },
   // drift: coast → desert, water hands the grain to the wind
-  { g: 17, cam: 'drift', len: 1.5, dir: [.93, 0, -.37], hero: [[1, .5, 1], [-3, 3, 0]] },
+  { g: 17, cam: 'drift', len: 1.8, dir: [.93, 0, -.37], hero: [[1, .5, 1], [-3, 3, 0]] },
   // bury: desert → again
   { g: 4, cam: 'sink', len: 1.4, k: 6, span: .5, hero: [[0, -2, 0], [0, 6, 0]] },
   // cut: again → quarry, the interlude ("One day,")

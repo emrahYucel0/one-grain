@@ -44,14 +44,19 @@ vec3 travel(vec4 A, vec4 B, vec3 pa, vec3 pb, vec3 R, out float e, out float arc
   else if (uStyle == 13) { p.z += arc * 1.5; }                                                                                                                            // raster
   else if (uStyle == 15) { p.x += sign(pa.x - uHeroA.x + .001) * arc * (1.5 + 2.5 * R.y) * uK; p.y -= arc * arc * (2. + 4. * R.z); }                                  // crack
   else if (uStyle == 16) { p.y += arc * .6 * step(.01, length(pb - pa)); }                                                                                                // expose
-  else if (uStyle == 17) { // drift: the carrying medium changes from water to wind
-    float wnd = smoothstep(.25, .7, e), grow = blend(.12, 1., smoothstep(.45, 1., e));
-    vec3 wave = vec3(0., sin(e * 9. + pa.x * .5) * .25, sin(e * 6.2832 + R.x * 6.) * 1.4) * arc * (1. - wnd);
-    vec3 wind = uDir * arc * (2. + 7. * R.y) * wnd + vec3(0., sin(dot(p.xz, vec2(-uDir.z, uDir.x)) * 5. + e * 20.) * .15 * arc, 0.);
-    p = vec3(p.x, blend(pa.y, pb.y * grow + sin(pb.x * 2.5 + pb.z) * .08 * (1. - grow), e), p.z) + wave + wind;
-    float fa = floor(A.w + .001);
-    // sea grains (behaviour 2) recede and thin out as the water goes
-    if (fa > 1.5 && fa < 2.5) { p.z += smoothstep(0., .35, e) * 3. * (1. - wnd); m.size = mix(1., .45, hump(smoothstep(0., .6, e), 3.14159)); }
+  else if (uStyle == 17) { // drift: the water recedes, the wet sand dries, wind ripples appear and grow into dunes
+    float fa = floor(A.w + .001), water = step(1.5, fa) * step(fa, 2.5);   // sea grains (behaviour 2)
+    float rec = smoothstep(0., .3, uT), rip = smoothstep(.22, .45, uT) * (1. - smoothstep(.8, 1., uT));
+    float stag = .12 * clamp(dot(pb - uHeroB, uDir) / 30. + .5, 0., 1.);   // dunes form downwind first
+    float grow = smoothstep(.5, .88, uT - stag);
+    vec3 cp = pa;
+    cp.z += water * rec * 5.; cp.y -= water * rec * .4;                     // the water recedes and drains
+    cp.y += (1. - water) * sin(dot(cp.xz, uDir.xz) * 7. - uT * 18. * uMotion) * .07 * rip;   // wind ripples
+    vec3 tgt = vec3(pb.x, pb.y * smoothstep(.55, 1., uT) + sin(dot(pb.xz, uDir.xz) * 7. - uT * 18. * uMotion) * .07 * (1. - grow) * rip, pb.z);
+    p = blend(cp, tgt, grow) + uDir * hump(grow, 3.14159) * (1. + 2.5 * R.y) * uMotion;   // ripples grow into dunes
+    e = grow; arc = hump(grow, 3.14159) * .5 * uMotion;
+    m.darken = (1. - water) * smoothstep(-3., 0., pa.z) * rec * (1. - smoothstep(.3, .55, uT)) * .45;   // wet sand, drying
+    m.size = blend(1. - water * rec * .85, 1., grow);
   }
   // the styles below take over the whole move: they replace p, e and arc computed above
   if (uStyle == 18) { // break: blocks crack apart, tumble into the hopper, heat up as they feed the furnace
