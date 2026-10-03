@@ -43,6 +43,7 @@ export default tseslint.config(
   },
   {
     files: ['scripts/**/*.mjs', 'eslint.config.js', 'vite.config.ts'],
-    languageOptions: { globals: { ...globals.node } },
+    // harness scripts also contain callbacks that run inside the page (page.evaluate)
+    languageOptions: { globals: { ...globals.node, ...globals.browser } },
   },
 );
