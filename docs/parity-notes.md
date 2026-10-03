@@ -2,15 +2,17 @@
 
 The port follows a behavioural spec: `reference/blockout-v5.html` in Phase 1, and
 `reference/blockout-v6.html` since Phase 2 (content, clock semantics, four new transitions,
-new camera moves; world generators unchanged). This page lists every place where the port is
-not the reference, and why. It also lists what was verified and how, and what was not.
+new camera moves; world generators unchanged). Phase 2.1 fixed v6's rest-state bugs on purpose.
+This page lists every place where the port is not the reference, and why. It also lists what
+was verified and how, and what was not.
 
 ## How parity was measured
 
 | Check | Result | How |
 |---|---|---|
 | Grain data | **Bit-identical** to v6 and to v5 at 90 000 and 36 000 grains per world | `npm run check:data` compares per-world digests of the packed texture and all 15 hero positions against an instrumented copy of each reference |
-| Rendered frames vs v6 | 39/39 compared positions at 0.000 % differing pixels: 15 holds, 13 transition midpoints, 2 interaction shots, and t = 0.2 / 0.45 / 0.75 in drift, break and separate. The 4 purity → crystal shots differ on purpose (below) | `npm run parity`: same viewport, grain count, frozen shader time and scroll progress in both pages; real GPU |
+| Rendered frames vs v6 | 30/30 compared positions at 0.000 % differing pixels. 13 positions differ on purpose and are listed below (the Phase 2 reframe and the Phase 2.1 rest-state fixes) | `npm run parity`: 15 holds, 14 transition midpoints, 2 interaction shots, and t = 0.2 / 0.45 / 0.75 in the four v6 transitions; same viewport, grain count, frozen shader time and scroll progress in both pages; real GPU |
+| Rest states | 39/39 identical, byte for byte: for chapters 2–14, the previous transition at t = 1 equals the next at t = 0, which equals the hold as scrolled into and, with the hold's lean, the hold screenshot | `npm run check:seams` |
 | Text and clock vs v6 | 85/85 positions identical: clock value, sub-line, unit class, label state, interlude hiding, act, title, body, micro line | `npm run check:text`: every hold and t = 0.1 / 0.3 / 0.5 / 0.7 / 0.9 in every transition |
 | Reverse scrub | 12/12: scrolled backwards, drift, break, separate and grow at t = 0.2 / 0.45 / 0.75 render exactly as scrolled forwards (0.000 %, same settled progress) | `npm run check:reverse`: real scrolling through ScrollTrigger, snapping off |
 | Noise floor | The reference compared with itself: 0.015–0.019 % (0.195 % at the quarry hold), measured in Phase 1 with both pages in one window | Since Phase 2 each page has its own window (a background tab has its frames throttled), and the residuals are gone: 0.000 % everywhere, including the hover shots |
@@ -34,31 +36,65 @@ The port gives that transition a *subject* (`story/transitions.ts`, applied in
   shader);
 - the camera's aim turns towards it with weight `smoothstep(0, .2, t) · (1 − smoothstep(.85, 1, t))`.
 
-The weight is 0 at both ends, so the purity and crystal holds frame exactly as in v6 (both
-0.000 % in the parity run) and there is no seam. Camera position and the orbit path are
+The weight is 0 at both ends, so the reframe leaves the purity and crystal holds exactly
+as they were, and there is no seam. (The purity hold's 0.16 % difference since Phase 2.1 comes
+from fix 5, not from the reframe.) Camera position and the orbit path are
 unchanged; only the aim moves. Under reduced motion the move is a cross-fade, so the reframe
 never shows.
 
-Shots that differ from v6 because of it, and only these:
+Shots that differ from v6 because of it: 18 (purity → crystal midpoint) and 41, 42, 43 (t = 0.2,
+0.45, 0.75). In Phase 2 they measured 7.20, 23.42, 9.52 and 4.92 %. Since Phase 2.1 they also
+carry fix 5; current values are in the Phase 2.1 table below.
 
-| Parity shot | Diff vs v6 |
-|---|---|
-| 18 · purity → crystal midpoint | 7.20 % |
-| 41 · purity → crystal, t = 0.2 | 23.42 % |
-| 42 · purity → crystal, t = 0.45 | 9.52 % |
-| 43 · purity → crystal, t = 0.75 | 4.92 % |
+## Phase 2.1: rest-state fixes (intentional deviations from v6)
+
+**Rule.** At t = 0 a transition must reproduce the previous world exactly, and at t = 1 the
+next world exactly. No transition may leave any trace (position, size or colour) on a resting
+chapter. A hold renders as the next transition at t = 0, so any trace there shows on the
+chapter itself. `npm run check:seams` enforces the rule.
+
+Before Phase 2.1 the seam check failed at every chapter. Three were large (furnace 75.8 %,
+purity 46.3 %, crystal 0.27 %); the others were float-level (24–1 224 scattered pixels).
+
+| Fix | Transition | v6 | Port |
+|---|---|---|---|
+| 1 | separate (19) | the vapour sway was not scaled by `rise`, so it displaced every grain at t = 0 | sway × `rise` |
+| 2 | separate (19) | heat `(1 − rise) · .6`: 0.6 at t = 0, tinting the resting furnace | `.4 · sin(π · rise)`: zero at both ends |
+| 3 | separate (19) | `dep = smoothstep(.55, 1., uT − (1 − R.y) · .08)` stopped short of 1 for delayed grains at t = 1 | ramp ends at .92, so every grain arrives |
+| 4 | break (18) | heat ended at ~0.5 at t = 1 | `smoothstep(.45, .85, tb) · (1 − smoothstep(.85, 1., tb))` |
+| 5 | grow (20) | the inclusion threshold was the rise offset (11.5 at t = 0), so the seed tip was already partly included during the purity hold, and grains at y = 0 only ~95 % at t = 1 | offset stays `11.5 · (1 − grow)`; inclusion uses `mix(12., −.4, grow)`: nothing at t = 0, everything at t = 1 |
+| exact ends | all | GPUs evaluate `mix(a, b, 1.)` as `a + (b − a)` and `sin(π · 1.)` as ~1e-7; the camera's lerps and orbit drift the same way. This left a float-level trace at every chapter | blends and arcs return exactly the endpoint at t = 0 and 1 (`blend`, `hump` in `shaders/transitions.glsl`); dive and break return `pa` where their formula mathematically equals it; orbit, look-at and grain-size lerps end exactly on world B. Between the ends every formula is v6's |
+
+There is deliberately no blanket "t = 0 → world A" clamp. It would make the seam check pass
+while hiding real traces like the separate sway.
+
+**Positions that now differ from v6, and only these** (the purity → crystal rows also carry
+the Phase 2 reframe):
+
+| Parity shot | Diff vs v6 | Cause |
+|---|---|---|
+| 14 · quarry → furnace midpoint | 0.22 % | fix 4 |
+| 37 · quarry → furnace, t = 0.75 | 14.56 % | fix 4 |
+| 15 · furnace hold | 50.80 % | fixes 1, 2 |
+| 16 · furnace → purity midpoint | 0.04 % | fixes 1–3 |
+| 38 · furnace → purity, t = 0.2 | 32.68 % | fixes 1–3 |
+| 39 · furnace → purity, t = 0.45 | 0.78 % | fixes 1–3 |
+| 40 · furnace → purity, t = 0.75 | 21.59 % | fixes 1–3 |
+| 17 · purity hold | 0.16 % | fix 5 |
+| 18 · purity → crystal midpoint | 7.35 % | reframe, fix 5 |
+| 41 · purity → crystal, t = 0.2 | 23.44 % | reframe, fix 5 |
+| 42 · purity → crystal, t = 0.45 | 9.58 % | reframe, fix 5 |
+| 43 · purity → crystal, t = 0.75 | 4.92 % | reframe, fix 5 |
+| 34 · coast → desert, t = 0.75 | 0.001 % (13 px) | exact ends: grains that have already finished their move sit exactly at rest instead of a float ulp off |
+
+**Cleanup.** Grain styles 1 (fall), 3 (wind), 6 (pour), 7 (heat), 8 (spiral) and the camera
+moves fly, pour and heat were removed: no transition used them. With them went the `uAxis`
+uniform, which only spiral read. They live in git history.
 
 ## Phase 2: v6 behaviour ported as-is (worth knowing)
 
-- **A hold renders with the next transition's style at t = 0.** For most styles that is
-  invisible. For *separate* it is not: the furnace hold carries v6's residual heat tint and a
-  slight sideways shimmer. For *grow*, the few crystal grains at the very tip of the seed cone
-  already sit partly at the interface during the purity hold. Both are in v6 and are kept.
 - **The final chapter's nav label is still "You"** (aria-label "Go to the end"), as in v6;
   only its slug changed to `now`. Display's label follows its new title.
-- **Unused since v6, kept:** grain styles 3 (wind), 6 (pour), 7 (heat) and 8 (spiral) in the
-  shader, and the fly, pour and heat camera moves. Nothing references them; they are cheap to
-  keep and remove later.
 - **Clock class order.** As in v6, a change of unit resets the clock's classes in the same
   frame that the interlude hides it; the next frame re-applies the hiding, behind a 0.3 s
   opacity transition, so it never shows.

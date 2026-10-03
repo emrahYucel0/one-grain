@@ -5,7 +5,8 @@ it on. Fifteen worlds, each a cloud of grains computed on the GPU; scrolling car
 grains from one world to the next.
 
 The behavioural spec is `reference/blockout-v6.html` (Phase 2: content v1, clock semantics,
-causal transitions). Phase 1 ported `blockout-v5.html`, which is kept alongside. The parity
+causal transitions), with its rest-state bugs fixed on purpose (Phase 2.1: a transition reproduces
+its two worlds exactly at t = 0 and 1). Phase 1 ported `blockout-v5.html`, which is kept alongside. The parity
 evidence is in `parity/`, and `docs/parity-notes.md` lists everything that is not identical,
 with the reason, including the one intentional change beyond v6.
 
@@ -26,6 +27,7 @@ npm run lint
 | `npm run parity` | Screenshots of the reference next to the port at every hold, every transition midpoint and three more points in each v6 transition, plus pixel diffs → `parity/` |
 | `npm run check:text` | Overlay text and clock state match the reference at every hold and five points in every transition |
 | `npm run check:reverse` | Scrolling backwards through drift, break, separate and grow renders exactly what scrolling forwards does |
+| `npm run check:seams` | No transition leaves a trace on a resting chapter: the previous transition at t = 1 and the next at t = 0 render byte-identical frames, equal to the hold |
 | `npm run check:console` | Zero console warnings or errors in dev and build, Chromium and Firefox |
 | `npm run check:a11y` | axe WCAG 2.1 AA, keyboard chapter steps, status line, focus ring, reduced motion, no-WebGL2 and no-JS fallbacks |
 | `npm run perf` | Frame times at every position, headed, on this machine's GPU |
@@ -187,6 +189,6 @@ Measured with `npm run perf`, headed Chromium, Intel UHD Graphics (i5-12450H lap
 | `?tier=low\|mid\|high` | Force a tier (also turns off the automatic drop) |
 | `?debug` | Corner readout: tier, grains, DPR, fps, median frame time |
 | `?debug&forceDrop` | Act as if the frame budget were blown, to watch a queued drop |
-| `?parity` | Let a harness drive progress (`window.__V`) and shader time (`window.__T`); the rendered progress is published as `window.__progress` |
+| `?parity` | Let a harness drive progress (`window.__V`) and shader time (`window.__T`), or render a transition point directly (`window.__AT = { tr, t, lean }`); the rendered progress is published as `window.__progress` |
 | `?nosnap` | Scrolling does not settle on chapters, so a position mid-transition can be held |
 | `#magma` … `#now` | Open at that chapter |

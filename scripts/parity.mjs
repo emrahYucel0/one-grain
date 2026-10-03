@@ -22,6 +22,21 @@ const SETTLE_MS = 1600;      // CSS: clock font-size .5 s, punch .7 s
 const ENDING_MS = 7500;      // final chapter: title at 1.2 s, signature at 5.5 s, 1.2 s fades
 const REVIEW_PCT = 2;
 
+// Positions where the port differs from the reference on purpose (docs/parity-notes.md).
+// Transitions with a camera subject (the purity → crystal reframe) are added automatically.
+const DEVIATIONS = {
+  '14-tr-quarry-furnace': 'break: heat fades out by t = 1 (fix 4)',
+  '37-tr-quarry-furnace-t75': 'break: heat fades out by t = 1 (fix 4)',
+  '15-hold-furnace': 'separate leaves no sway and no heat at rest (fixes 1, 2)',
+  '16-tr-furnace-purity': 'separate: sway, heat and deposit fixed (fixes 1–3)',
+  '38-tr-furnace-purity-t20': 'separate: sway, heat and deposit fixed (fixes 1–3)',
+  '39-tr-furnace-purity-t45': 'separate: sway, heat and deposit fixed (fixes 1–3)',
+  '40-tr-furnace-purity-t75': 'separate: sway, heat and deposit fixed (fixes 1–3)',
+  '17-hold-purity': 'grow: the seed tip no longer intrudes on the purity hold (fix 5)',
+  '34-tr-coast-desert-t75': 'exact ends: grains that have finished their move sit exactly at rest',
+};
+const SUBJECT_REASON = 'purity → crystal reframe, plus the grow inclusion fix (fix 5)';
+
 // Story layout, straight from the source (no copy of the numbers here).
 const vite = await createServer({ server: { middlewareMode: true }, appType: 'custom', logLevel: 'error' });
 const { SEGMENTS, SNAP_POINTS, TOTAL, transitionMidpoint } = await vite.ssrLoadModule('/src/timeline/segments.ts');
@@ -55,6 +70,11 @@ for (const seg of SEGMENTS.filter((x) => x.type === 'tr' && NEW_STYLES.has(TRANS
       v: (seg.start + seg.len * t) / TOTAL, wait: SETTLE_MS, intentional: !!tr.subject,
     });
   }
+}
+
+for (const s of [...shots, ...hover, ...extra]) {
+  if (DEVIATIONS[s.id]) { s.intentional = true; s.reason = DEVIATIONS[s.id]; }
+  else if (s.intentional) s.reason = SUBJECT_REASON;
 }
 
 await rm(OUT, { recursive: true, force: true });
@@ -96,7 +116,7 @@ try {
 }
 
 // ---------- report ----------
-const status = (r) => (r.intentional ? 'intentional change' : r.pct <= REVIEW_PCT ? '✓' : 'review');
+const status = (r) => (r.intentional ? `intentional: ${r.reason}` : r.pct <= REVIEW_PCT ? '✓' : 'review');
 const compared = results.filter((r) => !r.intentional), intentional = results.filter((r) => r.intentional);
 const md = [
   `# Parity checklist: blockout ${REFERENCES[0]} → port`,
