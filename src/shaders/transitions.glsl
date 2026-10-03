@@ -76,7 +76,7 @@ vec3 travel(vec4 A, vec4 B, vec3 pa, vec3 pb, vec3 R, out float e, out float arc
     p = mix(up, pb, dep);
     e = dep; arc = sin(3.14159 * uT) * uMotion;
     m.whiten = sep * (1. - impure) * (1. - dep); m.darken = impure * sep * (1. - dep);
-    m.size = mix(1., .25, impure * sep * (1. - dep)); m.heat = (1. - rise) * .6;
+    m.size = mix(1., .25, impure * sep * (1. - dep)); m.heat = .4 * sin(3.14159265 * rise);
   }
   else if (uStyle == 20) { // grow: rods melt into the pool, the crystal rises out of it from the seed down
     float melt = smoothstep(0., .35, uT - R.x * .08);
