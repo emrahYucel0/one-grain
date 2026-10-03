@@ -6,6 +6,7 @@ import type { V3 } from './shapes';
  * 0 still · 1 river · 2 sea · 3 hop · 4 fall · 5 magma · 7 spark · 8 switch · 9 sub-pixel
  * 10 wind streamer · 11 pressure · 12 conveyor · 13 convection · 14 deposition
  * 15 turning crystal · 17 light ray · 18 wire pulse · 19 clock tree
+ * 22–24 sand minerals of the final (from the red, green, blue sub-pixels)
  */
 
 /** Positions (xyz per grain) and behaviour.tone per grain. */

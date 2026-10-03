@@ -30,7 +30,7 @@ export function materialOf(slug: string, y: number, w: number): MaterialId {
     case 'wafer': case 'light': return y < -.3 ? MATERIAL.mineral : MATERIAL.silicon; // saw dust lies below the discs (y ≤ −.4)
     case 'chip': return w > .85 && w < .95 ? MATERIAL.metal : MATERIAL.silicon; // vias (.9)
     case 'display': return MATERIAL.glass;
-    case 'now': return MATERIAL.light;
+    case 'now': return MATERIAL.mineral; // sand, mineral families included
     default: return MATERIAL.mineral;
   }
 }

@@ -8,7 +8,7 @@ float emission(float fl, float tn, float tt, float rays, float pix){
   else if (fl > 12.5 && fl < 13.5) em = 1.7;                                                   // melt
   else if (fl > 16.5 && fl < 17.5) em = 2. * rays;                                             // light rays
   else if (fl > 17.5 && fl < 18.5) em = .2 + 2.6 * smoothstep(.88, 1., fract(tn * 4. - tt * .6)); // signal pulses
-  else if (fl > 18.5) em = .3 + 2. * smoothstep(.82, 1., fract(tt * .5 - tn * 1.5));          // clock tree
+  else if (fl > 18.5 && fl < 19.5) em = .3 + 2. * smoothstep(.82, 1., fract(tt * .5 - tn * 1.5)); // clock tree
   else if (fl > 8.5 && fl < 9.5) em = 1.1 * pix;                                               // sub-pixels
   else if (fl > 7.5 && fl < 8.5) em = 1.3 * step(.6, tn) * step(.5, fract(tt * .5 + floor(tn * 8.) / 8.)); // switching gates
   return em;

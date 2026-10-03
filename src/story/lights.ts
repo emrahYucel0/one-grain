@@ -54,5 +54,6 @@ export const LIGHTS: Readonly<Record<string, LightRig>> = {
   chip: { key: [[-.4, .85, .3], [.45, .5, .62]], sky: [.02, .025, .035], ground: [.01, .01, .012], rim: [.12, .14, .2], point: NONE, spec: .55, shadow: 16 },
   // brighter sub-pixels
   display: { key: [[.3, .6, .75], [.3, .32, .38]], sky: [.02, .02, .03], ground: [.01, .01, .01], rim: [.05, .05, .06], point: NONE, spec: .2, shadow: 16, pix: 1.8 },
-  now: { key: [[0, 0, 1], [0, 0, 0]], sky: [0, 0, 0], ground: [0, 0, 0], rim: [0, 0, 0], point: NONE, spec: 0, shadow: 16 },
+  // grazing light across the sand
+  now: { key: [[-.85, .3, .42], [1.3, 1.14, .92]], sky: [.07, .065, .06], ground: [.035, .03, .025], rim: [.12, .1, .08], point: NONE, spec: .28, shadow: 16, dof: .6 },
 };

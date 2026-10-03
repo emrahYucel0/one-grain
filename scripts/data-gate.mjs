@@ -16,8 +16,8 @@ const CASES = [{ n: 90000, width: 1440 }, { n: 36000, width: 700 }];
 const FINAL = 14;
 /** The worlds each reference is the baseline for. */
 const inScope = (version, i) => version === 'v15' || i < FINAL;
-/** Expected to differ for now: the new final is ported in Phase 4b, delta 7. Reported, not failed. */
-const PENDING = { v15: [FINAL] };
+/** Worlds expected to differ for now (reported, not failed). None at present. */
+const PENDING = {};
 const pending = (version, i) => (PENDING[version] ?? []).includes(i);
 const counts = (version, i) => inScope(version, i) && !pending(version, i);
 

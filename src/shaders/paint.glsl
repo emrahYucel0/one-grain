@@ -7,7 +7,11 @@ vec3 paint(vec4 P, vec3 lo, vec3 hi, vec3 R){
   else if (f > 6.5 && f < 7.5) c = vec3(1., .8, .45) * (1.2 - fract(t * (.3 + .4 * R.x) + R.y * 10.));
   else if (f > 7.5 && f < 8.5) { vec3 base = mix(vec3(.42, .47, .55), vec3(.7, .76, .84), R.y * .5); c = mix(base, vec3(.98, .74, .42), step(.6, tn) * step(.5, fract(t * .5 + floor(tn * 8.) / 8.)) * .75); }
   else if (f > 17.5 && f < 18.5) { float pulse = smoothstep(.88, 1., fract(tn * 4. - t * .6)); c = mix(vec3(.62, .38, .2), vec3(1.2, 1.05, .8), pulse); }
-  else if (f > 18.5) { float ring = smoothstep(.82, 1., fract(t * .5 - tn * 1.5)); c = vec3(.82, .64, .32) + vec3(1., .88, .6) * ring * .9; }
+  else if (f > 18.5 && f < 19.5) { float ring = smoothstep(.82, 1., fract(t * .5 - tn * 1.5)); c = vec3(.82, .64, .32) + vec3(1., .88, .6) * ring * .9; }
+  else if (f > 21.5 && f < 24.5) { // sand minerals, each family keeping a hint of the sub-pixel it came from
+    vec3 base = mix(vec3(.44, .33, .22), vec3(.9, .8, .64), tn);
+    c = base * (f < 22.5 ? vec3(1.08, .94, .88) : f < 23.5 ? vec3(.98, 1.02, .9) : vec3(.94, .97, 1.04));
+  }
   else if (f > 8.5 && f < 9.5) c = tn < .33 ? vec3(.72, .34, .3) : tn < .66 ? vec3(.38, .63, .42) : vec3(.3, .44, .72);
   else if (f > 11.5 && f < 12.5) c = hi * .9;
   else if (f > 12.5 && f < 13.5) c = mix(vec3(.8, .3, .1), vec3(1., .78, .4), tn) * (.9 + .15 * sin(t * 1.5 + R.x * 20.));
