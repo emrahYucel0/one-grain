@@ -1,0 +1,97 @@
+@import '@fontsource-variable/archivo/wdth.css';
+
+/* ---------- ported from reference/blockout-v5.html (keep in sync for parity) ---------- */
+:root{
+  --stage:#d3d7d2;--ink:#13201e;--muted:#4a5754;--rule:rgba(19,32,30,.25);
+  color-scheme:light dark;box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--stage:#0d181c;--ink:#ece3d3;--muted:#8d9d99;--rule:rgba(236,227,211,.22)}}
+:root[data-theme="dark"]{--stage:#0d181c;--ink:#ece3d3;--muted:#8d9d99;--rule:rgba(236,227,211,.22)}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*,*::before,*::after{box-sizing:border-box}
+body{margin:0;background:var(--stage);color:var(--ink);font-family:"Archivo Variable","Archivo",system-ui,-apple-system,"Segoe UI",sans-serif;font-size:1.0625rem;line-height:1.5;-webkit-font-smoothing:antialiased}
+#scene{position:fixed;top:0;left:0;width:100%;height:100%;display:block;z-index:0}
+#track{height:2000vh}
+.cut{position:fixed;inset:0;z-index:4;background:#06090a;color:#ece3d3;display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none}
+.cut p{margin:0;font-weight:800;font-stretch:125%;font-size:clamp(2.4rem,7vw,6rem)}
+.hint{margin-top:.6rem !important;color:var(--ink) !important;font-size:.9rem}
+@media (hover:none){.hint{display:none}}
+.scrim{position:fixed;left:0;right:0;bottom:0;height:42vh;z-index:2;pointer-events:none;background:linear-gradient(to top,var(--stage) 8%,transparent)}
+
+.hud{position:fixed;top:0;left:0;right:0;z-index:3;display:flex;justify-content:space-between;align-items:flex-start;
+  padding:calc(env(safe-area-inset-top,0px) + 1.2rem) clamp(1.25rem,5vw,4.5rem) 0;pointer-events:none}
+.hud-side{display:flex;flex-direction:column;align-items:flex-end}
+.brand{font-weight:700;font-stretch:118%;font-size:1.05rem}
+.brand span{font-weight:400;font-stretch:100%;color:var(--muted);margin-left:.6rem;font-size:.9rem}
+.time{text-align:right;font-variant-numeric:tabular-nums}
+.time b{display:block;font-weight:700;font-stretch:118%;font-size:clamp(1.4rem,2.6vw,2.2rem);line-height:1}
+.time span{color:var(--muted);font-size:.85rem}
+
+.story{position:fixed;z-index:3;left:clamp(1.25rem,5vw,4.5rem);bottom:calc(env(safe-area-inset-bottom,0px) + 2.2rem);max-width:min(34rem,70vw);pointer-events:none}
+.act{color:var(--muted);font-size:.9rem;margin:0 0 .3rem}
+.chapter h2{margin:0 0 .35rem;font-weight:800;font-stretch:125%;font-size:clamp(1.9rem,4vw,3.4rem);line-height:.95}
+.chapter.final h2{font-size:clamp(2rem,4.6vw,4rem);max-width:14ch}
+.chapter p{margin:0;color:var(--muted);max-width:40ch}
+.chapter a{pointer-events:auto;color:var(--ink)}
+
+.timeline{position:fixed;z-index:3;right:clamp(1rem,3vw,2.5rem);top:50%;transform:translateY(-50%);display:flex;flex-direction:column;gap:.9rem;align-items:flex-end}
+.timeline .group{display:flex;flex-direction:column;align-items:flex-end;gap:.15rem}
+.timeline .label{font-size:.75rem;color:var(--muted);margin-bottom:.15rem}
+.timeline button{all:unset;cursor:pointer;display:flex;align-items:center;gap:.5rem;padding:.12rem 0;font-size:.75rem;color:var(--muted)}
+.timeline button i{display:block;width:16px;height:2px;background:var(--rule);transition:width .3s,background .3s}
+.timeline button span{opacity:0;transition:opacity .2s}
+.timeline button:hover span,.timeline button:focus-visible span{opacity:1}
+.timeline button[aria-current="step"]{color:var(--ink)}
+.timeline button[aria-current="step"] i{width:30px;background:var(--ink)}
+.timeline button:focus-visible{outline:2px solid var(--ink);outline-offset:3px;border-radius:2px}
+
+.marker{position:fixed;z-index:2;left:0;top:0;width:30px;height:30px;margin:-15px 0 0 -15px;border:1.5px solid var(--ink);border-radius:50%;pointer-events:none;opacity:.8}
+.marker span{position:absolute;left:38px;top:5px;font-size:.8rem;white-space:nowrap}
+.intro{position:fixed;z-index:3;left:clamp(1.25rem,5vw,4.5rem);top:calc(env(safe-area-inset-top,0px) + 14vh);pointer-events:none}
+.intro .intro-title{margin:0;font-weight:800;font-stretch:125%;font-size:clamp(2.8rem,8vw,7.5rem);line-height:.9;color:var(--ink)}
+.intro p{margin:.8rem 0 0;color:var(--muted)}
+@media (max-width:720px){.timeline .label,.timeline button span{display:none}.timeline{gap:.6rem}}
+
+.time{display:flex;flex-direction:column;align-items:flex-end;gap:.2rem;transition:none}
+.time b{font-variant-numeric:tabular-nums;line-height:.95;transition:font-size .5s ease, letter-spacing .5s ease}
+.time.u-years b{font-weight:300;font-stretch:125%;font-size:clamp(1.6rem,3vw,2.6rem)}
+.time.u-days b{font-weight:800;font-stretch:62%;font-size:clamp(1.9rem,3.4vw,3rem);letter-spacing:.01em}
+.time.u-ns b,.time.u-ms b{font-weight:500;font-stretch:100%;font-size:clamp(1.3rem,2.2vw,1.9rem);letter-spacing:.06em}
+.time.u-now b{font-weight:900;font-stretch:125%;font-size:clamp(2.6rem,5.4vw,4.6rem)}
+.time span{color:var(--muted);font-size:.85rem}
+.time.punch b{animation:punch .7s cubic-bezier(.2,.8,.2,1)}
+@keyframes punch{0%{transform:scale(1.35);opacity:.2}60%{opacity:1}100%{transform:scale(1)}}
+@media (prefers-reduced-motion: reduce){.time.punch b{animation:none}}
+.sound{all:unset;pointer-events:auto;cursor:pointer;font-size:.85rem;color:var(--muted);border-bottom:1px solid var(--rule);margin-top:.9rem}
+.sound[aria-pressed="true"]{color:var(--ink)}
+.sound:focus-visible{outline:2px solid var(--ink);outline-offset:4px;border-radius:2px}
+.marker{border:2px solid #fff !important;box-shadow:0 0 0 1.5px rgba(0,0,0,.55),inset 0 0 0 1px rgba(0,0,0,.35);opacity:.95 !important}
+.marker span{color:#fff !important;text-shadow:0 1px 3px rgba(0,0,0,.8)}
+.chapter.final h2,.chapter.final p{transition:opacity 1.2s ease}
+.chapter.final:not(.in) h2{opacity:0}
+.chapter.final:not(.sig) p{opacity:0}
+/* ---------- end of ported block ---------- */
+
+/* The experience only exists once WebGL2 is confirmed (main.ts adds .gl). */
+html:not(.gl) :is(#scene,.scrim,.marker,.hud,.intro,.story,.timeline,.cut,#track){display:none}
+
+/* Visually hidden, still read by assistive tech. */
+.sr-only,
+html.js:not(.nogl) #story{position:absolute !important;width:1px !important;height:1px !important;margin:-1px !important;padding:0 !important;
+  overflow:hidden !important;clip-path:inset(50%) !important;white-space:nowrap !important;border:0 !important}
+#story [data-hint]{display:none}
+
+/* Keyboard focus on the (visually hidden) article link is mirrored onto the visible link. */
+.chapter a.kbd-focus{outline:2px solid var(--ink);outline-offset:3px;border-radius:2px}
+
+/* ---------- readable fallback: no WebGL2 or no JS ---------- */
+html:not(.gl) #story{max-width:40rem;margin:0 auto;padding:clamp(2rem,8vh,5rem) clamp(1.25rem,5vw,2rem) 4rem}
+#story h1{margin:0 0 2.5rem;font-weight:800;font-stretch:125%;font-size:clamp(2.6rem,9vw,4.5rem);line-height:.9}
+#story .act-group{margin:0 0 2.5rem}
+#story .act-group > h2{margin:0 0 1rem;color:var(--muted);font-size:.9rem;font-weight:500;text-transform:none}
+#story section{margin:0 0 1.75rem}
+#story h3{margin:0 0 .35rem;font-weight:800;font-stretch:125%;font-size:clamp(1.5rem,5vw,2.1rem);line-height:1}
+#story p{margin:0;color:var(--muted);max-width:40ch}
+#story a{color:var(--ink)}
+#story a:focus-visible{outline:2px solid var(--ink);outline-offset:3px;border-radius:2px}
