@@ -9,7 +9,7 @@ import { readFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 
 /** The behavioural spec of the current phase comes first. */
-export const REFERENCES = ['v6', 'v5'];
+export const REFERENCES = ['v8', 'v6', 'v5'];
 export const referenceFile = (version = REFERENCES[0]) => fileURLToPath(new URL(`../../reference/blockout-${version}.html`, import.meta.url));
 
 const PATCHES = [
