@@ -88,20 +88,23 @@ vec3 travel(vec4 A, vec4 B, vec3 pa, vec3 pb, vec3 R, out float e, out float arc
     m.whiten = sep * (1. - impure) * (1. - dep); m.darken = impure * sep * (1. - dep);
     m.size = mix(1., .25, impure * sep * (1. - dep)); m.heat = .4 * hump(rise, 3.14159265);
   }
-  else if (uStyle == 20) { // grow: rods melt into the pool, the crystal rises out of it from the seed down
-    float melt = smoothstep(0., .35, uT - R.x * .08);
+  else if (uStyle == 20) { // grow: rods melt into the pool, the seed end appears, grains gather under their column and lock into the lattice
+    float melt = smoothstep(0., .3, uT - R.x * .06);
     float rp = 3.6 * sqrt(R.x), ra = R.y * 6.2832;
     vec3 pool = vec3(cos(ra) * rp, -.55 + sin(uTime * uMotion * .5 + R.z * 6.) * .05, sin(ra) * rp);
     vec3 molten = mix(pa, pool, melt); molten.y -= hump(melt, 3.14159) * 1.2 * R.z;
     float fb = floor(B.w + .001), inC = 0.;
-    if (fb > 14.5 && fb < 15.5) { // crystal grains lock into the lattice as the interface passes them
-      // the crystal rises out of the pool by cutY; a separate inclusion threshold makes sure no
-      // crystal grain is included at t = 0 (seed tip at y ≤ 11.4) and every one is at t = 1 (y ≥ 0)
-      float grow = smoothstep(.45, 1., uT), cutY = 11.5 * (1. - grow), thr = mix(12., -.4, grow);
-      inC = smoothstep(thr - .35, thr + .05, pb.y);
-      p = blend(molten, pb - vec3(0., cutY, 0.), inC); e = max(melt * .49, inC);
-    } else { float k = smoothstep(.35, .75, uT); p = blend(molten, pb, k); e = max(melt * .49, k); inC = k; }
-    arc = hump(uT, 3.14159) * .5 * uMotion; m.heat = melt * (1. - inC) * .85;
+    if (fb > 14.5 && fb < 15.5) { // crystal grains: gather under their column, then lock into the lattice at the front
+      // the crystal rises out of the pool by off; the inclusion threshold is separate, so no crystal
+      // grain is included at t = 0 (seed tip at y < 11.4) and every one is at t = 1 (y >= 0)
+      float grow = smoothstep(.36, 1., uT), off = 11.5 * (1. - grow), thr = mix(12., -.4, grow);
+      inC = smoothstep(thr - .6, thr + .1, pb.y);
+      vec3 slot = pb - vec3(0., off, 0.), under = vec3(pb.x, -.45, pb.z);
+      p = blend(blend(molten, under, smoothstep(0., .5, inC)), slot, smoothstep(.35, 1., inC));
+      e = max(melt * .49, inC);
+      m.whiten = inC * (1. - inC) * 3.2;   // the crystallisation front glows as grains lock in
+    } else { float k = smoothstep(.3, .7, uT); p = blend(molten, pb, k); e = max(melt * .49, k); inC = k; }
+    arc = hump(uT, 3.14159) * .4 * uMotion; m.heat = melt * (1. - inC) * .85;
   }
   return p;
 }

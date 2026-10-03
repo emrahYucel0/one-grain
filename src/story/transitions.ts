@@ -21,7 +21,7 @@ export const TRANSITIONS: readonly TransitionDef[] = [
   // grow: purity → crystal, rods melt, a seed touches, order spreads
   // (Phase 2 reframe, beyond v6: keep the melt pool centred, then follow the crystal up out of it;
   //  the subject climbs with the growth front in shaders/transitions.glsl, half the visible height)
-  { g: 20, cam: 'orbit', len: 1.7, axis: [0, 0], hero: [[0, -2.5, 0], [0, -1.5, 0]], subject: { at: [0, -.55, 0], rise: 5.7, over: [.45, 1] } },
+  { g: 20, cam: 'orbit', len: 2.4, axis: [0, 0], hero: [[0, -2.5, 0], [0, -1.5, 0]], subject: { at: [0, -.55, 0], rise: 5.7, over: [.36, 1] } },
   // slice: crystal → wafer
   { g: 9, cam: 'slide', len: 1.0, dir: [0, -1, 0], spread: 9, span: .3 },
   // expose: wafer → light
