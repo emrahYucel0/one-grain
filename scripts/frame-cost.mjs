@@ -5,7 +5,8 @@
 //     the GPU (tracing slows the page), once with a Chrome trace of the renderer's main thread, split
 //     per frame (BeginMainThreadFrame) into script, style, layout and paint/commit;
 //   - layouts forced from script (a Layout inside a script event);
-//   - the raw GPU frame (window.__gpu.recent) and the frame interval from rAF timestamps, bucketed
+//   - the raw GPU frame (window.__gpu.recent) and the interval between rendered frames (window.__renderT:
+//     the pacer may skip refreshes, so rAF timestamps alone would not show the cadence), bucketed
 //     in refresh intervals (on a 144 Hz panel 1 = 6.9 ms, 2 = 13.9 ms, 3 = 20.8 ms); the refresh
 //     interval is measured first on a blank page;
 //   - for frames whose main-thread work exceeds 13.9 ms, the longest events and their source.
@@ -45,6 +46,7 @@ const PAINT = new Set(['Paint', 'PrePaint', 'Layerize', 'UpdateLayer', 'Commit',
 async function cadenceRun(ms, during) {
   // rAF timestamps and each newly resolved GPU frame, collected in the page (no polling from outside)
   await page.evaluate(() => {
+    window.__renderT = []; window.__renderLock = [];
     const own = window.__rafT = { raf: [], gpu: [] }; let last = null;
     const f = (t) => { if (window.__rafT !== own) return; own.raf.push(t); const r = window.__gpu.recent.at(-1); if (r && r !== last) { last = r; own.gpu.push(r.total); } requestAnimationFrame(f); };
     requestAnimationFrame(f);
@@ -52,7 +54,7 @@ async function cadenceRun(ms, during) {
   const t0 = Date.now();
   await during?.();
   await page.waitForTimeout(Math.max(0, ms - (Date.now() - t0)));
-  return page.evaluate(() => { const r = window.__rafT; window.__rafT = null; return r; });
+  return page.evaluate(() => { const r = window.__rafT; window.__rafT = null; return { raf: window.__renderT.slice(), gpu: r.gpu, locked: window.__renderLock.filter((l) => l > 0).length / Math.max(1, window.__renderLock.length), lock: Math.max(0, ...window.__renderLock) }; });
 }
 
 /** Traced: per-frame main-thread costs over `ms` (or while `during` runs). */
@@ -122,7 +124,7 @@ const f1 = (x) => (Number.isFinite(x) ? x.toFixed(1) : '—'), f2 = (x) => (Numb
 const rows = [], worst = [];
 const report = (at, m) => {
   const c = cadence(m.raf), cost = m.cost;
-  rows.push(`| ${at} | ${f1(c.median)} ms (sd ${f1(c.sd)}, p95 ${f1(c.p95)}) | ${c.share} | ${f2(med(cost.map((x) => x.busy)))} / ${f2(q(cost.map((x) => x.busy), .95))} / ${f2(Math.max(...cost.map((x) => x.busy)))} | ${f2(med(cost.map((x) => x.script)))} | ${f2(med(cost.map((x) => x.style)))} | ${f2(med(cost.map((x) => x.layout)))} | ${f2(med(cost.map((x) => x.paint)))} | ${cost.reduce((s, x) => s + x.forced, 0)} | ${f2(med(m.gpu))} / ${f2(q(m.gpu, .95))} / ${f2(Math.max(...m.gpu))} |`);
+  rows.push(`| ${at} | ${f1(c.median)} ms (sd ${f1(c.sd)}, p95 ${f1(c.p95)}) | ${c.share}${m.locked ? ` (locked ${Math.round(m.locked * 100)} % of frames, to ${m.lock})` : ''} | ${f2(med(cost.map((x) => x.busy)))} / ${f2(q(cost.map((x) => x.busy), .95))} / ${f2(Math.max(...cost.map((x) => x.busy)))} | ${f2(med(cost.map((x) => x.script)))} | ${f2(med(cost.map((x) => x.style)))} | ${f2(med(cost.map((x) => x.layout)))} | ${f2(med(cost.map((x) => x.paint)))} | ${cost.reduce((s, x) => s + x.forced, 0)} | ${f2(med(m.gpu))} / ${f2(q(m.gpu, .95))} / ${f2(Math.max(...m.gpu))} |`);
   for (const x of cost) if (x.top) worst.push(`${at}: ${x.busy.toFixed(1)} ms main thread — ${x.top.join(' · ')}`);
 };
 

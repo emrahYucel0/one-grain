@@ -4,11 +4,12 @@ import { CONFINEMENT, towards } from '../camera/confinement';
 import { ss } from './ease';
 import { LightRigBlend, type RigState } from './light-rig';
 import { shot } from '../camera/shot';
-import { overdrawView, progressOverride, reportGpu, reportProgress, restPathAllowed, timeOverride, transitionOverride } from '../debug/parity';
+import { overdrawView, progressOverride, reportGpu, reportProgress, reportRender, restPathAllowed, timeOverride, transitionOverride } from '../debug/parity';
 import type { GrainCloud } from '../render/grains';
 import type { Pipeline } from '../render/pipeline';
 import type { GpuTimer } from './gpu-timer';
 import type { RenderLayers } from './layers';
+import type { Pacer } from './pacing';
 import type { HeroGrain } from '../render/hero';
 import type { FrameUniforms } from '../render/types';
 import type { GrainPack } from '../sim/pack';
@@ -36,6 +37,8 @@ export interface LoopDeps {
   timer: GpuTimer;
   /** what to draw: tier, downgrade, overrides (core/layers.ts) */
   layers: RenderLayers;
+  /** which refreshes render (core/pacing.ts) */
+  pacer: Pacer;
 }
 
 /** Per-frame hook for the parts that react to where the story is (UI, input, audio, quality). */
@@ -77,6 +80,7 @@ export class Loop {
   private running = false;
   /** set by the interaction listener, applied in the same frame */
   readonly interaction = { mode: 0, at: new Vector3(0, -99, 0), press: 0 };
+  private canvasOpacity = '';
   /** seconds since the final chapter was reached, -1 elsewhere (set by the ending, in the 'story' phase) */
   finalTime = -1;
   /** extra canvas opacity factor (quality swaps) */
@@ -96,7 +100,14 @@ export class Loop {
   start(): void {
     if (this.running) return;
     this.running = true;
-    const tick = (): void => { requestAnimationFrame(tick); this.frame(); };
+    // every refresh is offered; the pacer may skip rendering on some (scroll input runs on GSAP's own ticker)
+    const tick = (now: number): void => {
+      requestAnimationFrame(tick);
+      if (!this.d.pacer.shouldRender(now)) return;
+      this.frame();
+      this.d.pacer.rendered(now);
+      reportRender(now, this.d.pacer.lock);
+    };
     requestAnimationFrame(tick);
   }
 
@@ -140,7 +151,8 @@ export class Loop {
     for (const fn of this.listeners.scene) fn(info);
     // reduced motion: worlds swap behind a quick fade instead of morphing; times any listener fade
     const fade = (reduced ? 1 - Math.sin(Math.PI * L.t) : 1) * this.fade;
-    stage.renderer.domElement.style.opacity = fade === 1 ? '1' : fade.toFixed(3);
+    const opacity = fade === 1 ? '1' : fade.toFixed(3);
+    if (opacity !== this.canvasOpacity) { this.canvasOpacity = opacity; stage.renderer.domElement.style.opacity = opacity; }
 
     // the key light's shadow map, framed around what the camera looks at
     const light = layers.on('light'), shadows = light && layers.on('shadows');
@@ -164,6 +176,6 @@ export class Loop {
       post: { bloom: layers.on('bloom'), dof: layers.on('dof'), grade: layers.on('grade'), near: cam.near, far: cam.far, focus: cam.position.distanceTo(S.hero), dofScale: this.rigState.dof, time, grainMoves: !reduced },
     });
     timer.tick();
-    reportGpu(timer.times());
+    reportGpu(timer);
   }
 }

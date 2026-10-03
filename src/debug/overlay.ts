@@ -1,5 +1,6 @@
 import type { GpuTimer } from '../core/gpu-timer';
 import { LAYER_NAMES, type LayerName, type RenderLayers } from '../core/layers';
+import type { Pacer } from '../core/pacing';
 import type { TierManager } from '../core/tiers';
 
 const LABELS: Record<LayerName, string> = { light: 'Light', shadows: 'Shadows', dof: 'Depth of field', bloom: 'Bloom', grade: 'Grade' };
@@ -10,7 +11,7 @@ const LABELS: Record<LayerName, string> = { light: 'Light', shadows: 'Shadows', 
  * toggle per render layer. A toggle overrides tier and downgrade until reset. Not part of the
  * experience.
  */
-export function debugOverlay(tiers: TierManager, layers: RenderLayers, pixelRatio: () => number, timer: GpuTimer): void {
+export function debugOverlay(tiers: TierManager, layers: RenderLayers, pixelRatio: () => number, timer: GpuTimer, pacer: Pacer): void {
   const panel = document.createElement('div');
   panel.style.cssText = 'position:fixed;left:8px;top:8px;z-index:9;display:flex;flex-direction:column;gap:6px;align-items:flex-start;font:12px/1.4 ui-monospace,monospace';
   const el = document.createElement('pre');
@@ -55,9 +56,14 @@ export function debugOverlay(tiers: TierManager, layers: RenderLayers, pixelRati
     const m = tiers.monitor.median;
     el.textContent = `tier ${tiers.tier.name}${tiers.next ? ` → ${tiers.next} (queued)` : ''}\n` +
       `grains ${tiers.tier.n.toLocaleString('en-US')} · dpr ${pixelRatio().toFixed(2)}\n` +
-      `fps ${frames.length} · median ${m > 0 ? m.toFixed(1) + ' ms' : '…'}` + gpuLines(timer);
+      `fps ${frames.length} · median ${m > 0 ? m.toFixed(1) + ' ms' : '…'}` + pacingLine(pacer) + gpuLines(timer);
     sync(); // the downgrade may have switched a layer off
   }, 500);
+}
+
+function pacingLine(pacer: Pacer): string {
+  const s = pacer.state;
+  return `\npacing ${s.mode}${s.refresh ? ` · refresh ${s.refresh.toFixed(2)} ms` : ' · refresh unknown'}${s.lock ? ` · locked to every ${s.lock}` : ''}${s.probing ? ' (probing)' : ''}`;
 }
 
 function gpuLines(timer: GpuTimer): string {

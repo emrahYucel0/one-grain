@@ -69,9 +69,9 @@ try {
   await page.waitForTimeout(3500);
   const sig = await page.evaluate(() => ({ hash: location.hash, mirrored: document.querySelector('#chapter a')?.classList.contains('kbd-focus') }));
   check('signature link focus → final chapter, ring mirrored', sig.hash === '#now' && sig.mirrored === true, JSON.stringify(sig));
-  const END_STAGE = '#17110b'; // STAGES.end in src/story/stages.ts (dark only)
+  const END_STAGE = 'rgb(23, 17, 11)'; // STAGES.end #17110b in src/story/stages.ts (dark only), as the body background
   // …and jumps straight to the fully revealed ending (well before the 8.5 s of the timed sequence)
-  const end = await page.evaluate(() => ({ cls: document.getElementById('chapter').className, stage: document.documentElement.style.getPropertyValue('--stage') }));
+  const end = await page.evaluate(() => ({ cls: document.getElementById('chapter').className, stage: document.body.style.backgroundColor }));
   check('signature link focus → fully revealed (sentence, signature, end colour)', /\bin\b/.test(end.cls) && /\bsig\b/.test(end.cls) && end.stage === END_STAGE, JSON.stringify(end));
   await page.close();
 

@@ -506,3 +506,79 @@ What it shows:
   variable-font instance to shape (title and clock, `--wdth/--wght` on `:root`). ScrollTrigger's
   `_onScroll` also forces a 5–6 ms layout after the frame's style writes (74 forced layouts in the
   run).
+
+## Phase 4b, delta 10: frame pacing
+
+`npm run perf:frame`, same machine and settings as the baseline above. The cadence comes from the
+timestamps of **rendered** frames (`window.__renderT`): the pacer may skip refreshes, so rAF
+timestamps alone would not show it.
+
+### Main thread: before and after
+
+| | Before delta 10 (after the Phase 4b look changes) | After |
+|---|---|---|
+| holds, main thread per frame (median) | 0.67–1.22 ms | 0.69–1.20 ms |
+| scroll-through, main thread median / p95 / max | 1.15 / 10.64 / 35.3 ms | 1.05 / **2.77** / 32.6 ms |
+| scroll-through, frames with more than 13.9 ms of main-thread work | 71 | **15** |
+| scroll-through, layout in a slow frame | 5–13 ms (title and clock font instances) | gone; ScrollTrigger's scroll handler still forces a ~3 ms layout now and then |
+
+What changed:
+
+- **`--wdth/--wght`** are written on the chapter and clock elements, not on `:root`. They are
+  quantised (width in 1 % steps, weight in steps of 10), and the title's only while it is visible.
+- **The stage colour** goes straight to the body and the scrim, instead of `--stage` on `:root`,
+  which restyled the whole document every frame of a move between acts.
+- **The marker** caches the viewport size on resize instead of reading `innerWidth` after the
+  frame's writes, writes its transform only when it changes, and has its own layer.
+- **Unguarded writes are guarded** (canvas, cut card, intro, marker label).
+- **The clock's punch** is replayed with the Web Animations API instead of restarting a CSS
+  animation through `void el.offsetWidth` (a forced layout). That also fixes `className` wiping the
+  `hide` class in the cut.
+- **No GPU readout** (and no per-frame allocation) without `?perf` or `?debug`.
+
+The remaining slow frames show almost no named work in the trace; they look like the main thread
+waiting on a busy GPU.
+
+### Cadence at the holds: the GPU decides
+
+At the holds the main thread needs under 1.3 ms. The GPU frame is 12.6–15.2 ms, at the boundary of
+two refreshes (13.9 ms). Without a lock, frames alternate:
+
+| Hold | Cadence, no lock | sd |
+|---|---|---|
+| magma | 2×13 % 3×67 % 4×18 % | 4.2 ms |
+| again | 2×13 % 3×78 % 4×9 % | 3.2 ms |
+| crystal | 2×34 % 3×64 % | 3.5 ms |
+| light | 2×12 % 3×62 % 4×23 % | 4.7 ms |
+| now | 2×17 % 3×77 % 4×6 % | 3.3 ms |
+
+A steady 72 fps (every frame within 13.9 ms) would need the GPU frame 1.5–2 ms shorter at the
+heavier holds. The options for that (depth of field, bloom, fewer grains, every other grain
+casting shadows) are in the delta 6 and Phase 4a tables, and all of them weaken the look, so none
+is adopted.
+
+### Option: the pacing lock (`?pacing=off|on|auto`, `core/pacing.ts`; default off)
+
+- **Refresh:** measured from rAF while the worlds build.
+- **When it engages (auto):** only when frames mostly take three refreshes or more and at least
+  15 % come in faster. 60 Hz and 120 Hz displays, where frames fit in one or two refreshes, never
+  engage it.
+- **What it skips:** only rendering. Scroll input (GSAP's own ticker) keeps every refresh.
+- **Re-evaluation:** the lock is released on resize, a quality step and a tab switch, rises one
+  step if most frames of a second miss it (at most every 4th refresh), and is re-tested by a probe:
+  one unlocked second every ten.
+
+| Hold | auto: cadence (lock to 3) | sd |
+|---|---|---|
+| magma (no probe in the window) | 3×100 % | **0.1 ms** |
+| again, crystal, light, now (a probe in the window) | 3× 66–89 %, 2× 7–33 % | 2.6–3.7 ms |
+| scroll-through | 3×57 %, spread as without a lock | 9.3 ms (9.0 without) |
+
+- **Between probes:** the lock gives an exactly steady 48 fps at the holds (sd 0.1 ms instead of
+  3–5 ms).
+- **The probe:** while it runs (1 s in 10), the old alternation is back.
+- **Moving:** the lock does not help. Frame cost varies too much while moving.
+
+To get the steadiness without the probe judder, the lock could be re-tested with the GPU timer
+where the browser has it (Chrome on desktop) and with probes only elsewhere. That is a decision,
+so the default stays off.

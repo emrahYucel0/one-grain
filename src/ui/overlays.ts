@@ -19,7 +19,11 @@ export class Intro {
   private readonly hint: HTMLElement;
   constructor(el: HTMLElement, hint: HTMLElement) { this.el = el; this.hint = hint; }
   ready(): void { this.hint.textContent = attr(this.hint, 'ready'); }
-  update(v: number): void { this.el.style.opacity = (1 - ss(0, .02, v)).toFixed(2); }
+  private opacity = '';
+  update(v: number): void {
+    const opacity = (1 - ss(0, .02, v)).toFixed(2);
+    if (opacity !== this.opacity) { this.opacity = opacity; this.el.style.opacity = opacity; }
+  }
 }
 
 /**

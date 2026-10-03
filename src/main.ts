@@ -9,6 +9,7 @@ import { GpuTimer } from './core/gpu-timer';
 import { createStage } from './core/renderer';
 import { StageColour } from './core/stage-colour';
 import { isLayerName, RenderLayers } from './core/layers';
+import { Pacer } from './core/pacing';
 import { Projection, onResize } from './core/resize';
 import { debugOverlay } from './debug/overlay';
 import { exposePack, flags } from './debug/parity';
@@ -65,9 +66,12 @@ function boot(): void {
   bindChapterKeys(timeline);
   const pipeline = new Pipeline(stage.renderer, timer);
   grains.attachShadow(pipeline.shadow);
+  const typeAxes = new TypeAxes($('chapter'), $('time'));
   const layers = new RenderLayers(tier.fx);
   for (const k of flags.off) if (isLayerName(k)) layers.override[k] = false;
-  const loop = new Loop({ stage, grains, hero, timeline, hash, projection, typeAxes: new TypeAxes(), stageColour: new StageColour(), pipeline, timer, layers });
+  const pacer = new Pacer(flags.pacing);
+  void pacer.measureRefresh(); // while the worlds build, nothing heavy draws
+  const loop = new Loop({ stage, grains, hero, timeline, hash, projection, typeAxes, stageColour: new StageColour(), pipeline, timer, layers, pacer });
   const go = (i: number): void => timeline.goTo(i);
 
   // words and instruments
@@ -92,9 +96,12 @@ function boot(): void {
     const { a, b, tr, hold } = L;
     updateInteraction(loop.interaction, pointer, { hold, reduced: env.reduced, heroes: loop.heroes, camera: stage.camera, now });
     if (chapter.show(t < .5 ? a : b)) nav.setCurrent(chapter.current);
-    chapter.setOpacity(chapterOpacity(tr, t));
+    const op = chapterOpacity(tr, t);
+    chapter.setOpacity(op);
+    typeAxes.showTitle(op > 0);
     clock.update(a, b, clockProgress(tr, t, eg), t, tr);
-    cut.style.opacity = cutOpacity(tr, t).toFixed(3);
+    const cutOp = cutOpacity(tr, t).toFixed(3);
+    if (cutOp !== cut.style.opacity) cut.style.opacity = cutOp;
     intro.update(v);
     marker.update(heroPos, stage.camera, heroVisible, v, hold, now, heroLight);
     a11y.rest(hold);
@@ -107,6 +114,7 @@ function boot(): void {
     auto: !flags.tier, forceDrop: flags.forceDrop,
     build: (n) => sim.build(n),
     swap: (pack, pixelRatio) => {
+      pacer.reset(performance.now());
       stage.renderer.setPixelRatio(pixelRatio);
       hero.setPixelRatio(pixelRatio);
       resize();
@@ -115,7 +123,7 @@ function boot(): void {
     },
   });
   loop.onFrame(({ L, now }) => { tiers.frame(now, L.hold); loop.fade = tiers.fade; });
-  if (flags.debug) debugOverlay(tiers, layers, () => stage.renderer.getPixelRatio(), timer);
+  if (flags.debug) debugOverlay(tiers, layers, () => stage.renderer.getPixelRatio(), timer, pacer);
 
   sim.build(tier.n).then((pack) => {
     exposePack(pack);

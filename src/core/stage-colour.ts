@@ -13,8 +13,8 @@ const actOf = (i: number): StageAct => (WORLDS[i]!.final ? 'end' : WORLDS[i]!.ac
 
 /**
  * The stage colour follows the act, eased like the camera between acts; the final chapter has the
- * end colour. Fog, the HDR target's clear colour (render/pipeline.ts) and
- * the page's --stage stay in sync. Dark only (v10).
+ * end colour. Fog, the HDR target's clear colour (render/pipeline.ts) and the page's background
+ * (body and scrim) stay in sync. Dark only (v10).
  */
 export class StageColour {
   /** the fog colour for the grains (the interpolated colour itself, not its 8-bit hex) */
@@ -25,9 +25,12 @@ export class StageColour {
   private readonly ca = new Color();
   private readonly cb = new Color();
   private last = '';
-  private readonly root: HTMLElement;
+  private readonly body: HTMLElement;
+  private readonly scrim: HTMLElement | null;
+  /** the page's stage colour as last written (8-bit hex) */
+  hex = '';
 
-  constructor(root: HTMLElement = document.documentElement) { this.root = root; }
+  constructor(body: HTMLElement = document.body, scrim: HTMLElement | null = document.querySelector<HTMLElement>('.scrim')) { this.body = body; this.scrim = scrim; }
 
   update(a: number, b: number, eg: number): void {
     this.ca.set(STAGES[actOf(a)]);
@@ -38,6 +41,9 @@ export class StageColour {
     const hex = cssHex(this.fog);
     if (hex === this.last) return;
     this.last = hex;
-    this.root.style.setProperty('--stage', hex);
+    // set where it is used: a --stage change on :root would restyle the whole document every frame of a move
+    this.hex = hex;
+    this.body.style.backgroundColor = hex;
+    if (this.scrim) this.scrim.style.background = `linear-gradient(to top,${hex} 8%,transparent)`;
   }
 }
