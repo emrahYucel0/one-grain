@@ -6,3 +6,6 @@ playwright-report/
 *.log
 .DS_Store
 Thumbs.db
+
+# scratch tools (never committed)
+scripts/_*

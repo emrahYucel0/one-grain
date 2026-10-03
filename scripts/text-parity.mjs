@@ -1,5 +1,5 @@
 // Text parity (npm run check:text): overlay text and clock state, port vs blockout v8 (the text and
-// clock reference; v10 is the reference for the look only)
+// clock reference, with the intentional changes below; v10 is the reference for the look)
 // (the act label is not compared: since v8 the rail carries the act and the label is gone),
 // at every hold and at five points in every transition. Positions are matched by (world a → b, t),
 // so the check also works while transition lengths differ between the two.
@@ -10,6 +10,11 @@ import { referenceFile, routeReference } from './lib/reference.mjs';
 import { startDev } from './lib/servers.mjs';
 
 const TEXT_REFERENCE = 'v8';
+/** Intentional changes since v8, applied to the reference page (docs/parity-notes.md). */
+const INTENTIONAL = [
+  // v10's clock rounding: one significant figure below a million ("≈ 300,000", not "≈ 340,000")
+  ['const k = Math.pow(10, Math.max(0, Math.floor(Math.log10(y)) - 1));', 'const k = Math.pow(10, Math.floor(Math.log10(y)));'],
+];
 
 const vite = await createServer({ server: { middlewareMode: true }, appType: 'custom', logLevel: 'error' });
 const { WORLDS } = await vite.ssrLoadModule('/src/story/worlds.ts');
@@ -30,7 +35,7 @@ const progress = (lens, i, t, kind) => { // kind: hold → middle of hold i; tr 
 const b = await launch();
 const ctx = await b.newContext({ viewport: { width: 1440, height: 900 } });
 const port = await ctx.newPage(), ref = await ctx.newPage();
-await routeReference(ref, 'http://localhost:5189/__r.html', TEXT_REFERENCE);
+await routeReference(ref, 'http://localhost:5189/__r.html', TEXT_REFERENCE, INTENTIONAL);
 await port.goto('http://localhost:5189/?parity&tier=mid'); await ref.goto('http://localhost:5189/__r.html');
 await ref.waitForFunction(() => window.__DATA, null, { timeout: 90000 });
 await port.waitForFunction(() => window.__PACK, null, { timeout: 90000 });

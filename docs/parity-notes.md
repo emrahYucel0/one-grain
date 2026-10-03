@@ -15,7 +15,7 @@ was verified and how, and what was not.
 | Grain data | **Bit-identical** to v8, v6 and v5 at 90 000 and 36 000 grains per world | `npm run check:data` compares per-world digests of the packed texture and all 15 hero positions against an instrumented copy of each reference |
 | Rendered frames vs v8 | 26/26 compared positions at 0.000 % differing pixels, also on the strict count (any byte). 15 positions differ on purpose, listed below with their cause | `npm run parity`: 15 holds, 14 transition midpoints, 2 interaction shots, t = 0.3 / 0.55 / 0.8 in drift, break and grow, and the final chapter at 2 s and 11 s; same viewport, grain count, frozen shader time and scroll progress in both pages; CSS transitions fast-forwarded; real GPU |
 | Rest states | 39/39 identical, byte for byte: for chapters 2–14, the previous transition at t = 1 equals the next at t = 0, which equals the hold as scrolled into and, with the hold's lean, the hold screenshot | `npm run check:seams` |
-| Text and clock vs v8 | 85/85 positions identical: clock value, sub-line, unit class, label state, interlude hiding, title, body, micro line | `npm run check:text`: every hold and t = 0.1 / 0.3 / 0.5 / 0.7 / 0.9 in every transition |
+| Text and clock vs v8 | 85/85 positions identical: clock value, sub-line, unit class, label state, interlude hiding, title, body, micro line. The reference page gets the Phase 4a clock rounding (below) spliced in, so it is the baseline too | `npm run check:text`: every hold and t = 0.1 / 0.3 / 0.5 / 0.7 / 0.9 in every transition |
 | Reverse scrub | 12/12: scrolled backwards, drift, break, separate and grow at t = 0.2 / 0.45 / 0.75 render exactly as scrolled forwards (0.000 %, same settled progress) | `npm run check:reverse`: real scrolling through ScrollTrigger, snapping off |
 | Fonts | No layout shift when the web fonts arrive late (CLS 0.0000 with fonts held back 1.5 s; without the font gate the same load shifts); the wdth axis renders (a probe word measures 802 px at magma's 118.5 % and 507 px at crystal's 62 %) | `npm run check:fonts`, on the built site; title crops in `parity/fonts/` |
 | Quality tiers | A forced drop is queued mid-transition and swapped (90 000 → 36 000 grains) only once resting | `npm run check:tiers` |
@@ -25,6 +25,17 @@ was verified and how, and what was not.
 
 The reference is never edited. The harness serves a patched copy with three hooks: progress
 override, time override, and exposing the built texture (`scripts/lib/reference.mjs`).
+
+## Phase 4a: intentional changes to text and clock
+
+Since Phase 4a, `reference/v10-lit.html` is the reference for the look (lighting, colour, post).
+Positions, text and clock, seams and reverse scrubbing are still measured against v8. Visual
+differences from v8 are expected in this phase. Changes to text and clock are listed here.
+
+- **Clock rounding: one significant figure below a million (v10).** The clock between two dates
+  reads "≈ 300,000", not v8's "≈ 340,000". Two figures suggested precision that isn't there.
+  Whole millions are unchanged. `check:text` applies the same rounding to the v8 page
+  (`INTENTIONAL` in `scripts/text-parity.mjs`), so any other clock difference still fails.
 
 ## Phase 3: differences from v8
 

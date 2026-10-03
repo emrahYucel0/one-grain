@@ -24,9 +24,9 @@ const OPTIONAL_PATCHES = [
   ['U.uNorm.value = ntex;', 'U.uNorm.value = ntex; window.__NDATA = ndata;'],
 ];
 
-export async function patchedReference(version) {
+export async function patchedReference(version, extra = []) {
   let html = await readFile(referenceFile(version), 'utf8');
-  for (const [find, replace] of PATCHES) {
+  for (const [find, replace] of [...PATCHES, ...extra]) {
     const count = html.split(find).length - 1;
     if (count !== 1) throw new Error(`reference patch target found ${count}× (expected 1): ${find}`);
     html = html.replace(find, replace);
@@ -35,9 +35,9 @@ export async function patchedReference(version) {
   return html;
 }
 
-/** Answers `url` with the patched reference in this page. */
-export async function routeReference(page, url, version) {
-  const body = await patchedReference(version);
+/** Answers `url` with the patched reference in this page; `extra` are further [find, replace] patches. */
+export async function routeReference(page, url, version, extra) {
+  const body = await patchedReference(version, extra);
   await page.route(url, (route) => route.fulfill({ status: 200, contentType: 'text/html; charset=utf-8', body }));
 }
 
