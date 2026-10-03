@@ -12,7 +12,8 @@ import { startPreview } from './lib/servers.mjs';
 
 const [tier = 'mid', width = '1920', height = '909', extra = ''] = process.argv.slice(2);
 const vite = await createServer({ server: { middlewareMode: true }, appType: 'custom', logLevel: 'error' });
-const { SNAP_POINTS, transitionMidpoint } = await vite.ssrLoadModule('/src/timeline/segments.ts');
+const { SEGMENTS, SNAP_POINTS, TOTAL, transitionMidpoint } = await vite.ssrLoadModule('/src/timeline/segments.ts');
+const { TRANSITIONS } = await vite.ssrLoadModule('/src/story/transitions.ts');
 const { WORLDS } = await vite.ssrLoadModule('/src/story/worlds.ts');
 await vite.close();
 
@@ -38,8 +39,10 @@ const sample = () => page.evaluate(() => new Promise((res) => {
 }));
 
 const rows = [];
+// every hold and transition midpoint, plus "become" (style 21: macro close-up, large grains) at five points
+const become = SEGMENTS.filter((x) => x.type === 'tr' && TRANSITIONS[x.i].g === 21).flatMap((seg) => [.2, .4, .55, .7, .85].map((t) => [`become t=${t}`, (seg.start + seg.len * t) / TOTAL, seg.i]));
 for (let i = 0; i < WORLDS.length; i++) {
-  for (const [kind, v] of [['hold', SNAP_POINTS[i]], ...(i < WORLDS.length - 1 ? [['mid', transitionMidpoint(i)]] : [])]) {
+  for (const [kind, v] of [['hold', SNAP_POINTS[i]], ...(i < WORLDS.length - 1 ? [['mid', transitionMidpoint(i)]] : []), ...become.filter((b) => b[2] === i).map((b) => [b[0], b[1]])]) {
     await page.evaluate((x) => { window.__V = x; window.__T = null; }, v);
     await page.waitForTimeout(400);
     const s = await sample();

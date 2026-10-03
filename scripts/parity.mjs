@@ -19,8 +19,8 @@ const OUT = new URL('../parity/', import.meta.url);
 const VIEW = { width: 1440, height: 900 };
 const TIME = 10;
 const SETTLE_MS = 1600;      // CSS: clock font-size .5 s, punch .7 s
-const FINAL_EARLY_MS = 2000; // final chapter: the sentence is in (1.2 s), the reveal not yet begun (4 s)
-const FINAL_LATE_MS = 11000; // final chapter: fully revealed (8 s), signature and footnote in (8.5 s)
+const FINAL_EARLY_MS = 1500; // final chapter: the sentence is in (.4 s), the grain hovers in full light (it fades from 3 s)
+const FINAL_LATE_MS = 15000; // final chapter: the grain has landed (6.4 s), signature and footnote in (8 s)
 const REVIEW_PCT = 2;
 
 // Positions where the port differs from the reference on purpose (docs/parity-notes.md).
@@ -29,8 +29,8 @@ const REVIEW_PCT = 2;
 // ends, the signature's CSS tie) are gone: v10 fixed the tie, and ulp-level differences from exact
 // ends no longer stand out under lighting and post.
 const DEVIATIONS = {};
-// harness only: v10's layer panel and benchmark box are tools, not part of the look
-const HIDE_REFERENCE_TOOLS = ['</head>', '<style>.fx,.bench{display:none !important}</style></head>'];
+// harness only: the reference's layer panel, benchmark box and version label are not part of the look
+const HIDE_REFERENCE_TOOLS = ['</head>', '<style>.fx,.bench,.brand span{display:none !important}</style></head>'];
 const SUBJECT_REASON = 'purity → crystal reframe (Phase 2): the pool centred, the crystal followed up';
 
 // Story layout, straight from the source (no copy of the numbers here).
@@ -70,8 +70,20 @@ for (const seg of SEGMENTS.filter((x) => x.type === 'tr' && REWORKED.has(TRANSIT
   }
 }
 
-// the final chapter early in its sequence (the 11 s state is the standard final hold)
-extra.push({ id: `${32 + extra.length}-final-2s`, kind: 'hold', label: 'Final chapter at 2 s (sentence in, screen still neutral)', v: 1, wait: FINAL_EARLY_MS });
+// "become" (display → now), at five points
+for (const seg of SEGMENTS.filter((x) => x.type === 'tr' && TRANSITIONS[x.i].g === 21)) {
+  const tr = TRANSITIONS[seg.i], a = WORLDS[seg.i].slug, b = WORLDS[seg.i + 1].slug;
+  for (const t of [.2, .4, .55, .7, .85]) {
+    extra.push({
+      id: `${32 + extra.length}-tr-${a}-${b}-t${Math.round(t * 100)}`, kind: 'transition',
+      label: `Transition · ${a} → ${b} at t = ${t} (${tr.cam}, style ${tr.g})`,
+      v: (seg.start + seg.len * t) / TOTAL, wait: SETTLE_MS,
+    });
+  }
+}
+
+// the final chapter early in its sequence (the 15 s state is the standard final hold)
+extra.push({ id: `${32 + extra.length}-final-1.5s`, kind: 'hold', label: 'Final chapter at 1.5 s (sentence in, the grain hovering in full light)', v: 1, wait: FINAL_EARLY_MS });
 
 for (const s of [...shots, ...hover, ...extra]) {
   if (DEVIATIONS[s.id]) { s.intentional = true; s.reason = DEVIATIONS[s.id]; }

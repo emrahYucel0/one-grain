@@ -169,10 +169,13 @@ it.
 (`core/stage-colour.ts`). The page declares `color-scheme: dark` and ignores the system
 preference.
 
-**The ending.** The last world arrives as a neutral screen with "Now" on the clock. The sentence
-follows at 1.2 s. The sand image fades into the screen from 4 s to 8 s while the End colour comes
-in, and the signature and footnote appear at 8.5 s. Focusing the signature link from the keyboard
-jumps straight to the fully revealed state.
+**The ending.** "Become" (display → now, 2.8 screens): the camera pushes in to macro, the
+sub-pixels' light goes out, the glass vanishes, every sub-pixel cluster spreads into the area it lit
+and turns into sand, and the camera pulls back; "Now" reaches the clock at 74 % of the move. In the
+final hold the sentence comes in at 0.4 s; the grain we followed hovers, loses its light from 3 to
+5.6 s and lands among the other grains from 5 to 6.4 s, after which it cannot be told apart; the
+signature and footnote come in at 8 s. Under reduced motion the grain becomes matte in place.
+Focusing the signature link from the keyboard jumps straight to the end state.
 
 ## Content
 
@@ -183,9 +186,11 @@ All words live in `index.html`:
 - **Micro lines** (a small aside under a chapter's text) are `<p data-micro>` in the section.
 - **Clock labels** belong to chapters: `data-clock` (and `data-clock-sub`) on the section.
   The clock means one thing, time elapsed on the grain's journey. *Years* chapters interpolate
-  "≈" values on a log scale and may carry a label shown only while resting there ("≈ hundreds
+  "≈" values on a log scale and may carry a label shown near their hold ("≈ hundreds
   of thousands"). *Production* chapters always show their label ("Day 1", "Weeks later"…). The
   final chapter shows "Now", and the interlude ("One day,") hides the clock.
+  On the display the clock counts milliseconds since it got there ("on your screen"); a years
+  chapter's own label holds within 15 % of either end of a move.
 - **UI microcopy** (unit names, sound states, nav labels, the status-line format) lives in
   `data-*` attributes on the element that shows it.
 
@@ -259,6 +264,7 @@ the Phase 1 numbers.
 | `?perf` | Time every render pass on the GPU (`window.__gpu`, with the last 240 raw frames) |
 | `?off=a,b` | Switch render layers off (light, shadows, dof, bloom, grade), for measurements |
 | `?grains=N` · `?pointcap=N` · `?shadowstride=N` | Measurements: grains per world, largest grain in pixels, every N-th grain casts shadows (default 1: all) |
-| `?parity` | Let a harness drive progress (`window.__V`) and shader time (`window.__T`), or render a transition point directly (`window.__AT = { tr, t, lean }`); the rendered progress is published as `window.__progress` |
+| `?pacing=off\|on\|auto` | Frame pacing (`core/pacing.ts`, default off): lock rendering to every n-th refresh when frames do not fit two (docs/perf.md) |
+| `?parity` | Let a harness drive progress (`window.__V`) and shader time (`window.__T`), or render a transition point directly (`window.__AT = { tr, t, lean }`); pin the display's live clock (`window.__LIVE`, ms) and the seconds spent in the current hold (`window.__FT`: ring fade, final hold); the rendered progress is published as `window.__progress` |
 | `?nosnap` | Scrolling does not settle on chapters, so a position mid-transition can be held |
 | `#magma` … `#now` | Open at that chapter |

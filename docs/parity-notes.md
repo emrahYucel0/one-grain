@@ -3,8 +3,11 @@
 The port follows a behavioural spec: `reference/blockout-v5.html` in Phase 1,
 `reference/blockout-v6.html` in Phase 2 (content, clock semantics, four new transitions, new
 camera moves), with v6's rest-state bugs fixed on purpose in Phase 2.1, and
-`reference/blockout-v8.html` since Phase 3 (typography, confinement, stage colour per act,
-reworked drift, break and grow, the final dramaturgy). World generators have not changed since v5.
+`reference/blockout-v8.html` in Phase 3 (typography, confinement, stage colour per act,
+reworked drift, break and grow, the final dramaturgy), `reference/v10-lit.html` for the look in
+Phase 4a, and `reference/v15-lit.html` since Phase 4b (look per world, type and HUD, clock, pacing,
+hero grain, and a new final). The generators of worlds 0–13 have not changed since v5; the final
+world is new in v15.
 This page lists every place where the port is not the reference, and why. It also lists what
 was verified and how, and what was not.
 
@@ -12,11 +15,11 @@ was verified and how, and what was not.
 
 | Check | Result | How |
 |---|---|---|
-| Grain data | **Bit-identical** to v8, v6 and v5 at 90 000 and 36 000 grains per world | `npm run check:data` compares per-world digests of the packed texture and all 15 hero positions against an instrumented copy of each reference |
-| Rendered frames vs v10 (since Phase 4a; v8 until Phase 3) | 37/37 compared positions within 2 %: 0.48 % at most (crystal hold), most at 0.02–0.03 %, the capture floor (film grain, the header label "blockout v8" against v10's "v10, lit"). The purity → crystal reframe (4 positions, 6.7–7.6 %) differs on purpose. v10's layer panel is hidden in the reference for the captures. Strict counts are high everywhere (lighting and post move many pixels by one level) and are not compared | `npm run parity`: 15 holds, 14 transition midpoints, 2 interaction shots, t = 0.3 / 0.55 / 0.8 in drift, break and grow, and the final chapter at 2 s and 11 s; same viewport, grain count, frozen shader time and scroll progress in both pages; CSS transitions fast-forwarded; real GPU |
-| Rest states | 39/39 identical, byte for byte: for chapters 2–14, the previous transition at t = 1 equals the next at t = 0, which equals the hold as scrolled into and, with the hold's lean, the hold screenshot | `npm run check:seams` |
-| Text and clock vs v8 | 85/85 positions identical: clock value, sub-line, unit class, label state, interlude hiding, title, body, micro line. The reference page gets the Phase 4a clock rounding (below) spliced in, so it is the baseline too | `npm run check:text`: every hold and t = 0.1 / 0.3 / 0.5 / 0.7 / 0.9 in every transition |
-| Reverse scrub | 12/12: scrolled backwards, drift, break, separate and grow at t = 0.2 / 0.45 / 0.75 render exactly as scrolled forwards (0.000 %, same settled progress) | `npm run check:reverse`: real scrolling through ScrollTrigger, snapping off |
+| Grain data | **Bit-identical**: worlds 0–13 to v15, v10, v8, v6 and v5; the final world (new in v15) to v15. At 90 000 and 36 000 grains per world, positions, hero positions and (v10, v15) surface normals | `npm run check:data` compares per-world digests of the packed texture, every hero position and the normals against an instrumented copy of each reference; each reference is the baseline only for the worlds it defines |
+| Rendered frames vs v15 (since Phase 4b; v10 in 4a, v8 until Phase 3) | 42/42 compared positions within 2 %: 0.46 % at most (crystal hold), most under 0.1 %. "Become" (display → now) at t = .2 / .4 / .55 / .7 / .85: 0.02–0.10 %; the final hold at 1.5 s and 15 s: 0.001–0.002 %. The purity → crystal reframe (4 positions, 6.5–7.6 %) differs on purpose. v15's layer panel and version label are hidden in the reference for the captures; the display's live clock counts on its own in each page. Strict counts are high everywhere (lighting and post move many pixels by one level) and are not compared | `npm run parity`: 15 holds, 14 transition midpoints, 2 interaction shots, t = .3 / .55 / .8 in drift, break and grow, five points of "become", the final chapter at 1.5 s and 15 s; same viewport, grain count, frozen shader time and scroll progress in both pages; CSS transitions fast-forwarded; real GPU |
+| Rest states | All identical, byte for byte: for chapters 2–14, the previous transition at t = 1 equals the next at t = 0, which equals the hold as scrolled into and, with the hold's lean, the hold screenshot; the rest path equals the full path at both ends; and the final hold (its first instant) equals the end of "become" | `npm run check:seams` (the live clock and the time spent in a hold pinned: `window.__LIVE`, `window.__FT`) |
+| Text and clock vs v15 | 85/85 positions identical: clock value (the live count normalised), sub-line, unit class, label state, interlude hiding, title, body, micro line. v15's copy is v8's | `npm run check:text`: every hold and t = 0.1 / 0.3 / 0.5 / 0.7 / 0.9 in every transition, matched by (world, t); the port's frame is awaited through its published progress |
+| Reverse scrub | 15/15: scrolled backwards, drift, break, separate, grow and become at t = 0.2 / 0.45 / 0.75 render exactly as scrolled forwards (at most 0.05 %, same settled progress) | `npm run check:reverse`: real scrolling through ScrollTrigger, snapping off |
 | Fonts | No layout shift when the web fonts arrive late (CLS 0.0000 with fonts held back 1.5 s; without the font gate the same load shifts); the wdth axis renders (a probe word measures 802 px at magma's 118.5 % and 507 px at crystal's 62 %) | `npm run check:fonts`, on the built site; title crops in `parity/fonts/` |
 | Quality tiers | A forced drop is queued mid-transition and swapped (90 000 → 36 000 grains) only once resting | `npm run check:tiers` |
 | Noise floor | The reference compared with itself: 0.015–0.019 % (0.195 % at the quarry hold), measured in Phase 1 with both pages in one window | Since Phase 2 each page has its own window (a background tab has its frames throttled), and the residuals are gone: 0.000 % everywhere, including the hover shots |
@@ -26,11 +29,35 @@ was verified and how, and what was not.
 The reference is never edited. The harness serves a patched copy with three hooks: progress
 override, time override, and exposing the built texture (`scripts/lib/reference.mjs`).
 
+## Phase 4b: reference v15, and where the port differs from the file
+
+Since Phase 4b, `reference/v15-lit.html` is the reference for everything: look, text and clock,
+pacing, the final. Positions of worlds 0–13 are still checked against every earlier reference too.
+Where the port does not copy the file:
+
+- **Chapter links land on their chapter.** v15 sorts the new "One day," scroll stop into the list
+  its chapter links index, so from Quarry on every link lands one chapter early (`#display` lands on
+  Chip). The port keeps the scroll stops (`SCROLL_SNAP`, holds plus the cut) apart from the chapter
+  points (`SNAP_POINTS`, one per chapter) that the rail, hash links and keys use.
+- **Chapter jumps snap exactly.** With v15's scrub of 1.6 s, ScrollTrigger's directional snap
+  carries a jump on to the next chapter (it measures velocity on the lagging scrubbed progress). A
+  jump the port makes itself (keys, rail, hash, focus) snaps to its target; free scrolling keeps
+  GSAP's directional snap.
+- **The square-pixel stage is deleted**, not left unreachable as in v15 (`uLast = -1`).
+- **The marker's `!important`.** v10 pinned the ring's opacity with `opacity:.95 !important`, and the
+  port had copied it; v15 removed it. Without it the ring fades as designed.
+- **"River cyan −12 %"** is v15's water colour (behaviours 1–2), not the river's palette.
+- **Exact ends for the macro camera.** At t = 0 and t = 1 it returns the resting cameras exactly
+  (v15 lerps twice, which can land a float step off).
+- **Frame pacing** (`?pacing`, default off) and the main-thread changes of Phase 4b (type axes on
+  the title and clock, the stage colour on body and scrim, the clock's punch through the Web
+  Animations API) have no counterpart in v15. They change no pixel; see docs/perf.md.
+
 ## Phase 4a: intentional changes to text and clock
 
-Since Phase 4a, `reference/v10-lit.html` is the reference for the look (lighting, colour, post).
-Positions, text and clock, seams and reverse scrubbing are still measured against v8. Visual
-differences from v8 are expected in this phase. Changes to text and clock are listed here.
+In Phase 4a, `reference/v10-lit.html` was the reference for the look (lighting, colour, post), and
+positions, text and clock, seams and reverse scrubbing were measured against v8 (since Phase 4b,
+text and clock are measured against v15, which includes both changes below).
 
 - **Clock rounding: one significant figure below a million (v10).** The clock between two dates
   reads "≈ 300,000", not v8's "≈ 340,000". Two figures suggested precision that isn't there.

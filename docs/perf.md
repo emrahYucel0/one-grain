@@ -582,3 +582,25 @@ is adopted.
 To get the steadiness without the probe judder, the lock could be re-tested with the GPU timer
 where the browser has it (Chrome on desktop) and with probes only elsewhere. That is a decision,
 so the default stays off.
+
+## Phase 4b, final timings
+
+`npm run perf`, mid tier, 1920×909, every layer on, every grain casting shadows, pacing off.
+"Become" is sampled at five points; the final hold carries the new sand surface (grain .085).
+
+| | Median | Worst (where) |
+|---|---|---|
+| GPU frame, 15 holds, 14 midpoints, 5 points of "become" | 14.50 ms | 15.48 ms (become t = .85) |
+| shadow-refresh frames, same positions | 15.07 ms | 16.19 ms (desert → again midpoint, become t = .85) |
+| final hold | 14.82 ms (refresh 15.24 ms) | — |
+| "become", t = .2 / .4 / .55 / .7 / .85 | 14.48–15.48 ms (refresh 14.93–16.19 ms) | — |
+| scroll-through, GPU frame | 14.25 ms | p95 16.29 ms |
+| scroll-through, refresh frames | 15.06 ms | p95 16.96 ms |
+
+Every standard position is within 16.7 ms, refresh frames included. While scrolling, the refresh
+frames' p95 is at the budget (16.96 ms). The frame interval is 20.8 ms throughout (see delta 10 for
+the cadence and the pacing lock).
+
+A first run of the same measurement, straight after the parity run, showed 28–48 ms frame intervals
+at the same GPU times, plus one corrupted shadow sample (5031 ms in the smoothed column). Repeated
+runs (`perf:frame`, then this one) show 20.8 ms, so that run was disturbed and is not reported.
