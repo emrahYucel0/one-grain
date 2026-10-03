@@ -375,3 +375,49 @@ shadow map. The levers, with their measured size:
 | vignette and film grain off | about 0.3 ms | flatter frame |
 
 The tiers and the adaptive downgrade (delta 9) build on this table.
+
+## Before delta 7: half-grain shadow pass by default, raw frame times
+
+**Every other grain casts shadows** (`?shadowstride=2` is now the default; `?shadowstride=1` restores
+every grain for measurements). The look cost is above: desert 1.5 % of pixels, chip 0.01 %.
+
+**Raw frame times.** The GPU timer now also keeps the last 240 frames as measured
+(`window.__gpu.recent`), and `npm run perf` reports two raw medians:
+
+- *GPU frame*: the median of whole frames;
+- *refresh*: the median of the frames that also redraw the shadow map, the expensive ones.
+
+The old "GPU total" added up per-pass averages. That overstated refresh frames by 1–2 ms: the
+frame-start overhead (about 1 ms) was counted in the shadow pass and, half the time, in the grain
+pass as well.
+
+Refresh frames at the worst positions (`scripts/_refresh.mjs`, a scratch tool), 120 frames each,
+settled. Both columns were measured in the same session:
+
+| Position | Every grain | Every other grain |
+|---|---|---|
+| hold again | 14.72 ms | 14.09 ms (p95 14.29) |
+| hold light | 14.58 ms | 13.76 ms (p95 13.97) |
+| coast → again midpoint | 14.36 ms | 13.79 ms (p95 14.03) |
+
+A full `npm run perf` afterwards, in the GPU's slower state (frame interval 20.8 ms, the shadow pass
+3.7–4.0 ms instead of 2.4), still keeps every position under 16.7 ms:
+
+- refresh frames: median 15.02 ms, worst 15.93 ms (desert → again midpoint);
+- all frames: median 14.41 ms;
+- scrub: refresh-frame p95 15.79 ms.
+
+Isolated single frames still reach about 17 ms, on non-refresh frames too.
+
+**Composite: the depth of field's own circle of confusion (tried, not kept).** The DOF pass
+writes its circle of confusion to alpha at half resolution, so the composite could skip its depth
+read. Interleaved A/B runs:
+
+| Composite variant | GPU time | Look against the full-resolution depth read |
+|---|---|---|
+| full-resolution depth read (kept) | 2.42–2.44 ms | — |
+| half-resolution circle of confusion | 2.18 ms | in-focus grains against blur get soft edges and dark fringe pixels (chip 0.19 % of pixels, perceptual) |
+| half resolution, depth read only where `fwidth` of it exceeds 0.03 (about 10 % of pixels) | 2.88–2.90 ms | the same as the full read (chip 0.002 %) |
+
+The depth read is one cached fetch and costs less than the derivative and branch that would avoid
+it. The composite keeps v10's full-resolution read.
