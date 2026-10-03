@@ -10,10 +10,11 @@
     "preview": "vite preview",
     "typecheck": "tsc --noEmit",
     "lint": "eslint .",
-    "parity": "node scripts/parity.mjs",
-    "check:console": "node scripts/console-gate.mjs",
+    "parity": "vite build && node scripts/parity.mjs",
+    "check:console": "vite build && node scripts/console-gate.mjs",
     "check:data": "node scripts/data-gate.mjs",
-    "check:a11y": "node scripts/a11y-check.mjs"
+    "check:a11y": "node scripts/a11y-check.mjs",
+    "perf": "vite build && node scripts/perf.mjs"
   },
   "engines": {
     "node": ">=20"

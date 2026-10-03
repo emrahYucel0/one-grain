@@ -1,0 +1,143 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Parity · One Grain</title>
+<style>
+:root{--bg:#f4f4f1;--ink:#16201e;--muted:#5b6662;--rule:#d5d8d3;--ok:#2f7a4a;--warn:#a5531d}
+@media (prefers-color-scheme:dark){:root{--bg:#111819;--ink:#e9e3d6;--muted:#93a19c;--rule:#2a3436;--ok:#6cc08b;--warn:#e3955b}}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 system-ui,sans-serif}
+header{padding:24px 16px 8px;max-width:1500px;margin:0 auto}h1{margin:0 0 4px;font-size:22px}header p{margin:0;color:var(--muted)}
+main{max-width:1500px;margin:0 auto;padding:8px 16px 48px}
+section{border-top:1px solid var(--rule);padding:16px 0}
+h2{font-size:15px;margin:0 0 8px;display:flex;gap:12px;flex-wrap:wrap;align-items:baseline}
+h2 .pct{font-variant-numeric:tabular-nums;color:var(--muted)}h2 .ok{color:var(--ok)}h2 .review{color:var(--warn)}
+.row{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+figure{margin:0}figure img{width:100%;height:auto;display:block;border:1px solid var(--rule)}figcaption{font-size:12px;color:var(--muted);padding-top:2px}
+@media (max-width:800px){.row{grid-template-columns:1fr}}
+</style></head><body>
+<header><h1>Parity: reference blockout v5 vs port</h1><p>31 positions · 31 within 2 % · see checklist.md for the method</p></header>
+<main>
+<section id="01-hold-magma"><h2><span>1. Hold · magma</span><span class="pct">v = 0.0000 · diff 0.000 %</span><span class="ok">✓</span></h2>
+<div class="row"><figure><img loading="lazy" src="ref/01-hold-magma.jpg" alt="Reference, Hold · magma"><figcaption>Reference</figcaption></figure>
+<figure><img loading="lazy" src="port/01-hold-magma.jpg" alt="Port, Hold · magma"><figcaption>Port</figcaption></figure>
+<figure><img loading="lazy" src="diff/01-hold-magma.png" alt="Differing pixels, Hold · magma"><figcaption>Differing pixels (red)</figcaption></figure></div></section>
+<section id="02-tr-magma-granite"><h2><span>2. Transition midpoint · magma → granite (crane, style 0)</span><span class="pct">v = 0.0649 · diff 0.006 %</span><span class="ok">✓</span></h2>
+<div class="row"><figure><img loading="lazy" src="ref/02-tr-magma-granite.jpg" alt="Reference, Transition midpoint · magma → granite (crane, style 0)"><figcaption>Reference</figcaption></figure>
+<figure><img loading="lazy" src="port/02-tr-magma-granite.jpg" alt="Port, Transition midpoint · magma → granite (crane, style 0)"><figcaption>Port</figcaption></figure>
+<figure><img loading="lazy" src="diff/02-tr-magma-granite.png" alt="Differing pixels, Transition midpoint · magma → granite (crane, style 0)"><figcaption>Differing pixels (red)</figcaption></figure></div></section>
+<section id="03-hold-granite"><h2><span>3. Hold · granite</span><span class="pct">v = 0.0988 · diff 0.000 %</span><span class="ok">✓</span></h2>
+<div class="row"><figure><img loading="lazy" src="ref/03-hold-granite.jpg" alt="Reference, Hold · granite"><figcaption>Reference</figcaption></figure>
+<figure><img loading="lazy" src="port/03-hold-granite.jpg" alt="Port, Hold · granite"><figcaption>Port</figcaption></figure>
+<figure><img loading="lazy" src="diff/03-hold-granite.png" alt="Differing pixels, Hold · granite"><figcaption>Differing pixels (red)</figcaption></figure></div></section>
+<section id="04-tr-granite-river"><h2><span>4. Transition midpoint · granite → river (crackdrop, style 15)</span><span class="pct">v = 0.1357 · diff 0.000 %</span><span class="ok">✓</span></h2>
+<div class="row"><figure><img loading="lazy" src="ref/04-tr-granite-river.jpg" alt="Reference, Transition midpoint · granite → river (crackdrop, style 15)"><figcaption>Reference</figcaption></figure>
+<figure><img loading="lazy" src="port/04-tr-granite-river.jpg" alt="Port, Transition midpoint · granite → river (crackdrop, style 15)"><figcaption>Port</figcaption></figure>
+<figure><img loading="lazy" src="diff/04-tr-granite-river.png" alt="Differing pixels, Transition midpoint · granite → river (crackdrop, style 15)"><figcaption>Differing pixels (red)</figcaption></figure></div></section>
+<section id="05-hold-river"><h2><span>5. Hold · river</span><span class="pct">v = 0.1711 · diff 0.000 %</span><span class="ok">✓</span></h2>
+<div class="row"><figure><img loading="lazy" src="ref/05-hold-river.jpg" alt="Reference, Hold · river"><figcaption>Reference</figcaption></figure>
+<figure><img loading="lazy" src="port/05-hold-river.jpg" alt="Port, Hold · river"><figcaption>Port</figcaption></figure>
+<figure><img loading="lazy" src="diff/05-hold-river.png" alt="Differing pixels, Hold · river"><figcaption>Differing pixels (red)</figcaption></figure></div></section>
+<section id="06-tr-river-coast"><h2><span>6. Transition midpoint · river → coast (track, style 2)</span><span class="pct">v = 0.2006 · diff 0.000 %</span><span class="ok">✓</span></h2>
+<div class="row"><figure><img loading="lazy" src="ref/06-tr-river-coast.jpg" alt="Reference, Transition midpoint · river → coast (track, style 2)"><figcaption>Reference</figcaption></figure>
+<figure><img loading="lazy" src="port/06-tr-river-coast.jpg" alt="Port, Transition midpoint · river → coast (track, style 2)"><figcaption>Port</figcaption></figure>
+<figure><img loading="lazy" src="diff/06-tr-river-coast.png" alt="Differing pixels, Transition midpoint · river → coast (track, style 2)"><figcaption>Differing pixels (red)</figcaption></figure></div></section>
+<section id="07-hold-coast"><h2><span>7. Hold · coast</span><span class="pct">v = 0.2301 · diff 0.000 %</span><span class="ok">✓</span></h2>
+<div class="row"><figure><img loading="lazy" src="ref/07-hold-coast.jpg" alt="Reference, Hold · coast"><figcaption>Reference</figcaption></figure>
+<figure><img loading="lazy" src="port/07-hold-coast.jpg" alt="Port, Hold · coast"><figcaption>Port</figcaption></figure>
+<figure><img loading="lazy" src="diff/07-hold-coast.png" alt="Differing pixels, Hold · coast"><figcaption>Differing pixels (red)</figcaption></figure></div></section>
+<section id="08-tr-coast-desert"><h2><span>8. Transition midpoint · coast → desert (fly, style 3)</span><span class="pct">v = 0.2611 · diff 0.000 %</span><span class="ok">✓</span></h2>
+<div class="row"><figure><img loading="lazy" src="ref/08-tr-coast-desert.jpg" alt="Reference, Transition midpoint · coast → desert (fly, style 3)"><figcaption>Reference</figcaption></figure>
+<figure><img loading="lazy" src="port/08-tr-coast-desert.jpg" alt="Port, Transition midpoint · coast → desert (fly, style 3)"><figcaption>Port</figcaption></figure>
+<figure><img loading="lazy" src="diff/08-tr-coast-desert.png" alt="Differing pixels, Transition midpoint · coast → desert (fly, style 3)"><figcaption>Differing pixels (red)</figcaption></figure></div></section>
+<section id="09-hold-desert"><h2><span>9. Hold · desert</span><span class="pct">v = 0.3009 · diff 0.000 %</span><span class="ok">✓</span></h2>
+<div class="row"><figure><img loading="lazy" src="ref/09-hold-desert.jpg" alt="Reference, Hold · desert"><figcaption>Reference</figcaption></figure>
+<figure><img loading="lazy" src="port/09-hold-desert.jpg" alt="Port, Hold · desert"><figcaption>Port</figcaption></figure>
+<figure><img loading="lazy" src="diff/09-hold-desert.png" alt="Differing pixels, Hold · desert"><figcaption>Differing pixels (red)</figcaption></figure></div></section>
+<section id="10-tr-desert-again"><h2><span>10. Transition midpoint · desert → again (sink, style 4)</span><span class="pct">v = 0.3451 · diff 0.000 %</span><span class="ok">✓</span></h2>
+<div class="row"><figure><img loading="lazy" src="ref/10-tr-desert-again.jpg" alt="Reference, Transition midpoint · desert → again (sink, style 4)"><figcaption>Reference</figcaption></figure>
+<figure><img loading="lazy" src="port/10-tr-desert-again.jpg" alt="Port, Transition midpoint · desert → again (sink, style 4)"><figcaption>Port</figcaption></figure>
+<figure><img loading="lazy" src="diff/10-tr-desert-again.png" alt="Differing pixels, Transition midpoint · desert → again (sink, style 4)"><figcaption>Differing pixels (red)</figcaption></figure></div></section>
+<section id="11-hold-again"><h2><span>11. Hold · again</span><span class="pct">v = 0.3791 · diff 0.000 %</span><span class="ok">✓</span></h2>
+<div class="row"><figure><img loading="lazy" src="ref/11-hold-again.jpg" alt="Reference, Hold · again"><figcaption>Reference</figcaption></figure>
+<figure><img loading="lazy" src="port/11-hold-again.jpg" alt="Port, Hold · again"><figcaption>Port</figcaption></figure>
+<figure><img loading="lazy" src="diff/11-hold-again.png" alt="Differing pixels, Hold · again"><figcaption>Differing pixels (red)</figcaption></figure></div></section>
+<section id="12-tr-again-quarry"><h2><span>12. Transition midpoint · again → quarry (cut, style 5)</span><span class="pct">v = 0.4027 · diff 0.000 %</span><span class="ok">✓</span></h2>
+<div class="row"><figure><img loading="lazy" src="ref/12-tr-again-quarry.jpg" alt="Reference, Transition midpoint · again → quarry (cut, style 5)"><figcaption>Reference</figcaption></figure>
+<figure><img loading="lazy" src="port/12-tr-again-quarry.jpg" alt="Port, Transition midpoint · again → quarry (cut, style 5)"><figcaption>Port</figcaption></figure>
+<figure><img loading="lazy" src="diff/12-tr-again-quarry.png" alt="Differing pixels, Transition midpoint · again → quarry (cut, style 5)"><figcaption>Differing pixels (red)</figcaption></figure></div></section>
+<section id="13-hold-quarry"><h2><span>13. Hold · quarry</span><span class="pct">v = 0.4277 · diff 0.139 %</span><span class="ok">✓</span></h2>
+<div class="row"><figure><img loading="lazy" src="ref/13-hold-quarry.jpg" alt="Reference, Hold · quarry"><figcaption>Reference</figcaption></figure>
+<figure><img loading="lazy" src="port/13-hold-quarry.jpg" alt="Port, Hold · quarry"><figcaption>Port</figcaption></figure>
+<figure><img loading="lazy" src="diff/13-hold-quarry.png" alt="Differing pixels, Hold · quarry"><figcaption>Differing pixels (red)</figcaption></figure></div></section>
+<section id="14-tr-quarry-furnace"><h2><span>14. Transition midpoint · quarry → furnace (pour, style 6)</span><span class="pct">v = 0.4572 · diff 0.000 %</span><span class="ok">✓</span></h2>
+<div class="row"><figure><img loading="lazy" src="ref/14-tr-quarry-furnace.jpg" alt="Reference, Transition midpoint · quarry → furnace (pour, style 6)"><figcaption>Reference</figcaption></figure>
+<figure><img loading="lazy" src="port/14-tr-quarry-furnace.jpg" alt="Port, Transition midpoint · quarry → furnace (pour, style 6)"><figcaption>Port</figcaption></figure>
+<figure><img loading="lazy" src="diff/14-tr-quarry-furnace.png" alt="Differing pixels, Transition midpoint · quarry → furnace (pour, style 6)"><figcaption>Differing pixels (red)</figcaption></figure></div></section>
+<section id="15-hold-furnace"><h2><span>15. Hold · furnace</span><span class="pct">v = 0.4867 · diff 0.000 %</span><span class="ok">✓</span></h2>
+<div class="row"><figure><img loading="lazy" src="ref/15-hold-furnace.jpg" alt="Reference, Hold · furnace"><figcaption>Reference</figcaption></figure>
+<figure><img loading="lazy" src="port/15-hold-furnace.jpg" alt="Port, Hold · furnace"><figcaption>Port</figcaption></figure>
+<figure><img loading="lazy" src="diff/15-hold-furnace.png" alt="Differing pixels, Hold · furnace"><figcaption>Differing pixels (red)</figcaption></figure></div></section>
+<section id="16-tr-furnace-purity"><h2><span>16. Transition midpoint · furnace → purity (heat, style 7)</span><span class="pct">v = 0.5147 · diff 0.000 %</span><span class="ok">✓</span></h2>
+<div class="row"><figure><img loading="lazy" src="ref/16-tr-furnace-purity.jpg" alt="Reference, Transition midpoint · furnace → purity (heat, style 7)"><figcaption>Reference</figcaption></figure>
+<figure><img loading="lazy" src="port/16-tr-furnace-purity.jpg" alt="Port, Transition midpoint · furnace → purity (heat, style 7)"><figcaption>Port</figcaption></figure>
+<figure><img loading="lazy" src="diff/16-tr-furnace-purity.png" alt="Differing pixels, Transition midpoint · furnace → purity (heat, style 7)"><figcaption>Differing pixels (red)</figcaption></figure></div></section>
+<section id="17-hold-purity"><h2><span>17. Hold · purity</span><span class="pct">v = 0.5398 · diff 0.000 %</span><span class="ok">✓</span></h2>
+<div class="row"><figure><img loading="lazy" src="ref/17-hold-purity.jpg" alt="Reference, Hold · purity"><figcaption>Reference</figcaption></figure>
+<figure><img loading="lazy" src="port/17-hold-purity.jpg" alt="Port, Hold · purity"><figcaption>Port</figcaption></figure>
+<figure><img loading="lazy" src="diff/17-hold-purity.png" alt="Differing pixels, Hold · purity"><figcaption>Differing pixels (red)</figcaption></figure></div></section>
+<section id="18-tr-purity-crystal"><h2><span>18. Transition midpoint · purity → crystal (orbit, style 8)</span><span class="pct">v = 0.5708 · diff 0.000 %</span><span class="ok">✓</span></h2>
+<div class="row"><figure><img loading="lazy" src="ref/18-tr-purity-crystal.jpg" alt="Reference, Transition midpoint · purity → crystal (orbit, style 8)"><figcaption>Reference</figcaption></figure>
+<figure><img loading="lazy" src="port/18-tr-purity-crystal.jpg" alt="Port, Transition midpoint · purity → crystal (orbit, style 8)"><figcaption>Port</figcaption></figure>
+<figure><img loading="lazy" src="diff/18-tr-purity-crystal.png" alt="Differing pixels, Transition midpoint · purity → crystal (orbit, style 8)"><figcaption>Differing pixels (red)</figcaption></figure></div></section>
+<section id="19-hold-crystal"><h2><span>19. Hold · crystal</span><span class="pct">v = 0.6091 · diff 0.000 %</span><span class="ok">✓</span></h2>
+<div class="row"><figure><img loading="lazy" src="ref/19-hold-crystal.jpg" alt="Reference, Hold · crystal"><figcaption>Reference</figcaption></figure>
+<figure><img loading="lazy" src="port/19-hold-crystal.jpg" alt="Port, Hold · crystal"><figcaption>Port</figcaption></figure>
+<figure><img loading="lazy" src="diff/19-hold-crystal.png" alt="Differing pixels, Hold · crystal"><figcaption>Differing pixels (red)</figcaption></figure></div></section>
+<section id="20-tr-crystal-wafer"><h2><span>20. Transition midpoint · crystal → wafer (slide, style 9)</span><span class="pct">v = 0.6431 · diff 0.000 %</span><span class="ok">✓</span></h2>
+<div class="row"><figure><img loading="lazy" src="ref/20-tr-crystal-wafer.jpg" alt="Reference, Transition midpoint · crystal → wafer (slide, style 9)"><figcaption>Reference</figcaption></figure>
+<figure><img loading="lazy" src="port/20-tr-crystal-wafer.jpg" alt="Port, Transition midpoint · crystal → wafer (slide, style 9)"><figcaption>Port</figcaption></figure>
+<figure><img loading="lazy" src="diff/20-tr-crystal-wafer.png" alt="Differing pixels, Transition midpoint · crystal → wafer (slide, style 9)"><figcaption>Differing pixels (red)</figcaption></figure></div></section>
+<section id="21-hold-wafer"><h2><span>21. Hold · wafer</span><span class="pct">v = 0.6696 · diff 0.000 %</span><span class="ok">✓</span></h2>
+<div class="row"><figure><img loading="lazy" src="ref/21-hold-wafer.jpg" alt="Reference, Hold · wafer"><figcaption>Reference</figcaption></figure>
+<figure><img loading="lazy" src="port/21-hold-wafer.jpg" alt="Port, Hold · wafer"><figcaption>Port</figcaption></figure>
+<figure><img loading="lazy" src="diff/21-hold-wafer.png" alt="Differing pixels, Hold · wafer"><figcaption>Differing pixels (red)</figcaption></figure></div></section>
+<section id="22-tr-wafer-light"><h2><span>22. Transition midpoint · wafer → light (top, style 16)</span><span class="pct">v = 0.6947 · diff 0.000 %</span><span class="ok">✓</span></h2>
+<div class="row"><figure><img loading="lazy" src="ref/22-tr-wafer-light.jpg" alt="Reference, Transition midpoint · wafer → light (top, style 16)"><figcaption>Reference</figcaption></figure>
+<figure><img loading="lazy" src="port/22-tr-wafer-light.jpg" alt="Port, Transition midpoint · wafer → light (top, style 16)"><figcaption>Port</figcaption></figure>
+<figure><img loading="lazy" src="diff/22-tr-wafer-light.png" alt="Differing pixels, Transition midpoint · wafer → light (top, style 16)"><figcaption>Differing pixels (red)</figcaption></figure></div></section>
+<section id="23-hold-light"><h2><span>23. Hold · light</span><span class="pct">v = 0.7212 · diff 0.000 %</span><span class="ok">✓</span></h2>
+<div class="row"><figure><img loading="lazy" src="ref/23-hold-light.jpg" alt="Reference, Hold · light"><figcaption>Reference</figcaption></figure>
+<figure><img loading="lazy" src="port/23-hold-light.jpg" alt="Port, Hold · light"><figcaption>Port</figcaption></figure>
+<figure><img loading="lazy" src="diff/23-hold-light.png" alt="Differing pixels, Hold · light"><figcaption>Differing pixels (red)</figcaption></figure></div></section>
+<section id="24-tr-light-chip"><h2><span>24. Transition midpoint · light → chip (zoom, style 11)</span><span class="pct">v = 0.7552 · diff 0.000 %</span><span class="ok">✓</span></h2>
+<div class="row"><figure><img loading="lazy" src="ref/24-tr-light-chip.jpg" alt="Reference, Transition midpoint · light → chip (zoom, style 11)"><figcaption>Reference</figcaption></figure>
+<figure><img loading="lazy" src="port/24-tr-light-chip.jpg" alt="Port, Transition midpoint · light → chip (zoom, style 11)"><figcaption>Port</figcaption></figure>
+<figure><img loading="lazy" src="diff/24-tr-light-chip.png" alt="Differing pixels, Transition midpoint · light → chip (zoom, style 11)"><figcaption>Differing pixels (red)</figcaption></figure></div></section>
+<section id="25-hold-chip"><h2><span>25. Hold · chip</span><span class="pct">v = 0.7950 · diff 0.000 %</span><span class="ok">✓</span></h2>
+<div class="row"><figure><img loading="lazy" src="ref/25-hold-chip.jpg" alt="Reference, Hold · chip"><figcaption>Reference</figcaption></figure>
+<figure><img loading="lazy" src="port/25-hold-chip.jpg" alt="Port, Hold · chip"><figcaption>Port</figcaption></figure>
+<figure><img loading="lazy" src="diff/25-hold-chip.png" alt="Differing pixels, Hold · chip"><figcaption>Differing pixels (red)</figcaption></figure></div></section>
+<section id="26-tr-chip-glass"><h2><span>26. Transition midpoint · chip → glass (beam, style 12)</span><span class="pct">v = 0.8274 · diff 0.000 %</span><span class="ok">✓</span></h2>
+<div class="row"><figure><img loading="lazy" src="ref/26-tr-chip-glass.jpg" alt="Reference, Transition midpoint · chip → glass (beam, style 12)"><figcaption>Reference</figcaption></figure>
+<figure><img loading="lazy" src="port/26-tr-chip-glass.jpg" alt="Port, Transition midpoint · chip → glass (beam, style 12)"><figcaption>Port</figcaption></figure>
+<figure><img loading="lazy" src="diff/26-tr-chip-glass.png" alt="Differing pixels, Transition midpoint · chip → glass (beam, style 12)"><figcaption>Differing pixels (red)</figcaption></figure></div></section>
+<section id="27-hold-glass"><h2><span>27. Hold · glass</span><span class="pct">v = 0.8614 · diff 0.000 %</span><span class="ok">✓</span></h2>
+<div class="row"><figure><img loading="lazy" src="ref/27-hold-glass.jpg" alt="Reference, Hold · glass"><figcaption>Reference</figcaption></figure>
+<figure><img loading="lazy" src="port/27-hold-glass.jpg" alt="Port, Hold · glass"><figcaption>Port</figcaption></figure>
+<figure><img loading="lazy" src="diff/27-hold-glass.png" alt="Differing pixels, Hold · glass"><figcaption>Differing pixels (red)</figcaption></figure></div></section>
+<section id="28-tr-glass-you"><h2><span>28. Transition midpoint · glass → you (pullback, style 13)</span><span class="pct">v = 0.9056 · diff 0.000 %</span><span class="ok">✓</span></h2>
+<div class="row"><figure><img loading="lazy" src="ref/28-tr-glass-you.jpg" alt="Reference, Transition midpoint · glass → you (pullback, style 13)"><figcaption>Reference</figcaption></figure>
+<figure><img loading="lazy" src="port/28-tr-glass-you.jpg" alt="Port, Transition midpoint · glass → you (pullback, style 13)"><figcaption>Port</figcaption></figure>
+<figure><img loading="lazy" src="diff/28-tr-glass-you.png" alt="Differing pixels, Transition midpoint · glass → you (pullback, style 13)"><figcaption>Differing pixels (red)</figcaption></figure></div></section>
+<section id="29-hold-you"><h2><span>29. Hold · you</span><span class="pct">v = 1.0000 · diff 0.000 %</span><span class="ok">✓</span></h2>
+<div class="row"><figure><img loading="lazy" src="ref/29-hold-you.jpg" alt="Reference, Hold · you"><figcaption>Reference</figcaption></figure>
+<figure><img loading="lazy" src="port/29-hold-you.jpg" alt="Port, Hold · you"><figcaption>Port</figcaption></figure>
+<figure><img loading="lazy" src="diff/29-hold-you.png" alt="Differing pixels, Hold · you"><figcaption>Differing pixels (red)</figcaption></figure></div></section>
+<section id="30-hover-desert"><h2><span>30. Desert · cursor brushing the dunes</span><span class="pct">v = 0.3009 · diff 0.073 %</span><span class="ok">✓</span></h2>
+<div class="row"><figure><img loading="lazy" src="ref/30-hover-desert.jpg" alt="Reference, Desert · cursor brushing the dunes"><figcaption>Reference</figcaption></figure>
+<figure><img loading="lazy" src="port/30-hover-desert.jpg" alt="Port, Desert · cursor brushing the dunes"><figcaption>Port</figcaption></figure>
+<figure><img loading="lazy" src="diff/30-hover-desert.png" alt="Differing pixels, Desert · cursor brushing the dunes"><figcaption>Differing pixels (red)</figcaption></figure></div></section>
+<section id="31-hover-chip"><h2><span>31. Chip · cursor lighting the switches</span><span class="pct">v = 0.7950 · diff 0.028 %</span><span class="ok">✓</span></h2>
+<div class="row"><figure><img loading="lazy" src="ref/31-hover-chip.jpg" alt="Reference, Chip · cursor lighting the switches"><figcaption>Reference</figcaption></figure>
+<figure><img loading="lazy" src="port/31-hover-chip.jpg" alt="Port, Chip · cursor lighting the switches"><figcaption>Port</figcaption></figure>
+<figure><img loading="lazy" src="diff/31-hover-chip.png" alt="Differing pixels, Chip · cursor lighting the switches"><figcaption>Differing pixels (red)</figcaption></figure></div></section>
+</main></body></html>

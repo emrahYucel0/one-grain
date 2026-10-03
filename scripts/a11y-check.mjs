@@ -102,10 +102,8 @@ try {
   const ctx = await noJs.newContext({ javaScriptEnabled: false, viewport: { width: 1440, height: 900 } });
   const p = await ctx.newPage();
   await p.goto(url);
-  const h = await p.evaluate(() => document.getElementById('story').getBoundingClientRect().height).catch(() => -1);
   const text = await p.locator('#story').innerText();
   check('no JavaScript: readable article', text.includes('Deep underground') && text.includes('You are looking at sand'), `${text.length} chars`);
-  void h;
 } finally { await noJs.close(); }
 
 await server.close();
