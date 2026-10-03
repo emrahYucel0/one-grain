@@ -5,13 +5,13 @@
 //   window.__T      shader time override (seconds), read every frame
 //   window.__DATA   the packed grain texture (Float32Array) once built
 //   window.__HEROES hero positions [[x, y, z] × 15] once built
-//   window.__NDATA  the surface normals (Float32Array, xyz per grain), where the reference has them (v10)
+//   window.__NDATA  the surface normals (Float32Array, xyz per grain), where the reference has them (v10, v15)
 import { readFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 
 /** The behavioural spec of the current phase comes first. */
-export const REFERENCES = ['v10', 'v8', 'v6', 'v5'];
-const FILES = { v10: 'v10-lit.html' };
+export const REFERENCES = ['v15', 'v10', 'v8', 'v6', 'v5'];
+const FILES = { v15: 'v15-lit.html', v10: 'v10-lit.html' };
 export const referenceFile = (version = REFERENCES[0]) => fileURLToPath(new URL(`../../reference/${FILES[version] ?? `blockout-${version}.html`}`, import.meta.url));
 
 const PATCHES = [

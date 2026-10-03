@@ -16,6 +16,7 @@
     "check:data": "node scripts/data-gate.mjs",
     "check:a11y": "node scripts/a11y-check.mjs",
     "perf": "vite build && node scripts/perf.mjs",
+    "perf:frame": "vite build --minify false && node scripts/frame-cost.mjs",
     "check:text": "node scripts/text-parity.mjs",
     "check:reverse": "node scripts/reverse-scrub.mjs",
     "check:seams": "node scripts/seams.mjs",

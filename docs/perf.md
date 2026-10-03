@@ -473,3 +473,36 @@ first two (depth of field, then shadows) before it touches the grain count.
 
 The frame interval in these runs was 20.8 ms (48 fps) while the GPU needed about 14 ms, so something other than the GPU set
 the pace on this machine during the measurement (earlier the same day it was 13.9 ms).
+
+## Phase 4b, baseline: frame cost and cadence (before any change)
+
+`npm run perf:frame` (`scripts/frame-cost.mjs`). Same machine (Intel UHD, 144 Hz panel), built
+unminified so the trace names functions, mid tier, 1920×909. Each position is measured twice:
+
+- untraced, for the cadence and the GPU (tracing slows the page);
+- with a Chrome trace of the main thread, split per frame into script, style, layout and paint.
+
+The refresh interval is measured on a blank page: 6.9 ms (145 Hz).
+
+| Position | Frame interval | Cadence (refreshes per frame) | Main thread median / p95 | GPU frame median / p95 |
+|---|---|---|---|---|
+| hold magma | 20.8 ms (sd 4.6) | 2×27 % 3×64 % 4+ 9 % | 1.13 / 1.89 ms | 13.64 / 14.40 ms |
+| hold granite | 20.7 ms (sd 3.4) | 2×35 % 3×64 % | 1.07 / 1.72 ms | 13.41 / 13.71 ms |
+| hold desert | 20.7 ms (sd 3.3) | 2×28 % 3×71 % | 1.09 / 1.67 ms | 13.90 / 14.25 ms |
+| hold again | 20.8 ms (sd 3.6) | 2×17 % 3×73 % 4×10 % | 1.00 / 1.58 ms | 15.11 / 15.45 ms |
+| hold crystal | 20.7 ms (sd 3.8) | 2×40 % 3×57 % | 1.01 / 1.52 ms | 13.21 / 13.46 ms |
+| hold light | 20.8 ms (sd 3.4) | 2×21 % 3×74 % | 1.10 / 1.65 ms | 14.90 / 15.17 ms |
+| hold now | 20.8 ms (sd 3.2) | 2×22 % 3×75 % | 1.12 / 3.33 ms | 14.33 / 14.56 ms |
+| all 15 holds | 20.7–20.8 ms (sd 3.2–4.6) | 2× 17–40 %, 3× 57–75 % | 0.95–1.13 ms | 11.98–15.11 ms |
+| scroll-through (wheel, ScrollTrigger) | 20.8 ms (sd 8.3, p95 34.9) | 1×12 % 2×21 % 3×46 % 4×11 % 5+ 10 % | 1.67 / 15.60 ms (max 38) | 13.74 / 15.84 ms |
+
+What it shows:
+
+- **Holds: the main thread is not the problem.** It needs about 1 ms per frame. The GPU frame
+  (12–15 ms) sits at the two-refresh boundary (13.9 ms), so frames alternate between 2 and 3 refreshes
+  (13.9 and 20.8 ms). That alternation is the judder.
+- **Scroll-through: layout is.** 150 frames carry more than 13.9 ms of main-thread work. Their
+  Layout touches only 10–16 of 204 objects but takes 5–13 ms: every new width/weight value is a new
+  variable-font instance to shape (title and clock, `--wdth/--wght` on `:root`). ScrollTrigger's
+  `_onScroll` also forces a 5–6 ms layout after the frame's style writes (74 forced layouts in the
+  run).
