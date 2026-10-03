@@ -2,7 +2,7 @@
 
 export type Vec3 = readonly [number, number, number];
 export type ActId = 'nature' | 'industry' | 'now';
-export type ClockUnit = 'years' | 'prod' | 'now';
+export type ClockUnit = 'years' | 'prod' | 'live' | 'now';
 
 /**
  * The clock has one meaning: time elapsed on the grain's journey.
@@ -11,7 +11,7 @@ export type ClockUnit = 'years' | 'prod' | 'now';
  * prod: production time; the label always comes from index.html.
  * now: the final chapter only.
  */
-export type WorldClock = { unit: 'years'; value: number } | { unit: 'prod' } | { unit: 'now' };
+export type WorldClock = { unit: 'years'; value: number } | { unit: 'prod' } | { unit: 'live' } | { unit: 'now' };
 
 export interface WorldDef {
   slug: string;

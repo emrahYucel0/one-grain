@@ -102,6 +102,7 @@ body{margin:0;background:var(--stage);color:var(--ink);font-family:var(--sans);f
 .sound:focus-visible{outline:2px solid var(--ink);outline-offset:4px;border-radius:2px}
 .micro{margin-top:.55rem !important;font-size:.85rem;color:var(--muted)}
 .time.u-prod b{font-weight:800;font-stretch:62%;font-size:clamp(1.9rem,3.4vw,3rem);letter-spacing:.01em}
+.time.u-live b{font-weight:500;font-stretch:100% !important;font-size:clamp(1.6rem,2.8vw,2.4rem);letter-spacing:.02em;font-variant-numeric:tabular-nums}
 .time.u-years.is-label b{font-size:clamp(1.1rem,2vw,1.6rem)}
 .time.hide{opacity:0}
 .time{transition:opacity .3s}

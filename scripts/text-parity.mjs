@@ -1,5 +1,5 @@
-// Text parity (npm run check:text): overlay text and clock state, port vs blockout v8 (the text and
-// clock reference, with the intentional changes below; v10 is the reference for the look)
+// Text parity (npm run check:text): overlay text and clock state, port vs reference v15 (its copy is
+// v8's; its clock adds the production labels, the live count on the display, label hysteresis)
 // (the act label is not compared: since v8 the rail carries the act and the label is gone),
 // at every hold and at five points in every transition. Positions are matched by (world a → b, t),
 // so the check also works while transition lengths differ between the two.
@@ -9,12 +9,9 @@ import { readFile } from 'node:fs/promises';
 import { referenceFile, routeReference } from './lib/reference.mjs';
 import { startDev } from './lib/servers.mjs';
 
-const TEXT_REFERENCE = 'v8';
-/** Intentional changes since v8, applied to the reference page (docs/parity-notes.md). */
-const INTENTIONAL = [
-  // v10's clock rounding: one significant figure below a million ("≈ 300,000", not "≈ 340,000")
-  ['const k = Math.pow(10, Math.max(0, Math.floor(Math.log10(y)) - 1));', 'const k = Math.pow(10, Math.floor(Math.log10(y)));'],
-];
+const TEXT_REFERENCE = 'v15';
+/** Intentional changes since the reference, applied to its page (docs/parity-notes.md). None at present. */
+const INTENTIONAL = [];
 
 const vite = await createServer({ server: { middlewareMode: true }, appType: 'custom', logLevel: 'error' });
 const { WORLDS } = await vite.ssrLoadModule('/src/story/worlds.ts');
@@ -42,7 +39,8 @@ await port.waitForFunction(() => window.__PACK, null, { timeout: 90000 });
 const read = (p) => p.evaluate(() => {
   const ch = document.getElementById('chapter'), q = (s) => ch.querySelector(s)?.textContent ?? '';
   const t = document.getElementById('time');
-  return [document.getElementById('clock').textContent, document.getElementById('clockUnit').textContent,
+  // the live count (milliseconds since the clock got to the display) differs between the pages
+  return [document.getElementById('clock').textContent.replace(/^[\d,]+ ms$/, '<n> ms'), document.getElementById('clockUnit').textContent,
     [...t.classList].filter((c) => c !== 'punch').sort().join(' '),
     q('h2'), ch.querySelector('p').textContent, document.getElementById('micro').textContent, getComputedStyle(document.getElementById('micro')).display].join(' | ');
 });
