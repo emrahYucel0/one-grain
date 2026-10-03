@@ -42,6 +42,12 @@ export class StageColour {
     return theme ? theme === 'dark' : this.dark.matches;
   }
 
+  /** Debug: a black clear colour (the overdraw view counts on it); the stage colour returns next update. */
+  blackout(): void {
+    this.stage.renderer.setClearColor(0x000000, 1);
+    this.last = '';
+  }
+
   update(a: number, b: number, eg: number, reveal: number): void {
     const k = this.isDark ? 0 : 1;
     this.ca.set(STAGES[actOf(a)][k]);

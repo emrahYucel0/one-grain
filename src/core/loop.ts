@@ -2,7 +2,7 @@ import { Vector3 } from 'three';
 import { frameShot } from '../camera/rig';
 import { CONFINEMENT, towards } from '../camera/confinement';
 import { shot } from '../camera/shot';
-import { progressOverride, reportGpu, reportProgress, timeOverride, transitionOverride } from '../debug/parity';
+import { overdrawView, progressOverride, reportGpu, reportProgress, restPathAllowed, timeOverride, transitionOverride } from '../debug/parity';
 import type { GrainCloud } from '../render/grains';
 import type { Pipeline } from '../render/pipeline';
 import type { GpuTimer } from './gpu-timer';
@@ -122,12 +122,16 @@ export class Loop {
 
     const ix = this.interaction;
     const u: FrameUniforms = {
+      rest: !restPathAllowed() ? 0 : t <= 0 ? 1 : t >= 1 ? 2 : 0,
       from: a, to: b, t, time, motion: reduced ? 0 : 1,
       style: tr.g, k: tr.k ?? 1, span: tr.span ?? .45, spread: tr.spread ?? 30, dir: tr.dir ?? [1, 0, 0],
       heroA: this.heroes[a]!, heroB: this.heroes[b]!,
       loA: wa.lo, hiA: wa.hi, loB: wb.lo, hiB: wb.hi, grain: towards(wa.grain, wb.grain, S.eg), jitter: towards(ca.jitter, cb.jitter, S.eg),
       fog: stageColour.fog, last: WORLDS.length - 1, reveal: this.reveal, interact: ix.mode, mouse: ix.mode ? ix.at : this.mouse, press: ix.press,
     };
+    const overdraw = overdrawView();
+    grains.setOverdrawView(overdraw);
+    if (overdraw) stageColour.blackout();
     grains.update(u);
     hash.update(L.hold);
     pipeline.render(stage.scene, stage.overlay, stage.camera);

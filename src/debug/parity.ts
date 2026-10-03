@@ -4,6 +4,7 @@
 //   ?debug           frame-time / tier overlay
 //   ?nosnap          scrolling does not settle on chapters (to hold a position mid-transition)
 //   ?perf            time every render pass on the GPU and publish the timings as window.__gpu
+//   ?pointcap=N      largest grain in pixels (performance experiments)
 //   with ?parity, window.__AT = { tr, t, lean } renders transition tr at t with that camera lean
 import type { GpuTimes } from '../core/gpu-timer';
 import type { GrainPack } from '../sim/pack';
@@ -16,6 +17,8 @@ declare global {
     __progress?: number;
     __gpu?: GpuTimes;
     __AT?: { tr: number; t: number; lean: number } | null;
+    __noRest?: boolean;
+    __overdraw?: boolean;
   }
 }
 
@@ -29,10 +32,15 @@ export const flags = {
   forceDrop: params.has('forceDrop'),
   noSnap: params.has('nosnap'),
   perf: params.has('perf'),
+  pointCap: params.has('pointcap') ? Number(params.get('pointcap')) : null,
 };
 
 export const progressOverride = (): number | null => (flags.parity && typeof window.__V === 'number' ? window.__V : null);
 export const transitionOverride = (): { tr: number; t: number; lean: number } | null => (flags.parity && window.__AT ? window.__AT : null);
+/** ?parity: window.__noRest forces the full vertex path at rest (to prove the cheap path equal). */
+export const restPathAllowed = (): boolean => !(flags.parity && window.__noRest);
+/** ?parity or ?debug: window.__overdraw shows how many grains cover each pixel. */
+export const overdrawView = (): boolean => (flags.parity || flags.debug) && !!window.__overdraw;
 export const timeOverride = (): number | null => (flags.parity && typeof window.__T === 'number' ? window.__T : null);
 
 /** In parity mode, publish the story progress actually rendered (for the reverse-scrub check). */

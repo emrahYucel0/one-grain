@@ -48,6 +48,7 @@ function boot(): void {
   const stage = createStage($<HTMLCanvasElement>('scene'), dpr);
   const grains = new GrainCloud(), hero = new HeroGrain(dpr);
   stage.scene.add(grains.object);
+  if (flags.pointCap) grains.setPointMax(flags.pointCap);
   stage.overlay.add(...hero.objects);
   const timer = new GpuTimer(stage.renderer.getContext() as WebGL2RenderingContext, flags.perf || flags.debug);
   const projection = new Projection(stage, (s) => grains.setScale(s));

@@ -65,3 +65,67 @@ frame intervals from v10's own panel, which averages rAF deltas. 16.9 ms is one 
 On the same laptop, the unlit grain draw measures **≈ 4 ms of GPU time at 1920×909**, not 17.
 So the budget is not dominated by the base draw. The 4a layers get measured pass by pass below,
 as they land.
+
+## Delta 1: the base draw
+
+**Cheap rest path.** At t = 0 or 1 (a uniform), the grain vertex shader fetches one world,
+animates and paints it once, and skips the transition. `check:seams` proves it renders exactly
+what the full path renders, at t = 1 of the previous transition and t = 0 of the next, for every
+chapter.
+
+| Same laptop, mid tier, 1920×909 | GPU total, median of all positions | Worst position |
+|---|---|---|
+| before (full path everywhere) | 4.32 ms | 7.41 ms (light hold) |
+| after (rest path at holds) | 4.66 ms | 7.29 ms (light hold) |
+
+No measurable gain: **the grain draw is not vertex-bound** on this GPU. The path stays, because it
+is proven identical and helps where vertex work does dominate (smaller GPUs, phones).
+
+**Point size.** The largest grain is now a uniform (`uPointMax`, 7 px as the reference;
+`?pointcap=N` for experiments).
+
+| Point cap | GPU total median | Worst |
+|---|---|---|
+| 4 px | 3.67 ms | 6.18 ms |
+| 7 px (reference) | 4.66 ms | 7.29 ms |
+| 9 px (v10's lit cap) | 4.45 ms | 7.44 ms |
+
+Large grains cost little: going from 4 to 9 px moves the median by under 1 ms.
+
+**Overdraw** (`node scripts/overdraw.mjs`: every grain adds 1/32 with no depth test, counted per
+pixel on a black clear colour; mid tier, 1920×909):
+
+| Hold | Covered | Mean grains per covered pixel | p95 | Fragments / pixel |
+|---|---|---|---|---|
+| magma | 21 % | 3.14 | 9 | 0.66 |
+| granite | 25 % | 2.93 | 8 | 0.74 |
+| river | 29 % | 3.07 | 9 | 0.88 |
+| coast | 30 % | 2.52 | 7 | 0.77 |
+| desert | 28 % | 3.44 | 11 | 0.96 |
+| again | 37 % | 2.35 | 7 | 0.86 |
+| quarry | 33 % | 3.84 | 12 | 1.26 |
+| furnace | 35 % | 2.79 | 6 | 0.98 |
+| purity | 17 % | 2.43 | 6 | 0.41 |
+| crystal | 6 % | 3.02 | 7 | 0.17 |
+| wafer | 13 % | 5.71 | 18 | 0.72 |
+| light | 39 % | 2.91 | 6 | 1.14 |
+| chip | 18 % | 1.46 | 3 | 0.26 |
+| display | 35 % | 1.97 | 5 | 0.68 |
+| now | 56 % | 1.23 | 2 | 0.68 |
+
+That is 0.75 fragments per pixel averaged over the holds, about 1.3 million fragments a frame.
+Hot spots (the wafer stack, the quarry walls) reach the 32-grain saturation in places, but fill
+is light overall.
+
+**Where the time goes.** Neither vertex work nor fill dominates. The cost scales with the
+**number of grains**: the low tier (36 000) measures 2.64 ms median against 4.3 ms for 90 000.
+That is about 31 ns per grain plus ~1.5 ms fixed. On Windows, ANGLE draws WebGL points through
+Direct3D 11, which has no native point size, so every point is expanded into a quad by
+emulation. Per-point cost of that kind is the likely bottleneck.
+
+**Options, if the lit pipeline needs headroom** (not done; numbers above):
+
+- fewer grains: 36 000 saves about 1.7 ms;
+- instanced quads instead of points, which avoids the point-sprite emulation; untested here, the
+  win is to be measured;
+- a lower point cap: 4 px saves about 0.6–1 ms but changes the look.

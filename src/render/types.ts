@@ -7,6 +7,8 @@ export interface FrameUniforms {
   from: number;
   to: number;
   t: number;
+  /** 0 moving · 1 resting in world A (t = 0) · 2 resting in world B (t = 1): the shader's cheap path */
+  rest: number;
   /** shader clock, seconds */
   time: number;
   /** 0 freezes resting behaviours and transition arcs (reduced motion) */

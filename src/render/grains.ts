@@ -1,5 +1,5 @@
 import {
-  BufferAttribute, BufferGeometry, Color, GLSL3, Points, ShaderMaterial, Vector3,
+  AdditiveBlending, BufferAttribute, BufferGeometry, Color, GLSL3, NormalBlending, Points, ShaderMaterial, Vector3,
   type DataTexture, type IUniform,
 } from 'three';
 import { grainShaders } from '../shaders';
@@ -17,7 +17,7 @@ export class GrainCloud {
 
   constructor() {
     this.u = {
-      uRows: { value: 1 }, uFrom: { value: 0 }, uTo: { value: 1 },
+      uRows: { value: 1 }, uRest: { value: 0 }, uPointMax: { value: 7 }, uFrom: { value: 0 }, uTo: { value: 1 },
       uTime: { value: 0 }, uT: { value: 0 }, uMotion: { value: 1 }, uScale: { value: 1 }, uGrain: { value: .1 },
       uStyle: { value: 0 }, uK: { value: 1 }, uSpan: { value: .45 }, uSpread: { value: 30 }, uDir: { value: new Vector3(1, 0, 0) },
       uHeroA: { value: new Vector3() }, uHeroB: { value: new Vector3() },
@@ -41,7 +41,7 @@ export class GrainCloud {
       (this.u[key] ??= { value: null }).value = tex;
     }
     this.u.uRows!.value = pack.rows;
-    this.material.defines = layerDefines(pack);
+    this.material.defines = { ...layerDefines(pack), ...('OVERDRAW' in this.material.defines ? { OVERDRAW: '' } : {}) };
     this.material.needsUpdate = true;
 
     const ids = new Float32Array(pack.n * 3);
@@ -53,12 +53,28 @@ export class GrainCloud {
     this.object.visible = true;
   }
 
+  /**
+   * Debug: draw every grain as a faint additive square-free disc with no depth test, so the
+   * picture's brightness counts how many grains cover each pixel (1/32 per grain).
+   */
+  setOverdrawView(on: boolean): void {
+    const mat = this.material;
+    if (on === !!mat.defines.OVERDRAW) return;
+    if (on) mat.defines.OVERDRAW = ''; else delete mat.defines.OVERDRAW;
+    mat.blending = on ? AdditiveBlending : NormalBlending;
+    mat.depthTest = mat.depthWrite = !on;
+    mat.needsUpdate = true;
+  }
+
+  /** Largest grain, in pixels, before the per-grain size factor (7 as the reference). */
+  setPointMax(px: number): void { this.u.uPointMax!.value = px; }
+
   /** Pixels per world unit at distance 1 (drawing-buffer height / (2·tan(fov/2))). */
   setScale(scale: number): void { this.u.uScale!.value = scale; }
 
   update(f: FrameUniforms): void {
     const u = this.u;
-    u.uFrom!.value = f.from; u.uTo!.value = f.to; u.uT!.value = f.t; u.uTime!.value = f.time; u.uMotion!.value = f.motion;
+    u.uRest!.value = f.rest; u.uFrom!.value = f.from; u.uTo!.value = f.to; u.uT!.value = f.t; u.uTime!.value = f.time; u.uMotion!.value = f.motion;
     u.uStyle!.value = f.style; u.uK!.value = f.k; u.uSpan!.value = f.span; u.uSpread!.value = f.spread;
     (u.uDir!.value as Vector3).set(f.dir[0], f.dir[1], f.dir[2]);
     (u.uHeroA!.value as Vector3).copy(f.heroA); (u.uHeroB!.value as Vector3).copy(f.heroB);

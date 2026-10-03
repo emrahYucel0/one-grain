@@ -9,6 +9,9 @@
 // has at its snap point against the hold screenshot itself. Also checked: (b) against the hold
 // as actually scrolled into (its first instant, lean ≈ 0).
 //
+// Also: the vertex shader's cheap rest path renders exactly what the full transition path renders
+// at t = 1 of the previous transition and t = 0 of the next.
+//
 // Exact comparison: any differing byte counts. Diff masks of failures go to the OS temp folder.
 import { mkdir, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
@@ -33,8 +36,8 @@ page.on('pageerror', (e) => console.log('[pageerror]', e.message));
 await page.goto(`${dev.origin}/?parity&tier=mid`);
 await page.waitForFunction(() => window.__PACK, null, { timeout: 90000 });
 
-const render = async (v, at) => {
-  await page.evaluate(([x, a]) => { window.__T = 10; window.__V = x; window.__AT = a; }, [v, at]);
+const render = async (v, at, full = false) => {
+  await page.evaluate(([x, a, f]) => { window.__T = 10; window.__V = x; window.__AT = a; window.__noRest = f; }, [v, at, full]);
   await page.waitForTimeout(SETTLE_MS);
   return PNG.sync.read(await page.screenshot());
 };
@@ -62,11 +65,14 @@ for (let i = 1; i < WORLDS.length - 1; i++) {
   const h0 = await render(holdStart, null);
   const bH = await render(snap, { tr: i, t: 0, lean: locate(snap).lean });
   const hs = await render(snap, null);
+  const aFull = await render(snap, { tr: i - 1, t: 1, lean: 1 }, true), bFull = await render(snap, { tr: i, t: 0, lean: 0 }, true);
   const slug = WORLDS[i].slug;
   const rows = [
     ['end of previous = start of next', await compare(a, b0, `${String(i).padStart(2, '0')}-${slug}-a-vs-b`)],
     ['start of next = hold as scrolled into', await compare(b0, h0, `${String(i).padStart(2, '0')}-${slug}-b-vs-hold-start`)],
     ['start of next = hold screenshot (same lean)', await compare(bH, hs, `${String(i).padStart(2, '0')}-${slug}-b-vs-hold`)],
+    ['rest path = full path (t = 1 of previous)', await compare(a, aFull, `${String(i).padStart(2, '0')}-${slug}-rest-vs-full-a`)],
+    ['rest path = full path (t = 0 of next)', await compare(b0, bFull, `${String(i).padStart(2, '0')}-${slug}-rest-vs-full-b`)],
   ];
   for (const [what, r] of rows) {
     const ok = r.n === 0; if (!ok) failed++;

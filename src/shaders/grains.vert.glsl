@@ -4,15 +4,29 @@ out vec3 vCol;
 void main(){
   int id = int(position.x + .5);
   vec3 R = vec3(h1(position.x), h1(position.x + 71.3), h1(position.x + 13.7));
-  vec4 A = grab(uFrom, id), B = grab(uTo, id);
-  float sa, sb, e, arc;
-  Mods m;
-  vec3 pa = animate(A, R, sa), pb = animate(B, R, sb);
-  vec3 p = travel(A, B, pa, pb, R, e, arc, m);
-  vec4 Pc = e < .5 ? A : B;
-  float fl = floor(Pc.w + .001), sz = (e < .5 ? sa : sb) * m.size;
-  p = brush(p, fl, R);
-  vec3 c = e < .5 ? paint(A, uLoA, uHiA, R) : paint(B, uLoB, uHiB, R);
+  vec3 p, c;
+  float e, arc, sz, fl;
+  Mods m = Mods(1., 0., 0., 0.);
+  if (uRest != 0) {
+    // at rest (t = 0 or 1): one world, one fetch, no transition. Every transition lands exactly
+    // on its worlds at its ends (exact ends), so this is the full path's result, only cheaper.
+    bool atA = uRest == 1;
+    vec4 P = grab(atA ? uFrom : uTo, id);
+    p = animate(P, R, sz);
+    e = atA ? 0. : 1.; arc = 0.;
+    fl = floor(P.w + .001);
+    p = brush(p, fl, R);
+    c = atA ? paint(P, uLoA, uHiA, R) : paint(P, uLoB, uHiB, R);
+  } else {
+    vec4 A = grab(uFrom, id), B = grab(uTo, id);
+    float sa, sb;
+    vec3 pa = animate(A, R, sa), pb = animate(B, R, sb);
+    p = travel(A, B, pa, pb, R, e, arc, m);
+    vec4 Pc = e < .5 ? A : B;
+    fl = floor(Pc.w + .001); sz = (e < .5 ? sa : sb) * m.size;
+    p = brush(p, fl, R);
+    c = e < .5 ? paint(A, uLoA, uHiA, R) : paint(B, uLoB, uHiB, R);
+  }
   // the last world arrives as a neutral screen; the sand image comes in with the reveal
   if (uTo == uLast && e >= .5) { float n = .4 + .06 * R.y; c = blend(vec3(n * .9, n * .94, n), c, uReveal); }
   c = glow(c, p, fl);
@@ -25,6 +39,6 @@ void main(){
   vec4 mv = modelViewMatrix * vec4(p, 1.);
   float depth = -mv.z;
   vCol = mix(c, uFog, clamp(1. - exp(-uFogD * depth), 0., .85));
-  gl_PointSize = sz < .02 ? 0. : clamp(uGrain * uScale / max(depth, .05), 1.2, 7.) * (.8 + .4 * R.z) * sz;
+  gl_PointSize = sz < .02 ? 0. : clamp(uGrain * uScale / max(depth, .05), 1.2, uPointMax) * (.8 + .4 * R.z) * sz;
   gl_Position = projectionMatrix * mv;
 }
