@@ -73,4 +73,6 @@ export interface TransitionDef {
    * and out at both ends of the move, so both holds frame exactly as before.
    */
   subject?: { at: Vec3; rise: number; over: readonly [number, number] };
+  /** the light rigs blend over this part of the move (smoothstep) instead of with the camera */
+  rig?: readonly [number, number];
 }

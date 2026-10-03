@@ -15,7 +15,8 @@ export const TRANSITIONS: readonly TransitionDef[] = [
   // cut: again → quarry, the interlude ("One day,")
   { g: 5, cam: 'cut', len: .7 },
   // break: quarry → furnace, the rock cracks, falls and feeds the furnace
-  { g: 18, cam: 'breakfall', len: 1.9, hero: [[0, 3, 1], [0, 7, 0]] },
+  // (falling rock stays grey and unlit by the furnace until it is fed: the light rigs blend late)
+  { g: 18, cam: 'breakfall', len: 1.9, hero: [[0, 3, 1], [0, 7, 0]], rig: [.55, 1] },
   // separate: furnace → purity, heat, vapour, separation, deposition
   { g: 19, cam: 'rise', len: 1.4, hero: [[0, 7, 0], [0, 6, 0]] },
   // grow: purity → crystal, rods melt, a seed touches, order spreads

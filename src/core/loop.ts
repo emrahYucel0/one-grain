@@ -1,6 +1,8 @@
 import { Vector3 } from 'three';
 import { frameShot } from '../camera/rig';
 import { CONFINEMENT, towards } from '../camera/confinement';
+import { ss } from './ease';
+import { LightRigBlend, type RigState } from './light-rig';
 import { shot } from '../camera/shot';
 import { overdrawView, progressOverride, reportGpu, reportProgress, restPathAllowed, timeOverride, transitionOverride } from '../debug/parity';
 import type { GrainCloud } from '../render/grains';
@@ -61,6 +63,9 @@ export interface FrameInfo {
 export class Loop {
   heroes: Vector3[] = [];
   private readonly clock = new FixedClock();
+  private readonly rig = new LightRigBlend();
+  /** this frame's light rig (render/ draws with it) */
+  rigState: RigState = this.rig.state;
   private readonly listeners: Record<FramePhase, FrameListener[]> = { story: [], camera: [], scene: [] };
   private readonly mouse = new Vector3(0, -99, 0);
   private readonly d: LoopDeps;
@@ -109,6 +114,8 @@ export class Loop {
     // stage colour per act; confinement, eased like the camera: lens (and uScale), type axes, jitter
     stageColour.update(a, b, S.eg, this.reveal);
     projection.setLens(towards(ca.fov, cb.fov, S.eg));
+    // light rigs, eased like the camera unless the transition delays them
+    this.rigState = this.rig.update(a, b, tr.rig ? ss(tr.rig[0], tr.rig[1], t) : S.eg, this.heroes);
     typeAxes.set(towards(ca.wdth, cb.wdth, S.eg), towards(ca.wght, cb.wght, S.eg));
 
     hero.moveTo(S.hero);
