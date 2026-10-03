@@ -29,6 +29,12 @@ export const SNAP_POINTS: readonly number[] = WORLDS.map((_, i) => {
   return (h.start + h.len / 2) / TOTAL;
 });
 
+/**
+ * Where scrolling settles: every hold, and the middle of the cut, so the "One day," card can be
+ * rested on (v15). Chapter navigation (nav, hash, keys) uses SNAP_POINTS: one per chapter, by index.
+ */
+export const SCROLL_SNAP: readonly number[] = [...SNAP_POINTS, ...SEGMENTS.filter((s) => s.type === 'tr' && TRANSITIONS[s.i]!.cam === 'cut').map((s) => (s.start + s.len / 2) / TOTAL)].sort((a, b) => a - b);
+
 /** Progress at the middle of transition i (used by the parity harness). */
 export const transitionMidpoint = (i: number): number => {
   const s = SEGMENTS.find((x) => x.type === 'tr' && x.i === i)!;

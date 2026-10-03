@@ -1,14 +1,17 @@
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { env } from '../core/env';
-import { SNAP_POINTS, TOTAL, nearestChapter } from './segments';
+import { SCROLL_SNAP, SNAP_POINTS, TOTAL, nearestChapter } from './segments';
 
 gsap.registerPlugin(ScrollTrigger);
 
+/** How long a chapter jump owns the snap target. */
+const JUMP_MS = 3000;
+
 /**
  * Native page scroll drives the story. The track is as tall as the story (one screen height
- * per unit of segment length); progress follows the scrollbar with a one-second scrub and
- * settles on the nearest hold when scrolling stops.
+ * per unit of segment length); progress follows the scroll with a 1.6 s scrub and settles on the
+ * nearest hold (or the "One day," card) when scrolling stops, in 0.9–2 s (v15).
  */
 export class ScrollTimeline {
   /** smoothed progress, 0..1 */
@@ -21,11 +24,21 @@ export class ScrollTimeline {
     gsap.to(this.state, {
       v: 1, ease: 'none',
       scrollTrigger: {
-        trigger: track, start: 'top top', end: 'bottom bottom', scrub: 1,
-        ...(snap ? { snap: { snapTo: [...SNAP_POINTS], duration: { min: .4, max: 1.2 }, delay: .2, ease: 'power1.inOut' } } : {}),
+        trigger: track, start: 'top top', end: 'bottom bottom', scrub: 1.6,
+        ...(snap ? { snap: { snapTo: this.snapTo, duration: { min: .9, max: 2 }, delay: .15, ease: 'power2.inOut' } } : {}),
       },
     });
   }
+
+  /**
+   * Scrolling settles on the nearest stop in its direction (as GSAP does with an array). A chapter
+   * jump (keys, rail, hash, focus) lands where it was sent: ScrollTrigger measures velocity on the
+   * scrubbed progress, which keeps moving for the 1.6 s scrub after the scroll stops, and that
+   * inertia would carry a jump on to the next chapter.
+   */
+  private readonly directional = ScrollTrigger.snapDirectional([...SCROLL_SNAP]);
+  private readonly snapTo = (value: number, self?: ScrollTrigger): number =>
+    this.target >= 0 && performance.now() - this.targetAt < JUMP_MS ? SNAP_POINTS[this.target]! : this.directional(value, self?.direction ?? 0);
 
   goTo(i: number, instant = false): void {
     const max = document.documentElement.scrollHeight - innerHeight;

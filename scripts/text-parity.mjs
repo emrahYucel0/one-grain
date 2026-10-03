@@ -48,7 +48,12 @@ let diffs = 0, n = 0;
 const cases = [];
 WORLDS.forEach((w, i) => { cases.push(['hold', i, 0]); if (i < WORLDS.length - 1) for (const t of [.1, .3, .5, .7, .9]) cases.push(['tr', i, t]); });
 for (const [kind, i, t] of cases) {
-  const at = async (p, v) => { await p.bringToFront(); await p.evaluate((x) => { window.__V = x; window.__T = 10; }, v); await p.waitForTimeout(250); return read(p); };
+  const at = async (p, v) => {
+    await p.bringToFront(); await p.evaluate((x) => { window.__V = x; window.__T = 10; }, v);
+    // the port publishes the progress it rendered: wait for that frame, then one more for the DOM
+    if (p === port) await p.waitForFunction((x) => window.__progress === x, v, { timeout: 5000 }).catch(() => {});
+    await p.waitForTimeout(250); return read(p);
+  };
   const x = await at(port, progress(portLens, i, t, kind)), y = await at(ref, progress(refLens, i, t, kind));
   n++;
   if (x !== y) { diffs++; console.log(`DIFF ${kind} ${WORLDS[i].slug} t=${t}\n  port: ${x}\n  ref:  ${y}`); }

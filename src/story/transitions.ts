@@ -13,7 +13,7 @@ export const TRANSITIONS: readonly TransitionDef[] = [
   // bury: desert → again
   { g: 4, cam: 'sink', len: 1.4, k: 6, span: .5, hero: [[0, -2, 0], [0, 6, 0]] },
   // cut: again → quarry, the interlude ("One day,")
-  { g: 5, cam: 'cut', len: .7 },
+  { g: 5, cam: 'cut', len: 1.1 }, // the interlude card has room to be read (v15)
   // break: quarry → furnace, the rock cracks, falls and feeds the furnace
   // (falling rock stays grey and unlit by the furnace until it is fed: the light rigs blend late)
   { g: 18, cam: 'breakfall', len: 1.9, hero: [[0, 3, 1], [0, 7, 0]], rig: [.55, 1] },

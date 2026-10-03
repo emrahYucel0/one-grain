@@ -4,7 +4,7 @@ import { attr } from './copy';
 
 /** The black "One day," card that covers the hard cut from nature to industry. */
 export function cutOpacity(tr: TransitionDef, t: number): number {
-  return tr.cam === 'cut' ? ss(.22, .4, t) * (1 - ss(.6, .78, t)) : 0;
+  return tr.cam === 'cut' ? ss(.12, .3, t) * (1 - ss(.7, .88, t)) : 0; // a wider window (v15)
 }
 
 /** Chapter text fades out early in a transition and back in at its end (slower around the cut). */
