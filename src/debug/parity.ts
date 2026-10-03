@@ -3,7 +3,9 @@
 //   ?tier=low|mid|high  force a quality tier
 //   ?debug           frame-time / tier overlay
 //   ?nosnap          scrolling does not settle on chapters (to hold a position mid-transition)
+//   ?perf            time every render pass on the GPU and publish the timings as window.__gpu
 //   with ?parity, window.__AT = { tr, t, lean } renders transition tr at t with that camera lean
+import type { GpuTimes } from '../core/gpu-timer';
 import type { GrainPack } from '../sim/pack';
 
 declare global {
@@ -12,6 +14,7 @@ declare global {
     __T?: number | null;
     __PACK?: GrainPack;
     __progress?: number;
+    __gpu?: GpuTimes;
     __AT?: { tr: number; t: number; lean: number } | null;
   }
 }
@@ -25,6 +28,7 @@ export const flags = {
   /** ?debug&forceDrop: pretend the frame budget is blown, to exercise the tier downgrade */
   forceDrop: params.has('forceDrop'),
   noSnap: params.has('nosnap'),
+  perf: params.has('perf'),
 };
 
 export const progressOverride = (): number | null => (flags.parity && typeof window.__V === 'number' ? window.__V : null);
@@ -34,6 +38,11 @@ export const timeOverride = (): number | null => (flags.parity && typeof window.
 /** In parity mode, publish the story progress actually rendered (for the reverse-scrub check). */
 export function reportProgress(v: number): void {
   if (flags.parity) window.__progress = v;
+}
+
+/** With ?perf or ?debug, publish the per-pass GPU timings (for scripts/perf.mjs). */
+export function reportGpu(times: GpuTimes): void {
+  if (flags.perf || flags.debug) window.__gpu = times;
 }
 
 export function exposePack(pack: GrainPack): void {

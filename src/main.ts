@@ -5,6 +5,7 @@ import { env, probeGpu } from './core/env';
 import { Loop } from './core/loop';
 import { pickTier, pixelRatioFor } from './core/quality';
 import { TierManager } from './core/tiers';
+import { GpuTimer } from './core/gpu-timer';
 import { createStage } from './core/renderer';
 import { StageColour } from './core/stage-colour';
 import { Projection, onResize } from './core/resize';
@@ -14,6 +15,7 @@ import { updateInteraction } from './input/interact';
 import { Pointer } from './input/pointer';
 import { GrainCloud } from './render/grains';
 import { HeroGrain } from './render/hero';
+import { Pipeline } from './render/pipeline';
 import { SimClient } from './sim/client';
 import { WORLDS } from './story/worlds';
 import { HashRouter } from './timeline/hash';
@@ -45,7 +47,9 @@ function boot(): void {
   const dpr = pixelRatioFor(tier);
   const stage = createStage($<HTMLCanvasElement>('scene'), dpr);
   const grains = new GrainCloud(), hero = new HeroGrain(dpr);
-  stage.scene.add(grains.object, ...hero.objects);
+  stage.scene.add(grains.object);
+  stage.overlay.add(...hero.objects);
+  const timer = new GpuTimer(stage.renderer.getContext() as WebGL2RenderingContext, flags.perf || flags.debug);
   const projection = new Projection(stage, (s) => grains.setScale(s));
   const resize = (): void => projection.fit();
   resize();
@@ -55,7 +59,7 @@ function boot(): void {
   const timeline = new ScrollTimeline($('track'), { snap: !flags.noSnap });
   const hash = new HashRouter(timeline);
   bindChapterKeys(timeline);
-  const loop = new Loop({ stage, grains, hero, timeline, hash, projection, typeAxes: new TypeAxes(), stageColour: new StageColour(stage) });
+  const loop = new Loop({ stage, grains, hero, timeline, hash, projection, typeAxes: new TypeAxes(), stageColour: new StageColour(stage), pipeline: new Pipeline(stage.renderer, timer), timer });
   const go = (i: number): void => timeline.goTo(i);
 
   // words and instruments
@@ -103,7 +107,7 @@ function boot(): void {
     },
   });
   loop.onFrame(({ L, now }) => { tiers.frame(now, L.hold); loop.fade = tiers.fade; });
-  if (flags.debug) debugOverlay(tiers, () => stage.renderer.getPixelRatio());
+  if (flags.debug) debugOverlay(tiers, () => stage.renderer.getPixelRatio(), timer);
 
   sim.build(tier.n).then((pack) => {
     exposePack(pack);

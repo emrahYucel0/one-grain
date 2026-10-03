@@ -2,8 +2,10 @@ import { Vector3 } from 'three';
 import { frameShot } from '../camera/rig';
 import { CONFINEMENT, towards } from '../camera/confinement';
 import { shot } from '../camera/shot';
-import { progressOverride, reportProgress, timeOverride, transitionOverride } from '../debug/parity';
+import { progressOverride, reportGpu, reportProgress, timeOverride, transitionOverride } from '../debug/parity';
 import type { GrainCloud } from '../render/grains';
+import type { Pipeline } from '../render/pipeline';
+import type { GpuTimer } from './gpu-timer';
 import type { HeroGrain } from '../render/hero';
 import type { FrameUniforms } from '../render/types';
 import type { GrainPack } from '../sim/pack';
@@ -27,6 +29,8 @@ export interface LoopDeps {
   projection: Projection;
   typeAxes: TypeAxes;
   stageColour: StageColour;
+  pipeline: Pipeline;
+  timer: GpuTimer;
 }
 
 /** Per-frame hook for the parts that react to where the story is (UI, input, audio, quality). */
@@ -87,7 +91,7 @@ export class Loop {
   }
 
   private frame(): void {
-    const { stage, grains, hero, timeline, hash, projection, typeAxes, stageColour } = this.d;
+    const { stage, grains, hero, timeline, hash, projection, typeAxes, stageColour, pipeline, timer } = this.d;
     const reduced = env.reduced;
     const v = progressOverride() ?? timeline.state.v;
     reportProgress(v);
@@ -126,6 +130,8 @@ export class Loop {
     };
     grains.update(u);
     hash.update(L.hold);
-    stage.renderer.render(stage.scene, stage.camera);
+    pipeline.render(stage.scene, stage.overlay, stage.camera);
+    timer.tick();
+    reportGpu(timer.times());
   }
 }

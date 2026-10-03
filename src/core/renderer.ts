@@ -6,7 +6,10 @@ ColorManagement.enabled = false;
 
 export interface Stage {
   renderer: WebGLRenderer;
+  /** the grains */
   scene: Scene;
+  /** drawn over the grains without clearing (the hero grain) */
+  overlay: Scene;
   camera: PerspectiveCamera;
 }
 
@@ -16,5 +19,5 @@ export function createStage(canvas: HTMLCanvasElement, pixelRatio: number): Stag
   renderer.debug.checkShaderErrors = import.meta.env.DEV;
   renderer.setPixelRatio(pixelRatio);
   // the clear colour follows the act from the first frame on (core/stage-colour.ts)
-  return { renderer, scene: new Scene(), camera: new PerspectiveCamera(40, 1, .05, 200) };
+  return { renderer, scene: new Scene(), overlay: new Scene(), camera: new PerspectiveCamera(40, 1, .05, 200) };
 }
