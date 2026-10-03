@@ -1,7 +1,7 @@
 import { Vector3 } from 'three';
 import { frameShot } from '../camera/rig';
 import { shot } from '../camera/shot';
-import { progressOverride, reportProgress, timeOverride } from '../debug/parity';
+import { progressOverride, reportProgress, timeOverride, transitionOverride } from '../debug/parity';
 import type { GrainCloud } from '../render/grains';
 import type { HeroGrain } from '../render/hero';
 import type { FrameUniforms } from '../render/types';
@@ -9,7 +9,7 @@ import type { GrainPack } from '../sim/pack';
 import { WORLDS } from '../story/worlds';
 import type { HashRouter } from '../timeline/hash';
 import type { ScrollTimeline } from '../timeline/scroll';
-import { locate, type Located } from '../timeline/segments';
+import { locate, locateAt, type Located } from '../timeline/segments';
 import { FixedClock } from './clock';
 import { env } from './env';
 import type { Stage } from './renderer';
@@ -81,7 +81,8 @@ export class Loop {
     reportProgress(v);
     const dt = this.clock.tick(reduced);
     const time = timeOverride() ?? this.clock.time;
-    const L = locate(v), { a, b, tr } = L;
+    const at = transitionOverride();
+    const L = at ? locateAt(at.tr, at.t, at.lean) : locate(v), { a, b, tr } = L;
     const t = reduced ? (L.t < .5 ? 0 : 1) : L.t;
     const S = shot(tr, a, b, t, this.heroes, L.lean, reduced);
     const wa = WORLDS[a]!, wb = WORLDS[b]!;
@@ -101,7 +102,7 @@ export class Loop {
       from: a, to: b, t, time, motion: reduced ? 0 : 1,
       style: tr.g, k: tr.k ?? 1, span: tr.span ?? .45, spread: tr.spread ?? 30, dir: tr.dir ?? [1, 0, 0], axis: tr.axis,
       heroA: this.heroes[a]!, heroB: this.heroes[b]!,
-      loA: wa.lo, hiA: wa.hi, loB: wb.lo, hiB: wb.hi, grain: wa.grain + (wb.grain - wa.grain) * S.eg,
+      loA: wa.lo, hiA: wa.hi, loB: wb.lo, hiB: wb.hi, grain: S.eg >= 1 ? wb.grain : wa.grain + (wb.grain - wa.grain) * S.eg,
       fog: stage.stageColor, interact: ix.mode, mouse: ix.mode ? ix.at : this.mouse, press: ix.press,
     };
     grains.update(u);

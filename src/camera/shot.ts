@@ -35,7 +35,7 @@ export function shot(tr: TransitionDef, a: number, b: number, t: number, heroes:
   const camA = off(hA, wa.cam), camB = off(hB, wb.cam), lookA = off(hA, wa.look), lookB = off(hB, wb.look);
   let eg = easeCubic(t);
   if (tr.cam === 'cut') eg = t < .5 ? 0 : 1; else if (tr.cam === 'slide') eg = ss(0, 1, t); else if (tr.cam === 'zoom') eg = easeQuint(t);
-  const arc = Math.sin(Math.PI * eg), hc = tr.hero ?? NO_HERO;
+  const arc = eg <= 0 || eg >= 1 ? 0 : Math.sin(Math.PI * eg), hc = tr.hero ?? NO_HERO; // exactly 0 at rest
   const hero = tr.cam === 'cut' ? (eg < .5 ? hA.clone() : hB.clone()) : bez(hA, off(hA, hc[0]), off(hB, hc[1]), hB, eg);
   const d = tr.dir ? v(tr.dir[0], tr.dir[1], tr.dir[2]) : v(1, 0, 0);
   let c1: Vector3, c2: Vector3, pos: Vector3;
@@ -56,7 +56,8 @@ export function shot(tr: TransitionDef, a: number, b: number, t: number, heroes:
     case 'pullback': c1 = off(hB, [0, 0, 1.2]); c2 = off(hB, [0, 0, 3]); break;
     default: c1 = camA.clone().lerp(camB, 1 / 3); c2 = camA.clone().lerp(camB, 2 / 3);
   }
-  if (tr.cam === 'orbit') {
+  if (tr.cam === 'orbit' && (eg <= 0 || eg >= 1)) pos = (eg <= 0 ? camA : camB).clone(); // the orbit's ends, exactly
+  else if (tr.cam === 'orbit') {
     const axis = tr.axis ?? [0, 0], ax = v(axis[0], 0, axis[1]);
     const ra = Math.hypot(camA.x - ax.x, camA.z - ax.z), rb = Math.hypot(camB.x - ax.x, camB.z - ax.z);
     const ta = Math.atan2(camA.z - ax.z, camA.x - ax.x); let tb = Math.atan2(camB.z - ax.z, camB.x - ax.x);
@@ -65,7 +66,7 @@ export function shot(tr: TransitionDef, a: number, b: number, t: number, heroes:
     pos = v(ax.x + Math.cos(th) * r, camA.y + (camB.y - camA.y) * eg + arc * 3, ax.z + Math.sin(th) * r);
   } else if (tr.cam === 'cut') pos = eg < .5 ? camA : camB;
   else pos = bez(camA, c1, c2, camB, eg);
-  const look = lookA.clone().lerp(lookB, eg);
+  const look = eg >= 1 ? lookB.clone() : lookA.clone().lerp(lookB, eg);
   if (WATCH_HERO.has(tr.cam)) look.lerp(hero, arc * .9);
   if (tr.subject) { // a reframe beyond the reference: aim at what the move is about
     const { at, rise, over } = tr.subject;
