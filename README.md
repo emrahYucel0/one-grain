@@ -4,9 +4,10 @@ A scroll-driven WebGL story about one grain of sand, from magma to the screen yo
 it on. Fifteen worlds, each a cloud of grains computed on the GPU; scrolling carries the same
 grains from one world to the next.
 
-The behavioural spec is `reference/blockout-v6.html` (Phase 2: content v1, clock semantics,
-causal transitions), with its rest-state bugs fixed on purpose (Phase 2.1: a transition reproduces
-its two worlds exactly at t = 0 and 1). Phase 1 ported `blockout-v5.html`, which is kept alongside. The parity
+The behavioural spec is `reference/blockout-v8.html` (Phase 3: typography, art direction through
+confinement, stage colour per act, reworked drift, break and grow, the final dramaturgy). Earlier
+phases ported `blockout-v5.html` and `v6`, which are kept alongside. The port keeps its exact
+transition endpoints (a transition reproduces its two worlds exactly at t = 0 and 1). Phase 1 ported `blockout-v5.html`, which is kept alongside. The parity
 evidence is in `parity/`, and `docs/parity-notes.md` lists everything that is not identical,
 with the reason, including the one intentional change beyond v6.
 
@@ -28,9 +29,11 @@ npm run lint
 | `npm run check:text` | Overlay text and clock state match the reference at every hold and five points in every transition |
 | `npm run check:reverse` | Scrolling backwards through drift, break, separate and grow renders exactly what scrolling forwards does |
 | `npm run check:seams` | No transition leaves a trace on a resting chapter: the previous transition at t = 1 and the next at t = 0 render byte-identical frames, equal to the hold |
+| `npm run check:fonts` | No layout shift when the web fonts arrive (on the built site, fonts held back 1.5 s), and the wdth axis really renders |
+| `npm run check:tiers` | A quality drop is queued mid-transition and only swapped in while resting |
 | `npm run check:console` | Zero console warnings or errors in dev and build, Chromium and Firefox |
 | `npm run check:a11y` | axe WCAG 2.1 AA, keyboard chapter steps, status line, focus ring, reduced motion, no-WebGL2 and no-JS fallbacks |
-| `npm run perf` | Frame times at every position, headed, on this machine's GPU |
+| `npm run perf` | Frame times at every position and while scrubbing through the whole story, headed, on this machine's GPU |
 
 **Pre-commit hook.** `npm install` runs the `prepare` script, which points git at the
 versioned hooks (`git config core.hooksPath .githooks`). `.githooks/pre-commit` typechecks
@@ -128,6 +131,42 @@ Drawing changes (materials, lighting) stay inside `render/` and `shaders/`, with
    `scene` (interaction, UI, audio, quality, after it).
 5. Hands a `FrameUniforms` object to `render/grains` and draws.
 
+## Art direction
+
+**Type.** Two variable families, self-hosted:
+
+- Archivo (wdth 62–125, wght) carries the interface and the clock.
+- Newsreader (opsz, roman and italic) carries the narrative: chapter body, micro lines, clock
+  unit words, the intro line, the "One day," interlude.
+
+Every type value is a custom property in one `:root` block at the top of `styles/main.css`.
+Inside a chapter the order is title, body, micro, hint. The act label is gone; the rail carries
+the act. The experience's text waits for the fonts (`ui/fonts.ts`, at most 3 s), and
+metric-matched local fallbacks keep sizes close if they are late.
+
+**Confinement.** One value per chapter, 0 natural … 1 controlled (`conf` in
+`story/worlds.ts`). Nature fills the frame; industry concentrates matter until the crystal stands
+alone; computation opens the space again; the end fills your screen. Through
+`camera/confinement.ts` it drives:
+
+- the lens, 48° → 30° (+9° in portrait); uScale follows every change;
+- the camera distance, keeping each blockout composition under its lens, then the `frame`
+  factor;
+- the resting jitter, (1 − c) · 0.022;
+- the title and clock axes, wdth 125 − 63c and wght 300 + 480c.
+
+All of it is interpolated through transitions with the camera's easing. Colour is not driven by
+it.
+
+**Stage colour.** One per act (Nature, Industry, Now, End), dark and light
+(`story/stages.ts`), eased between acts. Clear colour, fog and `--stage` stay in sync
+(`core/stage-colour.ts`).
+
+**The ending.** The last world arrives as a neutral screen with "Now" on the clock. The sentence
+follows at 1.2 s. The sand image fades into the screen from 4 s to 8 s while the End colour comes
+in, and the signature and footnote appear at 8.5 s. Focusing the signature link from the keyboard
+jumps straight to the fully revealed state.
+
 ## Content
 
 All words live in `index.html`:
@@ -165,7 +204,7 @@ over 25 ms, a one-tier drop is **queued**:
 
 The tier never goes back up.
 
-Measured with `npm run perf`, headed Chromium, Intel UHD Graphics (i5-12450H laptop,
+Phase 1 measurement with `npm run perf`, headed Chromium, Intel UHD Graphics (i5-12450H laptop,
 144 Hz panel):
 
 | Tier and window | Typical frame | Worst position |
@@ -173,6 +212,13 @@ Measured with `npm run perf`, headed Chromium, Intel UHD Graphics (i5-12450H lap
 | mid, 1440×900 | 7.0 ms (vsync-bound at 144 fps) | 13.7 ms (73 fps) |
 | mid, 1920×1080 | 7.2 ms | 13.9 ms (72 fps) |
 | high, 1920×1080 (for comparison) | 13.8 ms | 20.8 ms; this is why integrated GPUs start on mid |
+
+Phase 3, same machine, mid tier, 1440×900: 20.6 ms typical (49 fps), and 13.8 ms median while
+scrubbing through the whole story with the lens changing every frame. On that day the machine was
+slower across the board. Measured back to back, v6, v8 and the port all landed at 14–28 ms per
+hold, where v6 ran at about 7 ms during the Phase 1 run. So the port costs the same as the
+reference, and a lens change costs 0.18 µs. Re-measure on a quiet machine before comparing with
+the Phase 1 numbers.
 
 ## Accessibility
 

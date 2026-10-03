@@ -18,7 +18,9 @@
     "perf": "vite build && node scripts/perf.mjs",
     "check:text": "node scripts/text-parity.mjs",
     "check:reverse": "node scripts/reverse-scrub.mjs",
-    "check:seams": "node scripts/seams.mjs"
+    "check:seams": "node scripts/seams.mjs",
+    "check:fonts": "vite build && node scripts/fonts-check.mjs",
+    "check:tiers": "node scripts/tier-check.mjs"
   },
   "engines": {
     "node": ">=20"

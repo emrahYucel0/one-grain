@@ -1,8 +1,10 @@
 # Parity notes: what could not be matched exactly, and why
 
-The port follows a behavioural spec: `reference/blockout-v5.html` in Phase 1, and
-`reference/blockout-v6.html` since Phase 2 (content, clock semantics, four new transitions,
-new camera moves; world generators unchanged). Phase 2.1 fixed v6's rest-state bugs on purpose.
+The port follows a behavioural spec: `reference/blockout-v5.html` in Phase 1,
+`reference/blockout-v6.html` in Phase 2 (content, clock semantics, four new transitions, new
+camera moves), with v6's rest-state bugs fixed on purpose in Phase 2.1, and
+`reference/blockout-v8.html` since Phase 3 (typography, confinement, stage colour per act,
+reworked drift, break and grow, the final dramaturgy). World generators have not changed since v5.
 This page lists every place where the port is not the reference, and why. It also lists what
 was verified and how, and what was not.
 
@@ -10,17 +12,54 @@ was verified and how, and what was not.
 
 | Check | Result | How |
 |---|---|---|
-| Grain data | **Bit-identical** to v6 and to v5 at 90 000 and 36 000 grains per world | `npm run check:data` compares per-world digests of the packed texture and all 15 hero positions against an instrumented copy of each reference |
-| Rendered frames vs v6 | 30/30 compared positions at 0.000 % differing pixels. 13 positions differ on purpose and are listed below (the Phase 2 reframe and the Phase 2.1 rest-state fixes) | `npm run parity`: 15 holds, 14 transition midpoints, 2 interaction shots, and t = 0.2 / 0.45 / 0.75 in the four v6 transitions; same viewport, grain count, frozen shader time and scroll progress in both pages; real GPU |
+| Grain data | **Bit-identical** to v8, v6 and v5 at 90 000 and 36 000 grains per world | `npm run check:data` compares per-world digests of the packed texture and all 15 hero positions against an instrumented copy of each reference |
+| Rendered frames vs v8 | 26/26 compared positions at 0.000 % differing pixels, also on the strict count (any byte). 15 positions differ on purpose, listed below with their cause | `npm run parity`: 15 holds, 14 transition midpoints, 2 interaction shots, t = 0.3 / 0.55 / 0.8 in drift, break and grow, and the final chapter at 2 s and 11 s; same viewport, grain count, frozen shader time and scroll progress in both pages; CSS transitions fast-forwarded; real GPU |
 | Rest states | 39/39 identical, byte for byte: for chapters 2–14, the previous transition at t = 1 equals the next at t = 0, which equals the hold as scrolled into and, with the hold's lean, the hold screenshot | `npm run check:seams` |
-| Text and clock vs v6 | 85/85 positions identical: clock value, sub-line, unit class, label state, interlude hiding, act, title, body, micro line | `npm run check:text`: every hold and t = 0.1 / 0.3 / 0.5 / 0.7 / 0.9 in every transition |
+| Text and clock vs v8 | 85/85 positions identical: clock value, sub-line, unit class, label state, interlude hiding, title, body, micro line | `npm run check:text`: every hold and t = 0.1 / 0.3 / 0.5 / 0.7 / 0.9 in every transition |
 | Reverse scrub | 12/12: scrolled backwards, drift, break, separate and grow at t = 0.2 / 0.45 / 0.75 render exactly as scrolled forwards (0.000 %, same settled progress) | `npm run check:reverse`: real scrolling through ScrollTrigger, snapping off |
+| Fonts | No layout shift when the web fonts arrive late (CLS 0.0000 with fonts held back 1.5 s; without the font gate the same load shifts); the wdth axis renders (a probe word measures 802 px at magma's 118.5 % and 507 px at crystal's 62 %) | `npm run check:fonts`, on the built site; title crops in `parity/fonts/` |
+| Quality tiers | A forced drop is queued mid-transition and swapped (90 000 → 36 000 grains) only once resting | `npm run check:tiers` |
 | Noise floor | The reference compared with itself: 0.015–0.019 % (0.195 % at the quarry hold), measured in Phase 1 with both pages in one window | Since Phase 2 each page has its own window (a background tab has its frames throttled), and the residuals are gone: 0.000 % everywhere, including the hover shots |
-| Ending sequence | Title at 1.2 s and signature at 5.5 s, the same fade curves | Sampled every 500 ms in both pages |
+| Ending sequence | v8: "Now", the sentence at 1.2 s, the End colour from 4 s to 8 s, the footnote at 8.5 s. The port matches, except that its signature also waits for 8.5 s (below) | Sampled every second in both pages |
 | Console | 0 warnings or errors | `npm run check:console`: dev and build × Chromium and Firefox, real scrolling through all 29 positions, hash links, sound toggle, resize |
 
 The reference is never edited. The harness serves a patched copy with three hooks: progress
 override, time override, and exposing the built texture (`scripts/lib/reference.mjs`).
+
+## Phase 3: differences from v8
+
+v8 already contains the Phase 2.1 rest-state fixes, so those no longer show up as differences.
+What remains is listed here. Every other compared position is identical to v8 on the strict count.
+
+| Parity shot | Diff vs v8 (perceptual / strict) | Cause |
+|---|---|---|
+| 18, 38, 39, 40 · purity → crystal (midpoint, t = 0.3, 0.55, 0.8) | 2.05–2.77 % / 5.4–11.0 % | the Phase 2 reframe: pool centred, crystal followed up (below) |
+| 41 · final chapter at 2 s | 0.06 % / 0.11 % | the signature waits for 8.5 s with the footnote. In v8 the rule `.chapter.final p:not(.micro)` ties in specificity with `.chapter.final:not(.sig) p` and comes later, so its signature shows from the first second (verified on a v8 render); the brief puts both at 8.5 s |
+| 13 · quarry hold | 0 % / 0.007 % | exact ends: break at t = 0 returns the resting grain itself; v8 computes bc + (pa − bc), a float ulp off |
+| 14, 35, 36, 37 · quarry → furnace (midpoint, t = 0.3, 0.55, 0.8) | 0 % / 0.002–0.006 % | exact ends: once a block's crack completes, the port's arc is 0, v8's sin(3.14159)·.4 ≈ 1e-6 (a colour factor of 1 + 2.6e-7) |
+| 20, 22, 26 · crystal → wafer, wafer → light, chip → display midpoints | 0 % / 0.001–0.003 % | exact ends: grains that have finished their move sit exactly at rest |
+| 23 · light hold | 0 % / 0.003 % | exact ends: the hold renders the dive at t = 0, which returns the resting grain itself |
+| 29 · final chapter at 11 s | 0 % / 0.023 % | exact ends: at reveal 1 the screen is exactly the sand image (`blend`, not `mix`) |
+
+Implementation differences that do not show at any compared position:
+
+- **No hysteresis on lens and type axes.** v8 updates the lens only when it moves more than 0.01°,
+  and the type axes beyond 0.2 / 1. The port updates on every change (uScale follows the lens).
+  What is shown then depends only on where the story is, forwards or backwards, which
+  `check:reverse` and `check:seams` require. At every compared position the two agree; a
+  lens change costs 0.18 µs.
+- **Confinement is interpolated per derived value.** Lens, type axes and jitter are linear in
+  the confinement value, so interpolating each (as v8 does) is the same as interpolating the value
+  itself, and bit-identical to v8.
+- **`--stage` is written by truncation**, as three r149 in the reference does (current three
+  rounds). Mid-transition an interpolated channel can land just under an integer; rounding left the
+  scrim gradient one level off over a fifth of the frame.
+- **Fonts are self-hosted.** Their metric-matched fallback faces cover exactly the web fonts'
+  unicode-range, so a glyph the fonts lack ("≈") falls through to the system font, as in v8. The
+  experience's text waits for the fonts (at most 3 s), so nothing visible reflows when they arrive.
+- **The act label is removed from the DOM**, where v8 hides it with `display: none`.
+- **The fallback article** (no WebGL2) uses the same type system, with the micro lines at full
+  muted colour instead of the overlay's 0.62 opacity, for AA contrast on a plain page.
 
 ## Phase 2: one intentional change beyond v6
 
@@ -46,7 +85,7 @@ Shots that differ from v6 because of it: 18 (purity → crystal midpoint) and 41
 0.45, 0.75). In Phase 2 they measured 7.20, 23.42, 9.52 and 4.92 %. Since Phase 2.1 they also
 carry fix 5; current values are in the Phase 2.1 table below.
 
-## Phase 2.1: rest-state fixes (intentional deviations from v6)
+## Phase 2.1: rest-state fixes (intentional deviations from v6; since folded into v8)
 
 **Rule.** At t = 0 a transition must reproduce the previous world exactly, and at t = 1 the
 next world exactly. No transition may leave any trace (position, size or colour) on a resting
@@ -68,7 +107,7 @@ purity 46.3 %, crystal 0.27 %); the others were float-level (24–1 224 scattere
 There is deliberately no blanket "t = 0 → world A" clamp. It would make the seam check pass
 while hiding real traces like the separate sway.
 
-**Positions that now differ from v6, and only these** (the purity → crystal rows also carry
+**Positions that differed from v6 in Phase 2.1, and only these** (the purity → crystal rows also carry
 the Phase 2 reframe):
 
 | Parity shot | Diff vs v6 | Cause |

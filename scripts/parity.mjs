@@ -19,23 +19,27 @@ const OUT = new URL('../parity/', import.meta.url);
 const VIEW = { width: 1440, height: 900 };
 const TIME = 10;
 const SETTLE_MS = 1600;      // CSS: clock font-size .5 s, punch .7 s
-const ENDING_MS = 7500;      // final chapter: title at 1.2 s, signature at 5.5 s, 1.2 s fades
+const FINAL_EARLY_MS = 2000; // final chapter: the sentence is in (1.2 s), the reveal not yet begun (4 s)
+const FINAL_LATE_MS = 11000; // final chapter: fully revealed (8 s), signature and footnote in (8.5 s)
 const REVIEW_PCT = 2;
 
 // Positions where the port differs from the reference on purpose (docs/parity-notes.md).
 // Transitions with a camera subject (the purity → crystal reframe) are added automatically.
+const EXACT_ENDS = 'exact ends (kept from Phase 2.1; v8 lacks them)';
 const DEVIATIONS = {
-  '14-tr-quarry-furnace': 'break: heat fades out by t = 1 (fix 4)',
-  '37-tr-quarry-furnace-t75': 'break: heat fades out by t = 1 (fix 4)',
-  '15-hold-furnace': 'separate leaves no sway and no heat at rest (fixes 1, 2)',
-  '16-tr-furnace-purity': 'separate: sway, heat and deposit fixed (fixes 1–3)',
-  '38-tr-furnace-purity-t20': 'separate: sway, heat and deposit fixed (fixes 1–3)',
-  '39-tr-furnace-purity-t45': 'separate: sway, heat and deposit fixed (fixes 1–3)',
-  '40-tr-furnace-purity-t75': 'separate: sway, heat and deposit fixed (fixes 1–3)',
-  '17-hold-purity': 'grow: the seed tip no longer intrudes on the purity hold (fix 5)',
-  '34-tr-coast-desert-t75': 'exact ends: grains that have finished their move sit exactly at rest',
+  '13-hold-quarry': `${EXACT_ENDS}: break at t = 0 returns the resting grain itself, v8 bc + (pa − bc)`,
+  '14-tr-quarry-furnace': `${EXACT_ENDS}: break's arc is 0 once a block's crack completes, v8 sin(3.14159)·.4`,
+  '35-tr-quarry-furnace-t30': `${EXACT_ENDS}: break's arc is 0 once a block's crack completes, v8 sin(3.14159)·.4`,
+  '36-tr-quarry-furnace-t55': `${EXACT_ENDS}: break's arc is 0 once a block's crack completes, v8 sin(3.14159)·.4`,
+  '37-tr-quarry-furnace-t80': `${EXACT_ENDS}: break's arc is 0 once a block's crack completes, v8 sin(3.14159)·.4`,
+  '20-tr-crystal-wafer': `${EXACT_ENDS}: grains that have finished their move sit exactly at rest`,
+  '22-tr-wafer-light': `${EXACT_ENDS}: grains that have finished their move sit exactly at rest`,
+  '26-tr-chip-display': `${EXACT_ENDS}: grains that have finished their move sit exactly at rest`,
+  '23-hold-light': `${EXACT_ENDS}: the light hold renders the dive at t = 0, which returns the resting grain itself`,
+  '29-hold-now': `${EXACT_ENDS}: at reveal 1 the screen is exactly the sand image (blend, not mix)`,
+  '41-final-2s': 'the signature waits for 8.5 s with the footnote (in v8 a CSS specificity tie shows it from the start)',
 };
-const SUBJECT_REASON = 'purity → crystal reframe, plus the grow inclusion fix (fix 5)';
+const SUBJECT_REASON = 'purity → crystal reframe (Phase 2): the pool centred, the crystal followed up';
 
 // Story layout, straight from the source (no copy of the numbers here).
 const vite = await createServer({ server: { middlewareMode: true }, appType: 'custom', logLevel: 'error' });
@@ -46,24 +50,26 @@ await vite.close();
 
 const shots = [];
 WORLDS.forEach((w, i) => {
-  shots.push({ id: `${String(shots.length + 1).padStart(2, '0')}-hold-${w.slug}`, kind: 'hold', label: `Hold · ${w.slug}`, v: SNAP_POINTS[i], wait: i === WORLDS.length - 1 ? ENDING_MS : SETTLE_MS });
+  shots.push({ id: `${String(shots.length + 1).padStart(2, '0')}-hold-${w.slug}`, kind: 'hold', label: `Hold · ${w.slug}`, v: SNAP_POINTS[i], wait: i === WORLDS.length - 1 ? FINAL_LATE_MS : SETTLE_MS });
   if (i < WORLDS.length - 1) {
     const tr = TRANSITIONS[i];
     shots.push({ id: `${String(shots.length + 1).padStart(2, '0')}-tr-${w.slug}-${WORLDS[i + 1].slug}`, kind: 'transition', label: `Transition midpoint · ${w.slug} → ${WORLDS[i + 1].slug} (${tr.cam}, style ${tr.g})`, v: transitionMidpoint(i), wait: SETTLE_MS, intentional: !!tr.subject });
   }
 });
-// hands-on holds, with the pointer parked over the scene (taken last: hovering adds camera parallax)
+// hands-on holds, with the pointer parked over the scene. Captured last (once a mouse has moved,
+// it adds camera parallax to every later shot) and given time: pointer smoothing advances a fixed
+// fraction per frame, so each page converges at its own frame rate
 const hover = [
-  { id: '30-hover-desert', kind: 'interaction', label: 'Desert · cursor brushing the dunes', v: SNAP_POINTS[4], mouse: [760, 560], wait: 3500 },
-  { id: '31-hover-chip', kind: 'interaction', label: 'Chip · cursor lighting the switches', v: SNAP_POINTS[12], mouse: [640, 520], wait: 3500 },
+  { id: '30-hover-desert', kind: 'interaction', label: 'Desert · cursor brushing the dunes', v: SNAP_POINTS[4], mouse: [760, 560], wait: 6500 },
+  { id: '31-hover-chip', kind: 'interaction', label: 'Chip · cursor lighting the switches', v: SNAP_POINTS[12], mouse: [640, 520], wait: 6500 },
 ];
 
 // the transitions added from blockout v6, at three more points each
-const NEW_STYLES = new Set([17, 18, 19, 20]);
+const REWORKED = new Set([17, 18, 20]); // drift, break, grow (reworked in v8)
 const extra = [];
-for (const seg of SEGMENTS.filter((x) => x.type === 'tr' && NEW_STYLES.has(TRANSITIONS[x.i].g))) {
+for (const seg of SEGMENTS.filter((x) => x.type === 'tr' && REWORKED.has(TRANSITIONS[x.i].g))) {
   const tr = TRANSITIONS[seg.i], a = WORLDS[seg.i].slug, b = WORLDS[seg.i + 1].slug;
-  for (const t of [.2, .45, .75]) {
+  for (const t of [.3, .55, .8]) {
     extra.push({
       id: `${32 + extra.length}-tr-${a}-${b}-t${Math.round(t * 100)}`, kind: 'transition',
       label: `Transition · ${a} → ${b} at t = ${t} (${tr.cam}, style ${tr.g})`,
@@ -71,6 +77,9 @@ for (const seg of SEGMENTS.filter((x) => x.type === 'tr' && NEW_STYLES.has(TRANS
     });
   }
 }
+
+// the final chapter early in its sequence (the 11 s state is the standard final hold)
+extra.push({ id: `${32 + extra.length}-final-2s`, kind: 'hold', label: 'Final chapter at 2 s (sentence in, screen still neutral)', v: 1, wait: FINAL_EARLY_MS });
 
 for (const s of [...shots, ...hover, ...extra]) {
   if (DEVIATIONS[s.id]) { s.intentional = true; s.reason = DEVIATIONS[s.id]; }
@@ -96,19 +105,24 @@ try {
   const n = await port.evaluate(() => window.__PACK.n), refN = await ref.evaluate(() => window.__HEROES.length && Math.round(window.__DATA.length / 15 / 4));
   console.log(`grains per world: port ${n}, reference texture sized for ${refN}`);
 
-  for (const s of [...shots, ...hover, ...extra]) {
+  for (const s of [...shots, ...extra, ...hover]) {
     for (const p of [ref, port]) await p.evaluate(([v, t]) => { window.__V = v; window.__T = t; }, [s.v, TIME]);
     if (s.mouse) for (const p of [ref, port]) await p.mouse.move(s.mouse[0], s.mouse[1]);
     await ref.waitForTimeout(s.wait);
-    const [a, b] = [await ref.screenshot(), await port.screenshot()];
-    await ref.screenshot({ path: fileURLToPath(new URL(`ref/${s.id}.jpg`, OUT)), type: 'jpeg', quality: 82 });
-    await port.screenshot({ path: fileURLToPath(new URL(`port/${s.id}.jpg`, OUT)), type: 'jpeg', quality: 82 });
+    // CSS transitions are fast-forwarded: the two pages' timers are not in step to the millisecond
+    const shot = (p, opts = {}) => p.screenshot({ animations: 'disabled', ...opts });
+    const [a, b] = [await shot(ref), await shot(port)];
+    await shot(ref, { path: fileURLToPath(new URL(`ref/${s.id}.jpg`, OUT)), type: 'jpeg', quality: 82 });
+    await shot(port, { path: fileURLToPath(new URL(`port/${s.id}.jpg`, OUT)), type: 'jpeg', quality: 82 });
     const A = PNG.sync.read(a), B = PNG.sync.read(b), D = new PNG({ width: A.width, height: A.height });
     const px = pixelmatch(A.data, B.data, D.data, A.width, A.height, { threshold: .1, diffMask: true });
     await writeFile(new URL(`diff/${s.id}.png`, OUT), PNG.sync.write(D));
     const pct = px / (A.width * A.height) * 100;
-    results.push({ ...s, pct });
-    console.log(`${pct.toFixed(3).padStart(7)} %  ${s.id}`);
+    let strictPx = 0;
+    for (let k = 0; k < A.data.length; k += 4) if (A.data[k] !== B.data[k] || A.data[k + 1] !== B.data[k + 1] || A.data[k + 2] !== B.data[k + 2]) strictPx++;
+    const strict = strictPx / (A.width * A.height) * 100;
+    results.push({ ...s, pct, strict });
+    console.log(`${pct.toFixed(3).padStart(7)} %  (strict ${strict.toFixed(3)} %)  ${s.id}`);
   }
 } finally {
   await browser.close();
@@ -128,9 +142,11 @@ const md = [
   `${compared.filter((r) => r.pct <= REVIEW_PCT).length} of ${compared.length} compared positions within ${REVIEW_PCT} %. ` +
     `${intentional.length} positions show an intentional change beyond the reference and are not held to it: ${intentional.map((r) => r.id).join(', ')} (see docs/parity-notes.md).`,
   '',
-  '| # | Position | Progress | Diff | Status |',
-  '|---|---|---|---|---|',
-  ...results.map((r, i) => `| ${i + 1} | ${r.label} | ${r.v.toFixed(4)} | ${r.pct.toFixed(3)} % | ${status(r)} |`),
+  '"Strict" counts every pixel whose colour differs at all, however little; it catches uniform colour shifts the perceptual threshold absorbs.',
+  '',
+  '| # | Position | Progress | Diff | Strict | Status |',
+  '|---|---|---|---|---|---|',
+  ...results.map((r, i) => `| ${i + 1} | ${r.label} | ${r.v.toFixed(4)} | ${r.pct.toFixed(3)} % | ${r.strict.toFixed(3)} % | ${status(r)} |`),
   '',
   `Console during the run: ${consoleLog.filter((c) => !c.harness).length} warnings/errors from the pages` +
     (consoleLog.some((c) => c.harness) ? `, plus ${consoleLog.filter((c) => c.harness).length} GPU driver notices caused by the screenshot read-backs themselves.` : '.'),

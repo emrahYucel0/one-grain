@@ -37,4 +37,15 @@ for (let i = 0; i < WORLDS.length; i++) {
 for (const r of rows) console.log(`${r.at.padEnd(14)} median ${r.med.toFixed(1).padStart(5)} ms  p95 ${r.p95.toFixed(1).padStart(5)} ms`);
 const meds = rows.map((r) => r.med).sort((a, b) => a - b);
 console.log(`overall: median of medians ${meds[meds.length >> 1].toFixed(1)} ms (${(1000 / meds[meds.length >> 1]).toFixed(0)} fps), worst ${meds[meds.length - 1].toFixed(1)} ms`);
+
+// scrub: progress advances every frame through the whole story, so the lens (and uScale), type
+// axes and stage colour change on every frame; compare with the static positions above
+const scrub = await page.evaluate(() => new Promise((res) => {
+  const ts = []; let v = 0;
+  const f = (t) => { ts.push(t); v += 1 / 900; window.__V = Math.min(v, 1); window.__T = null; if (v < 1) requestAnimationFrame(f); else {
+    const d = ts.slice(1).map((x, i) => x - ts[i]).sort((a, b) => a - b);
+    res([d[d.length >> 1], d[Math.floor(d.length * .95)], d.length]); } };
+  requestAnimationFrame(f);
+}));
+console.log(`scrub through the story (lens changing every frame): median ${scrub[0].toFixed(1)} ms, p95 ${scrub[1].toFixed(1)} ms over ${scrub[2]} frames`);
 await browser.close(); await server.close();
