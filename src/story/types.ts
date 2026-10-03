@@ -34,10 +34,11 @@ export interface WorldDef {
 
 /**
  * Grain transition styles (uStyle in the shader):
- * 0 rise · 1 fall · 2 flow · 3 wind · 4 bury · 5 cut · 6 pour · 7 heat · 8 spiral
- * 9 slice · 11 dive · 12 beam · 13 raster · 15 crack · 16 expose
+ * 0 rise · 1 fall · 2 flow · 4 bury · 5 cut · 9 slice · 11 dive · 12 beam · 13 raster
+ * 15 crack · 16 expose · 17 drift · 18 break · 19 separate · 20 grow
+ * (3 wind · 6 pour · 7 heat · 8 spiral are still in the shader but unused since blockout v6)
  */
-export type GrainStyle = 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 11 | 12 | 13 | 15 | 16;
+export type GrainStyle = 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 11 | 12 | 13 | 15 | 16 | 17 | 18 | 19 | 20;
 
 export type CamStyle =
   | 'crane' | 'crackdrop' | 'track' | 'fly' | 'sink' | 'cut' | 'pour'

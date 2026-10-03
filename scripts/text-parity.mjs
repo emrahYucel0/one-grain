@@ -44,7 +44,7 @@ for (const [kind, i, t] of cases) {
   const at = async (p, v) => { await p.bringToFront(); await p.evaluate((x) => { window.__V = x; window.__T = 10; }, v); await p.waitForTimeout(250); return read(p); };
   const x = await at(port, progress(portLens, i, t, kind)), y = await at(ref, progress(refLens, i, t, kind));
   n++;
-  if (x !== y) { diffs++; console.log(`DIFF ${kind} ${WORLDS[i].slug} t=${t}\n  port: ${x}\n  v6:   ${y}`); }
+  if (x !== y) { diffs++; console.log(`DIFF ${kind} ${WORLDS[i].slug} t=${t}\n  port: ${x}\n  ref:  ${y}`); }
 }
 console.log(`${n - diffs}/${n} positions identical`);
 await b.close(); await dev.close();

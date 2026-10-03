@@ -1,9 +1,18 @@
 // How grains travel from world A to world B (uStyle, see story/types.ts GrainStyle).
 // Each grain starts after a delay d that depends on where it is, so the change sweeps the scene.
-// Writes the eased progress e and the in-flight arc (0 at both ends, 1 midway).
-vec3 travel(vec4 A, vec3 pa, vec3 pb, vec3 R, out float e, out float arc){
+// Writes the eased progress e, the in-flight arc (0 at both ends, 1 midway) and per-grain
+// modifiers that some styles use to show what is happening to the material.
+struct Mods {
+  float size;   // point size multiplier
+  float heat;   // 0..1 glow towards molten orange
+  float whiten; // 0..1 towards purified white
+  float darken; // 0..1 towards impurity brown-black
+};
+
+vec3 travel(vec4 A, vec4 B, vec3 pa, vec3 pb, vec3 R, out float e, out float arc, out Mods m){
   vec3 p;
   arc = 0.;
+  m = Mods(1., 0., 0., 0.);
   if (uStyle == 5) { e = step(.5, uT); return mix(pa, pb, e); } // cut
   float dd, w = .6;
   if (uStyle == 1) dd = clamp(.5 - (pa.y - uHeroA.y) / 10., 0., 1.);
@@ -34,5 +43,14 @@ vec3 travel(vec4 A, vec3 pa, vec3 pb, vec3 R, out float e, out float arc){
   else if (uStyle == 13) { p.z += arc * 1.5; }                                                                                                                            // raster
   else if (uStyle == 15) { p.x += sign(pa.x - uHeroA.x + .001) * arc * (1.5 + 2.5 * R.y) * uK; p.y -= arc * arc * (2. + 4. * R.z); }                                  // crack
   else if (uStyle == 16) { p.y += arc * .6 * step(.01, length(pb - pa)); }                                                                                                // expose
+  else if (uStyle == 17) { // drift: the carrying medium changes from water to wind
+    float wnd = smoothstep(.25, .7, e), grow = mix(.12, 1., smoothstep(.45, 1., e));
+    vec3 wave = vec3(0., sin(e * 9. + pa.x * .5) * .25, sin(e * 6.2832 + R.x * 6.) * 1.4) * arc * (1. - wnd);
+    vec3 wind = uDir * arc * (2. + 7. * R.y) * wnd + vec3(0., sin(dot(p.xz, vec2(-uDir.z, uDir.x)) * 5. + e * 20.) * .15 * arc, 0.);
+    p = vec3(p.x, mix(pa.y, pb.y * grow + sin(pb.x * 2.5 + pb.z) * .08 * (1. - grow), e), p.z) + wave + wind;
+    float fa = floor(A.w + .001);
+    // sea grains (behaviour 2) recede and thin out as the water goes
+    if (fa > 1.5 && fa < 2.5) { p.z += smoothstep(0., .35, e) * 3. * (1. - wnd); m.size = mix(1., .45, sin(3.14159 * smoothstep(0., .6, e))); }
+  }
   return p;
 }
