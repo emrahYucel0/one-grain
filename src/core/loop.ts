@@ -82,7 +82,7 @@ export class Loop {
     const time = timeOverride() ?? this.clock.time;
     const L = locate(v), { a, b, tr } = L;
     const t = reduced ? (L.t < .5 ? 0 : 1) : L.t;
-    const S = shot(tr, a, b, t, this.heroes);
+    const S = shot(tr, a, b, t, this.heroes, L.lean, reduced);
     const wa = WORLDS[a]!, wb = WORLDS[b]!;
 
     hero.moveTo(S.hero);

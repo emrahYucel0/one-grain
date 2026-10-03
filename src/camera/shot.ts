@@ -22,14 +22,15 @@ const bez = (p0: Vector3, p1: Vector3, p2: Vector3, p3: Vector3, t: number): Vec
 };
 const NO_HERO: readonly [Vec3, Vec3] = [[0, 0, 0], [0, 0, 0]];
 /** shots that turn to look at the grain on the way */
-const WATCH_HERO = new Set(['crackdrop', 'zoom', 'pour', 'pullback', 'beam']);
+const WATCH_HERO = new Set(['crackdrop', 'zoom', 'pour', 'pullback', 'beam', 'breakfall']);
 
 /**
  * The shot director. Each world has a resting camera (cam/look offsets from its hero grain);
  * a transition flies between them on a cubic bezier whose inner handles depend on the style,
- * orbits around an axis, or cuts.
+ * orbits around an axis, or cuts. While resting, the camera already leans towards the next move
+ * (lean, from timeline/segments.ts) and the lean fades out as the move runs, so there is no seam.
  */
-export function shot(tr: TransitionDef, a: number, b: number, t: number, heroes: readonly Vector3[]): Shot {
+export function shot(tr: TransitionDef, a: number, b: number, t: number, heroes: readonly Vector3[], lean = 0, reduced = false): Shot {
   const hA = heroes[a]!, hB = heroes[b]!, wa = WORLDS[a]!, wb = WORLDS[b]!;
   const camA = off(hA, wa.cam), camB = off(hB, wb.cam), lookA = off(hA, wa.look), lookB = off(hB, wb.look);
   let eg = easeCubic(t);
@@ -43,6 +44,9 @@ export function shot(tr: TransitionDef, a: number, b: number, t: number, heroes:
     case 'crackdrop': c1 = camA.clone().lerp(hA, .82); c2 = off(hB, [1, 4, 2.5]); break;
     case 'track': c1 = camA.clone().addScaledVector(d, 4); c2 = camB.clone().addScaledVector(d, -4); break;
     case 'fly': c1 = off(hA, [-3, 2.5, 3]); c2 = off(hB, [-5, 6, 6]); break;
+    case 'drift': c1 = off(camA, [2, 1, 3]); c2 = off(camB, [-4, 4, 8]); break;
+    case 'breakfall': c1 = off(hA, [0, 6, 8]); c2 = off(hB, [0, 12, 7]); break;
+    case 'rise': c1 = off(camA, [0, 9, 2]); c2 = off(camB, [0, 8, 4]); break;
     case 'sink': c1 = off(camA, [0, -1, -2]); c2 = off(camB, [0, -8, 0]); break;
     case 'pour': c1 = off(hA, [0, 8, 5]); c2 = off(hB, [0, 11, 6]); break;
     case 'heat': c1 = off(camA, [0, 7, 0]); c2 = off(camB, [0, 7, 2]); break;
@@ -63,5 +67,9 @@ export function shot(tr: TransitionDef, a: number, b: number, t: number, heroes:
   else pos = bez(camA, c1, c2, camB, eg);
   const look = lookA.clone().lerp(lookB, eg);
   if (WATCH_HERO.has(tr.cam)) look.lerp(hero, arc * .9);
+  if (tr.cam !== 'cut' && !reduced) {
+    const toward = camB.clone().sub(camA);
+    if (toward.lengthSq() > 1e-4) pos.addScaledVector(toward.normalize(), .6 * (1 - eg) * lean);
+  }
   return { pos, look, hero, eg, arc };
 }

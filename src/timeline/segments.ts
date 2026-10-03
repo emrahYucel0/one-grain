@@ -1,3 +1,4 @@
+import { ss } from '../core/ease';
 import { TRANSITIONS } from '../story/transitions';
 import type { TransitionDef } from '../story/types';
 import { WORLDS } from '../story/worlds';
@@ -42,14 +43,19 @@ export interface Located {
   tr: TransitionDef;
   /** the world being rested in, or -1 mid-transition */
   hold: number;
+  /**
+   * How far the camera already leans into the next move: grows across a hold (0 → 1) and stays
+   * at 1 in the transition, where the shot fades it out with the move. 0 on the last hold.
+   */
+  lean: number;
 }
 
 export function locate(v: number): Located {
   const s = Math.min(TOTAL - 1e-6, Math.max(0, v * TOTAL));
   const seg = SEGMENTS.find((x) => s >= x.start && s < x.start + x.len) ?? last;
-  if (seg.type === 'tr') return { a: seg.i, b: seg.i + 1, t: (s - seg.start) / seg.len, tr: TRANSITIONS[seg.i]!, hold: -1 };
-  if (seg.i === CH - 1) return { a: CH - 2, b: CH - 1, t: 1, tr: TRANSITIONS[CH - 2]!, hold: CH - 1 };
-  return { a: seg.i, b: seg.i + 1, t: 0, tr: TRANSITIONS[seg.i]!, hold: seg.i };
+  if (seg.type === 'tr') return { a: seg.i, b: seg.i + 1, t: (s - seg.start) / seg.len, tr: TRANSITIONS[seg.i]!, hold: -1, lean: 1 };
+  if (seg.i === CH - 1) return { a: CH - 2, b: CH - 1, t: 1, tr: TRANSITIONS[CH - 2]!, hold: CH - 1, lean: 0 };
+  return { a: seg.i, b: seg.i + 1, t: 0, tr: TRANSITIONS[seg.i]!, hold: seg.i, lean: ss(0, 1, (s - seg.start) / seg.len) };
 }
 
 /** The chapter whose snap point is nearest to progress v. */

@@ -40,9 +40,10 @@ export interface WorldDef {
  */
 export type GrainStyle = 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 11 | 12 | 13 | 15 | 16 | 17 | 18 | 19 | 20;
 
+/** Camera moves (camera/shot.ts). fly, pour and heat are unused since blockout v6. */
 export type CamStyle =
-  | 'crane' | 'crackdrop' | 'track' | 'fly' | 'sink' | 'cut' | 'pour'
-  | 'heat' | 'orbit' | 'slide' | 'top' | 'zoom' | 'beam' | 'pullback';
+  | 'crane' | 'crackdrop' | 'track' | 'drift' | 'sink' | 'cut' | 'breakfall' | 'rise'
+  | 'orbit' | 'slide' | 'top' | 'zoom' | 'beam' | 'pullback' | 'fly' | 'pour' | 'heat';
 
 export interface TransitionDef {
   g: GrainStyle;
