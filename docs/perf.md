@@ -448,3 +448,28 @@ Refresh frames at the worst positions afterwards (same session):
 | hold again | 14.61 ms (p95 14.77) | 15.25 ms (p95 15.43) |
 | hold light | 14.18 ms (p95 14.90) | 15.04 ms (p95 15.17) |
 | coast → again midpoint | 13.90 ms (p95 14.07) | 14.54 ms (p95 14.72) |
+
+## Phase 4a, final (every grain casts shadows again)
+
+Every other grain in the shadow pass lightened the shadows of scattered clouds mid-transition: 3.7–12.2 % of pixels against
+v10 at four transition midpoints, against at most 0.03 % with every grain. Every grain is the default again;
+`?shadowstride=2` stays for measurements.
+
+`npm run perf`, mid tier, 1920×909, every layer on, Intel UHD Graphics (ANGLE/D3D11):
+
+| | Median | Worst (where) |
+|---|---|---|
+| GPU frame, 15 holds and 14 midpoints | 14.15 ms | 15.21 ms (desert → again midpoint) |
+| shadow-refresh frames, same positions | 14.41 ms | 15.41 ms (desert → again midpoint) |
+| scrub through the story, GPU frame | 13.52 ms | p95 16.39 ms |
+| scrub through the story, refresh frames | 14.39 ms | p95 16.78 ms |
+
+Per pass, typical: shadow 3.0–3.4 ms (per refresh; it includes about 1 ms of frame-start overhead), grains 4.4–6.3, hero
+0.05, bloom 1.15, depth of field 2.85, composite 2.43.
+
+Every standard position is inside 16.7 ms, refresh frames included. Scrubbing reaches the budget at its p95, and single
+frames spike to 17–18 ms. The levers, if a machine needs them, are in the delta 6 table. The adaptive downgrade uses the
+first two (depth of field, then shadows) before it touches the grain count.
+
+The frame interval in these runs was 20.8 ms (48 fps) while the GPU needed about 14 ms, so something other than the GPU set
+the pace on this machine during the measurement (earlier the same day it was 13.9 ms).

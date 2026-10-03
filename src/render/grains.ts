@@ -27,8 +27,8 @@ export class GrainCloud {
   private readonly u: Record<string, IUniform>;
   private textures = new Map<LayerName, DataTexture>();
   private colorKeys = ['', '', '', ''];
-  /** every n-th grain casts shadows (2: every other one, docs/perf.md) */
-  private shadowStride = 2;
+  /** every n-th grain casts shadows (1: all; every other one lightens shadows in scattered clouds, docs/perf.md) */
+  private shadowStride = 1;
 
   constructor() {
     this.u = {
@@ -103,7 +103,7 @@ export class GrainCloud {
   }
 
   /**
-   * Only every n-th grain casts shadows (2 by default), its disc in the shadow map scaled by `grow`.
+   * Only every n-th grain casts shadows (1, all, by default), its disc in the shadow map scaled by `grow`.
    * ?shadowstride and ?shadowgrow change it for measurements. Applies from the next pack.
    */
   setShadowSubset(stride: number, grow: number): void { this.shadowStride = Math.max(1, Math.round(stride)); this.u.uShadowGrow!.value = grow; }

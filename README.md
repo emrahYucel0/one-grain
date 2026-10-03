@@ -258,7 +258,7 @@ the Phase 1 numbers.
 | `?debug&forceDrop` | Act as if the frame budget stayed blown, to watch the downgrade walk its steps |
 | `?perf` | Time every render pass on the GPU (`window.__gpu`, with the last 240 raw frames) |
 | `?off=a,b` | Switch render layers off (light, shadows, dof, bloom, grade), for measurements |
-| `?grains=N` · `?pointcap=N` · `?shadowstride=N` | Measurements: grains per world, largest grain in pixels, every N-th grain casts shadows (default 2) |
+| `?grains=N` · `?pointcap=N` · `?shadowstride=N` | Measurements: grains per world, largest grain in pixels, every N-th grain casts shadows (default 1: all) |
 | `?parity` | Let a harness drive progress (`window.__V`) and shader time (`window.__T`), or render a transition point directly (`window.__AT = { tr, t, lean }`); the rendered progress is published as `window.__progress` |
 | `?nosnap` | Scrolling does not settle on chapters, so a position mid-transition can be held |
 | `#magma` … `#now` | Open at that chapter |
