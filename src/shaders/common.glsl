@@ -8,6 +8,7 @@ uniform int uRest; // 0 moving · 1 resting in world A (t = 0) · 2 resting in w
 uniform float uReveal;
 uniform float uPointMax; // largest grain, in pixels, before the per-grain size factor
 uniform float uSpecA, uSpecB; // each world's gloss
+uniform float uGlowA, uGlowB, uRaysA, uRaysB, uPixA, uPixB, uWaterA, uWaterB; // each world's material look (story/lights.ts)
 uniform float uPx;            // shadow map pixels per world unit
 uniform float uShadowGrow;    // disc size factor in the shadow map (1; ?shadowgrow for measurements)
 uniform mat4 uLightVP;        // the key light's view-projection (shadow map)

@@ -75,16 +75,17 @@ void main(){
   gl_PointSize = sz < .02 ? 0. : max(1., uGrain * uPx * uShadowGrow * (.8 + .4 * R.z) * sz);
 #else
   n = normalize(n + vec3(0., 1e-4, 0.));
-  if (fl > .5 && fl < 2.5) spec = .7; // water is glossy
+  if (fl > .5 && fl < 2.5) spec = .7 + .25 * blend(uWaterA, uWaterB, e); // water is glossy (more so in the river)
   // the last world arrives as a neutral screen of pixels; the sand image comes in with the reveal (v10)
   float isPix = (uTo == uLast && e >= .5) ? 1. : 0.;
   if (isPix > .5) { float g = .24 + .04 * R.y; c = blend(vec3(g * .9, g * .94, g), c, uReveal); }
-  float em = emission(fl, tn, uTime * uMotion);
+  float em = emission(fl, tn, uTime * uMotion, blend(uRaysA, uRaysB, e), blend(uPixA, uPixB, e));
   c = glow(c, p, fl, em);
   c = mix(c, vec3(1., .48, .16) * (1.1 + .3 * R.x), m.heat * .75);
   c = mix(c, vec3(.95, .97, 1.), m.whiten * .8);
   c = mix(c, vec3(.18, .14, .12), m.darken * .85);
   em += m.heat * 2.2 + m.whiten * .5;
+  if (fl < .5) em += blend(uGlowA, uGlowB, e); // the world's inner glow for its base material (magma's quartz)
   c *= 1. + arc * .25;
   vec4 mv = modelViewMatrix * vec4(p, 1.);
   float depth = -mv.z;

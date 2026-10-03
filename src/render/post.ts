@@ -15,6 +15,8 @@ export interface PostFrame {
   far: number;
   /** camera → hero distance: the depth of field focuses on the grain */
   focus: number;
+  /** the world's depth-of-field scale (story/lights.ts `dof`): below 1, more is in focus */
+  dofScale: number;
   /** shader time (the film grain moves with it) */
   time: number;
   /** false under reduced motion: the film grain stands still */
@@ -101,7 +103,7 @@ export class PostChain {
       this.blurInto(renderer, this.bloomB2, this.bloomB, 0, 1);
       timer.end();
     }
-    const range = Math.max(1.5, f.focus * .35);
+    const range = Math.max(1.5, f.focus * .35) / Math.max(.2, f.dofScale);
     for (const p of [this.dof, this.composite]) {
       p.u.uNear!.value = f.near; p.u.uFar!.value = f.far; p.u.uFocus!.value = f.focus; p.u.uRange!.value = range;
     }

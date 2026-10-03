@@ -18,6 +18,13 @@ export interface RigState {
   specB: number;
   /** half-size of the shadow frustum */
   shadow: number;
+  /** each world's material look (story/lights.ts); blended per grain like the gloss */
+  glowA: number; glowB: number;
+  raysA: number; raysB: number;
+  pixA: number; pixB: number;
+  waterA: number; waterB: number;
+  /** depth-of-field scale, blended with the rig */
+  dof: number;
 }
 
 const rigOf = (i: number): LightRig => {
@@ -41,6 +48,7 @@ export class LightRigBlend {
   readonly state: RigState = {
     keyDir: new Vector3(0, 1, 0), keyCol: new Vector3(), sky: new Vector3(), ground: new Vector3(), rim: new Vector3(),
     pointPos: new Vector3(), pointCol: new Vector3(), pointRange: 1, specA: .3, specB: .3, shadow: 16,
+    glowA: 0, glowB: 0, raysA: 1, raysB: 1, pixA: 1, pixB: 1, waterA: 0, waterB: 0, dof: 1,
   };
   private readonly ka = new Vector3();
   private readonly kb = new Vector3();
@@ -59,6 +67,9 @@ export class LightRigBlend {
     s.pointRange = num(ra.point[2], rb.point[2], k);
     s.specA = ra.spec; s.specB = rb.spec;
     s.shadow = num(ra.shadow, rb.shadow, k);
+    s.glowA = ra.glow ?? 0; s.glowB = rb.glow ?? 0; s.raysA = ra.rays ?? 1; s.raysB = rb.rays ?? 1;
+    s.pixA = ra.pix ?? 1; s.pixB = rb.pix ?? 1; s.waterA = ra.water ?? 0; s.waterB = rb.water ?? 0;
+    s.dof = num(ra.dof ?? 1, rb.dof ?? 1, k);
     return s;
   }
 }

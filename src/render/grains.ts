@@ -40,7 +40,8 @@ export class GrainCloud {
       uLoA: { value: new Color() }, uHiA: { value: new Color() }, uLoB: { value: new Color() }, uHiB: { value: new Color() },
       uFog: { value: new Color() }, uFogD: { value: .02 }, uJitter: { value: 0 },
       // lighting (v10)
-      uSpecA: { value: .3 }, uSpecB: { value: .3 }, uPx: { value: 1 }, uShadowGrow: { value: 1 }, uLightVP: { value: new Matrix4() },
+      uSpecA: { value: .3 }, uSpecB: { value: .3 },
+      uGlowA: { value: 0 }, uGlowB: { value: 0 }, uRaysA: { value: 1 }, uRaysB: { value: 1 }, uPixA: { value: 1 }, uPixB: { value: 1 }, uWaterA: { value: 0 }, uWaterB: { value: 0 }, uPx: { value: 1 }, uShadowGrow: { value: 1 }, uLightVP: { value: new Matrix4() },
       uKeyDir: { value: new Vector3(0, 1, 0) }, uKeyCol: { value: new Vector3() }, uSky: { value: new Vector3() }, uGround: { value: new Vector3() }, uRim: { value: new Vector3() },
       uPLPos: { value: new Vector3() }, uPLCol: { value: new Vector3() }, uPLRange: { value: 1 },
       uCamPos: { value: new Vector3() }, uCamR: { value: new Vector3() }, uCamU: { value: new Vector3() }, uCamB: { value: new Vector3() }, uFogLin: { value: new Vector3() },
@@ -132,6 +133,8 @@ export class GrainCloud {
     (u.uSky!.value as Vector3).copy(rig.sky); (u.uGround!.value as Vector3).copy(rig.ground); (u.uRim!.value as Vector3).copy(rig.rim);
     (u.uPLPos!.value as Vector3).copy(rig.pointPos); (u.uPLCol!.value as Vector3).copy(rig.pointCol); u.uPLRange!.value = rig.pointRange;
     u.uSpecA!.value = rig.specA; u.uSpecB!.value = rig.specB;
+    u.uGlowA!.value = rig.glowA; u.uGlowB!.value = rig.glowB; u.uRaysA!.value = rig.raysA; u.uRaysB!.value = rig.raysB;
+    u.uPixA!.value = rig.pixA; u.uPixB!.value = rig.pixB; u.uWaterA!.value = rig.waterA; u.uWaterB!.value = rig.waterB;
     (u.uFogLin!.value as Vector3).copy(f.fogLinear);
     u.uUseLight!.value = f.light ? 1 : 0;
     u.uUseShadow!.value = f.light && f.shadows ? 1 : 0;

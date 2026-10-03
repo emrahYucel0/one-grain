@@ -149,7 +149,7 @@ export class Loop {
     const cam = stage.camera;
     pipeline.render({
       grains: stage.scene, overlay: stage.overlay, camera: cam, shadows: shadows && !overdraw, clear: stageColour.fogLinear, direct: overdraw,
-      post: { bloom: layers.on('bloom'), dof: layers.on('dof'), grade: layers.on('grade'), near: cam.near, far: cam.far, focus: cam.position.distanceTo(S.hero), time, grainMoves: !reduced },
+      post: { bloom: layers.on('bloom'), dof: layers.on('dof'), grade: layers.on('grade'), near: cam.near, far: cam.far, focus: cam.position.distanceTo(S.hero), dofScale: this.rigState.dof, time, grainMoves: !reduced },
     });
     timer.tick();
     reportGpu(timer.times());
