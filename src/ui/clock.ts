@@ -1,5 +1,6 @@
 import type { ClockUnit, TransitionDef } from '../story/types';
 import { WORLDS } from '../story/worlds';
+import { liveOverride } from '../debug/parity';
 import { attr, type Copy } from './copy';
 
 /**
@@ -49,7 +50,7 @@ export class ClockView {
     } else if (C.unit === 'live') {
       el.classList.remove('is-label');
       if (this.liveSince < 0) this.liveSince = now;
-      value = Math.round(now - this.liveSince).toLocaleString('en-US') + attr(el, 'ms');
+      value = Math.round(liveOverride() ?? now - this.liveSince).toLocaleString('en-US') + attr(el, 'ms');
       label = attr(el, 'liveUnit');
     } else {
       el.classList.remove('is-label');

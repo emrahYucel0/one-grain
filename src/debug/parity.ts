@@ -9,6 +9,7 @@
 //   ?shadowstride=N  every N-th grain casts shadows (default 1 = all); &shadowgrow=F scales its disc
 //   ?off=a,b         switch render layers off (light, shadows, dof, bloom, grade), for measurements
 //   with ?parity, window.__AT = { tr, t, lean } renders transition tr at t with that camera lean
+//   with ?parity, window.__LIVE = ms pins the display's live clock (it counts real time otherwise)
 import type { GpuTimes } from '../core/gpu-timer';
 import type { GrainPack } from '../sim/pack';
 
@@ -22,6 +23,7 @@ declare global {
     __AT?: { tr: number; t: number; lean: number } | null;
     __noRest?: boolean;
     __overdraw?: boolean;
+    __LIVE?: number | null;
   }
 }
 
@@ -47,6 +49,8 @@ export const transitionOverride = (): { tr: number; t: number; lean: number } | 
 /** ?parity: window.__noRest forces the full vertex path at rest (to prove the cheap path equal). */
 export const restPathAllowed = (): boolean => !(flags.parity && window.__noRest);
 /** ?parity or ?debug: window.__overdraw shows how many grains cover each pixel. */
+/** ?parity: window.__LIVE pins the live clock's count, in milliseconds. */
+export const liveOverride = (): number | null => (flags.parity && typeof window.__LIVE === 'number' ? window.__LIVE : null);
 export const overdrawView = (): boolean => (flags.parity || flags.debug) && !!window.__overdraw;
 export const timeOverride = (): number | null => (flags.parity && typeof window.__T === 'number' ? window.__T : null);
 

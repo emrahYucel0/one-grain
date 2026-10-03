@@ -37,7 +37,7 @@ await page.goto(`${dev.origin}/?parity&tier=mid`);
 await page.waitForFunction(() => window.__PACK, null, { timeout: 90000 });
 
 const render = async (v, at, full = false) => {
-  await page.evaluate(([x, a, f]) => { window.__T = 10; window.__V = x; window.__AT = a; window.__noRest = f; }, [v, at, full]);
+  await page.evaluate(([x, a, f]) => { window.__T = 10; window.__V = x; window.__AT = a; window.__noRest = f; window.__LIVE = 0; }, [v, at, full]);
   await page.waitForTimeout(SETTLE_MS);
   return PNG.sync.read(await page.screenshot());
 };
