@@ -4,6 +4,14 @@ import { WORLDS } from '../story/worlds';
 import type { Stage } from './renderer';
 
 const LAST = WORLDS.length - 1;
+
+/**
+ * Hex for --stage. Truncates each channel, as three r149 (the reference) did; current three
+ * rounds, which differs by one level wherever an interpolated channel lands just under an integer
+ * (seen in the scrim gradient mid-transition).
+ */
+const cssHex = (c: Color): string =>
+  '#' + [c.r, c.g, c.b].map((x) => (Math.min(255, Math.max(0, x * 255)) | 0).toString(16).padStart(2, '0')).join('');
 const actOf = (i: number): StageAct => (WORLDS[i]!.final ? 'end' : WORLDS[i]!.act);
 
 /**
@@ -40,7 +48,7 @@ export class StageColour {
     this.cb.set(STAGES[b === LAST ? 'now' : actOf(b)][k]);
     if (b === LAST) this.cb.lerp(this.ce.set(STAGES.end[k]), reveal);
     if (eg >= 1) this.fog.copy(this.cb); else this.fog.copy(this.ca).lerp(this.cb, eg);
-    const hex = '#' + this.fog.getHexString();
+    const hex = cssHex(this.fog);
     if (hex === this.last) return;
     this.last = hex;
     this.stage.renderer.setClearColor(this.fog, 1);
