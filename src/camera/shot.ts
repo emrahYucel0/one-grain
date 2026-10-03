@@ -67,6 +67,11 @@ export function shot(tr: TransitionDef, a: number, b: number, t: number, heroes:
   else pos = bez(camA, c1, c2, camB, eg);
   const look = lookA.clone().lerp(lookB, eg);
   if (WATCH_HERO.has(tr.cam)) look.lerp(hero, arc * .9);
+  if (tr.subject) { // a reframe beyond the reference: aim at what the move is about
+    const { at, rise, over } = tr.subject;
+    const subject = v(at[0], at[1] + rise * ss(over[0], over[1], t), at[2]);
+    look.lerp(subject, ss(0, .2, t) * (1 - ss(.85, 1, t)));
+  }
   if (tr.cam !== 'cut' && !reduced) {
     const toward = camB.clone().sub(camA);
     if (toward.lengthSq() > 1e-4) pos.addScaledVector(toward.normalize(), .6 * (1 - eg) * lean);

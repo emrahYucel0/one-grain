@@ -1,21 +1,67 @@
 # Parity notes: what could not be matched exactly, and why
 
-Phase 1 is a port of `reference/blockout-v5.html` with no new visuals. This page lists every
-place where the port is not byte-for-byte the reference, and why. It also lists what was
-verified and how, and what was not verified.
+The port follows a behavioural spec: `reference/blockout-v5.html` in Phase 1, and
+`reference/blockout-v6.html` since Phase 2 (content, clock semantics, four new transitions,
+new camera moves; world generators unchanged). This page lists every place where the port is
+not the reference, and why. It also lists what was verified and how, and what was not.
 
 ## How parity was measured
 
 | Check | Result | How |
 |---|---|---|
-| Grain data | **Bit-identical** at 90 000 and 36 000 grains per world | `npm run check:data` compares per-world digests of the packed texture and all 15 hero positions against an instrumented copy of the reference |
-| Rendered frames | 29/29 positions (15 holds and 14 transition midpoints) plus 2 interaction shots: all within 0.14 % differing pixels, 28 of 31 under 0.01 % | `npm run parity`: same viewport, grain count, frozen shader time and scroll progress in both pages; real GPU |
-| Noise floor | The reference compared with itself: 0.015–0.019 % (0.195 % at the quarry hold) | Same harness, two copies of the reference. The port's residuals are the same size and sit in the same places, so they are capture noise, not port differences |
+| Grain data | **Bit-identical** to v6 and to v5 at 90 000 and 36 000 grains per world | `npm run check:data` compares per-world digests of the packed texture and all 15 hero positions against an instrumented copy of each reference |
+| Rendered frames vs v6 | 39/39 compared positions at 0.000 % differing pixels: 15 holds, 13 transition midpoints, 2 interaction shots, and t = 0.2 / 0.45 / 0.75 in drift, break and separate. The 4 purity → crystal shots differ on purpose (below) | `npm run parity`: same viewport, grain count, frozen shader time and scroll progress in both pages; real GPU |
+| Text and clock vs v6 | 85/85 positions identical: clock value, sub-line, unit class, label state, interlude hiding, act, title, body, micro line | `npm run check:text`: every hold and t = 0.1 / 0.3 / 0.5 / 0.7 / 0.9 in every transition |
+| Reverse scrub | 12/12: scrolled backwards, drift, break, separate and grow at t = 0.2 / 0.45 / 0.75 render exactly as scrolled forwards (0.000 %, same settled progress) | `npm run check:reverse`: real scrolling through ScrollTrigger, snapping off |
+| Noise floor | The reference compared with itself: 0.015–0.019 % (0.195 % at the quarry hold), measured in Phase 1 with both pages in one window | Since Phase 2 each page has its own window (a background tab has its frames throttled), and the residuals are gone: 0.000 % everywhere, including the hover shots |
 | Ending sequence | Title at 1.2 s and signature at 5.5 s, the same fade curves | Sampled every 500 ms in both pages |
 | Console | 0 warnings or errors | `npm run check:console`: dev and build × Chromium and Firefox, real scrolling through all 29 positions, hash links, sound toggle, resize |
 
 The reference is never edited. The harness serves a patched copy with three hooks: progress
 override, time override, and exposing the built texture (`scripts/lib/reference.mjs`).
+
+## Phase 2: one intentional change beyond v6
+
+**purity → crystal is reframed.** In v6 the camera keeps looking where the purity and crystal
+holds look, so while the rods melt the glowing pool sits in a corner of the frame (bottom right
+at t = 0.3, half out of shot), and the crystal later rises at the right edge.
+
+The port gives that transition a *subject* (`story/transitions.ts`, applied in
+`camera/shot.ts`):
+
+- it starts at the pool centre (0, −0.55, 0) and climbs by half the crystal's visible height as
+  the growth front moves (`smoothstep(.45, 1, t)`, the same timing as the grow style in the
+  shader);
+- the camera's aim turns towards it with weight `smoothstep(0, .2, t) · (1 − smoothstep(.85, 1, t))`.
+
+The weight is 0 at both ends, so the purity and crystal holds frame exactly as in v6 (both
+0.000 % in the parity run) and there is no seam. Camera position and the orbit path are
+unchanged; only the aim moves. Under reduced motion the move is a cross-fade, so the reframe
+never shows.
+
+Shots that differ from v6 because of it, and only these:
+
+| Parity shot | Diff vs v6 |
+|---|---|
+| 18 · purity → crystal midpoint | 7.20 % |
+| 41 · purity → crystal, t = 0.2 | 23.42 % |
+| 42 · purity → crystal, t = 0.45 | 9.52 % |
+| 43 · purity → crystal, t = 0.75 | 4.92 % |
+
+## Phase 2: v6 behaviour ported as-is (worth knowing)
+
+- **A hold renders with the next transition's style at t = 0.** For most styles that is
+  invisible. For *separate* it is not: the furnace hold carries v6's residual heat tint and a
+  slight sideways shimmer. For *grow*, the few crystal grains at the very tip of the seed cone
+  already sit partly at the interface during the purity hold. Both are in v6 and are kept.
+- **The final chapter's nav label is still "You"** (aria-label "Go to the end"), as in v6;
+  only its slug changed to `now`. Display's label follows its new title.
+- **Unused since v6, kept:** grain styles 3 (wind), 6 (pour), 7 (heat) and 8 (spiral) in the
+  shader, and the fly, pour and heat camera moves. Nothing references them; they are cheap to
+  keep and remove later.
+- **Clock class order.** As in v6, a change of unit resets the clock's classes in the same
+  frame that the interlude hides it; the next frame re-applies the hiding, behind a 0.3 s
+  opacity transition, so it never shows.
 
 ## Differences, and why
 
@@ -53,7 +99,7 @@ override, time override, and exposing the built texture (`scripts/lib/reference.
 ### Behaviour added on purpose
 - **Readable fallback.** Without WebGL2, the reference showed an empty HUD. The port shows the
   semantic article from `index.html`, which is also what you get without JavaScript.
-- **Accessibility model.** In the reference, the chapter card itself was the `aria-live`
+- **Accessibility model.** In the reference (v5 and v6), the chapter card itself was the `aria-live`
   region. In the port, the card is `aria-hidden`, and the full article stays in the
   accessibility tree (visually hidden). A short status line ("Coast. Nature, chapter 4 of
   15.") is announced once the visitor settles on a chapter. Body text is never announced
@@ -75,7 +121,8 @@ override, time override, and exposing the built texture (`scripts/lib/reference.
 - **Audio** uses `Math.random` for its noise buffer and tick timing, so no two runs sound the
   same. The bed was smoke-tested (toggle on/off, no console output) but not compared by ear.
 - **Pointer smoothing** advances a fixed fraction per frame, so it is frame-rate dependent
-  in both versions. The two hover shots (0.073 % and 0.028 %) differ slightly for that reason.
+  in both versions. In Phase 1 the two hover shots differed slightly (0.073 % and 0.028 %) for
+  that reason; with each page in its own window they now match too.
 
 ## Not verified here
 - Visual parity was measured in Chromium only. Firefox passed the console gate and runs

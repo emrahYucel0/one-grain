@@ -58,4 +58,10 @@ export interface TransitionDef {
   axis?: readonly [number, number];
   /** bezier handles for the hero grain, offsets from hero A and hero B */
   hero?: readonly [Vec3, Vec3];
+  /**
+   * Not in the reference: during the move the camera turns to look at a subject that starts at
+   * `at` and climbs by `rise` over the part `over` of the move (smoothstep). The turn eases in
+   * and out at both ends of the move, so both holds frame exactly as before.
+   */
+  subject?: { at: Vec3; rise: number; over: readonly [number, number] };
 }
