@@ -12,7 +12,7 @@ export const WORLDS: readonly WorldDef[] = [
   { slug: 'quarry', act: 'industry', hold: 1.0, clock: { unit: 'prod' }, lo: '#6f6252', hi: '#e8dfd2', grain: .12, cam: [-4, 8, 16], look: [3, -5, -8], conf: .3, frame: 1 },
   { slug: 'furnace', act: 'industry', hold: 1.0, clock: { unit: 'prod' }, lo: '#2f2b29', hi: '#8c8178', grain: .08, cam: [0, 6, 12], look: [0, -2, -3], conf: .5, frame: 1.25 },
   { slug: 'purity', act: 'industry', hold: .8, clock: { unit: 'prod' }, lo: '#46525e', hi: '#dbe3ea', grain: .06, cam: [4, 1.2, 9], look: [-3.5, 1.5, -5], conf: .75, frame: 1.6 },
-  { slug: 'crystal', act: 'industry', hold: 1.3, clock: { unit: 'prod' }, lo: '#46525e', hi: '#eef3f6', grain: .05, cam: [7, 4, 14], look: [-4.5, 3, -2], conf: 1, frame: 1.55 },
+  { slug: 'crystal', act: 'industry', hold: 1.3, clock: { unit: 'prod' }, lo: '#46525e', hi: '#eef3f6', grain: .05, cam: [7, 5.5, 14], look: [-4.5, 4.6, -2], conf: 1, frame: 1.55 },
   { slug: 'wafer', act: 'industry', hold: .8, clock: { unit: 'prod' }, lo: '#3e4a59', hi: '#e8eef4', grain: .05, cam: [5, 2.6, 7], look: [-2, 1.8, -2], conf: .85, frame: 1.25 },
   { slug: 'light', act: 'industry', hold: .9, clock: { unit: 'prod' }, lo: '#2e2a45', hi: '#d6cff2', grain: .045, cam: [2.2, 5.4, 4.2], look: [-.5, -1.2, -1.6], conf: .55, frame: 1.2 },
 
