@@ -421,3 +421,30 @@ read. Interleaved A/B runs:
 
 The depth read is one cached fetch and costs less than the derivative and branch that would avoid
 it. The composite keeps v10's full-resolution read.
+
+## Point light: specular per pixel again (found by the v10 parity run)
+
+The new parity baselines against v10 turned up the furnace hold at 4.95 % of pixels. The cause was
+the per-grain point light. Its specular, evaluated once with the shading normal at the sprite's
+centre, lit whole grains where v10 draws a small highlight per pixel; the furnace is lit mostly by
+its point light. The earlier before/after check (magma, crystal, desert, chip, light) had missed
+it.
+
+The specular is per pixel again, by the same exact-sphere method as the key. To keep the number
+of per-point outputs flat, which on ANGLE's point sprites costs as much as the maths, two things
+changed: the rim takes the camera's axis as the view vector, and the scalars share one vec4.
+
+| Variant | Grain pass (A/B against the previous build) | Look against v10, every grain casting shadows |
+|---|---|---|
+| previous build (point light per grain) | — | furnace 4.95 %, light 1.20 %, crystal 0.49 % |
+| diffuse and specular per pixel (12 more floats per point) | +1.7 ms | everything at most 0.03 % |
+| diffuse per pixel only | +0.3 ms | furnace 4.68 % (the specular is the cause) |
+| **specular per pixel, rim on the camera axis, packed (kept)** | +0.15 to +0.67 ms (two runs, both orders) | furnace 0.05 %, crystal 0.48 %, wafer → light 0.27 %, everything else at most 0.03 % |
+
+Refresh frames at the worst positions afterwards (same session):
+
+| Position | Every other grain casts shadows (default) | Every grain |
+|---|---|---|
+| hold again | 14.61 ms (p95 14.77) | 15.25 ms (p95 15.43) |
+| hold light | 14.18 ms (p95 14.90) | 15.04 ms (p95 15.17) |
+| coast → again midpoint | 13.90 ms (p95 14.07) | 14.54 ms (p95 14.72) |

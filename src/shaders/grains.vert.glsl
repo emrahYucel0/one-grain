@@ -8,13 +8,13 @@ uniform float uPLRange, uUseShadow, uUseLight;
 uniform sampler2D uShadow;
 
 out vec3 vAlb;    // linear albedo
-out vec3 vFlat;   // point light, its specular and emission (fogged), plus the fog colour
+out vec3 vFlat;   // the point light's diffuse and emission (fogged), plus the fog colour
 out vec3 vNv;     // surface normal, camera space
 out vec3 vHv;     // the key's half vector, camera space
-out vec3 vVv;     // towards the camera, camera space
 out vec4 vDots;   // .62 n·key, .62 n·half, .62 n·view, .62 n·up
 out vec4 vMisc;   // gloss, share left after fog, rim strength (0: unlit), 1 for the final screen's pixels
-out vec2 vSh;     // key shadow, key specular strength × shadow
+out vec4 vS;      // key shadow, key specular strength × shadow, .62 n·the point light's half vector, its specular strength
+out vec3 vHp;     // the point light's half vector, camera space
 
 vec3 toCamera(vec3 v){ return vec3(dot(v, uCamR), dot(v, uCamU), dot(v, uCamB)); }
 
@@ -92,23 +92,24 @@ void main(){
   float emit = isPix > .5 ? 1. : em;
   float fog = clamp(1. - exp(-uFogD * depth), 0., .85), keep = 1. - fog;
   vec3 flat_ = alb * emit * (.88 + .2 * sin(R.x * 30. + p.x));
-  vAlb = alb; vNv = vHv = vVv = vec3(0.); vDots = vec4(0.); vMisc = vec4(1., keep, 0., isPix); vSh = vec2(0.);
+  vAlb = alb; vNv = vHv = vHp = vec3(0.); vDots = vS = vec4(0.); vMisc = vec4(1., keep, 0., isPix);
   if (uUseLight > .5 && isPix < .5) { // the screen's pixels are not lit (grains.frag.glsl)
     vec3 V = normalize(uCamPos - p);
     vec3 H = normalize(uKeyDir + V);
     float sh = uUseShadow > .5 ? shadowAt(p) : 1.;
     float gloss = mix(10., 140., spec);
-    vNv = toCamera(n); vHv = toCamera(H); vVv = toCamera(V);
+    vNv = toCamera(n); vHv = toCamera(H);
     vDots = .62 * vec4(dot(n, uKeyDir), dot(n, H), dot(n, V), n.y);
     vMisc.xz = vec2(gloss, .6);
-    vSh = vec2(sh, spec * 1.8 * sh);
-    // the point light is the same across a grain: once, with the shading normal at the sprite's centre
-    vec3 N0 = normalize(n * .62 + uCamB * .55);
+    // the point light: direction and attenuation per grain (as in v10). Its specular keeps v10's
+    // per-pixel highlight (a whole-grain highlight brightens the furnace); its diffuse is once per
+    // grain, with the shading normal at the sprite's centre
     vec3 Lp = uPLPos - p; float dist = max(length(Lp), .001), att = 1. / (1. + dist * dist / (uPLRange * uPLRange));
-    vec3 Ld = Lp / dist;
-    float specPl = pow(max(dot(N0, normalize(Ld + V)), 0.), gloss) * spec * 1.2 * att;
-    flat_ += alb * uPLCol * max(dot(N0, Ld), 0.) * att + uPLCol * specPl;
-  }
+    vec3 Ld = Lp / dist, Hp = normalize(Ld + V);
+    vHp = toCamera(Hp);
+    vS = vec4(sh, spec * 1.8 * sh, .62 * dot(n, Hp), spec * 1.2 * att);
+    flat_ += alb * uPLCol * (max(dot(normalize(n * .62 + uCamB * .55), Ld), 0.) * att);
+  } else flat_ += alb;
   vFlat = flat_ * keep + uFogLin * fog;
   gl_PointSize = sz < .02 ? 0. : clamp(uGrain * uScale / max(depth, .05), 1.2, uPointMax) * (.8 + .4 * R.z) * sz
     * (isPix > .5 ? mix(1., 1.42, uReveal) : 1.); // pixels swell into grains
