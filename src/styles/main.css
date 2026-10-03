@@ -60,7 +60,6 @@ body{margin:0;background:var(--stage);color:var(--ink);font-family:var(--sans);f
   padding:calc(env(safe-area-inset-top,0px) + 1.2rem) clamp(1.25rem,5vw,4.5rem) 0;pointer-events:none}
 .hud-side{display:flex;flex-direction:column;align-items:flex-end}
 .brand{font-weight:700;font-stretch:118%;font-size:1.05rem}
-.brand span{font-weight:400;font-stretch:100%;color:var(--muted);margin-left:.6rem;font-size:.9rem}
 .time{text-align:right;font-variant-numeric:tabular-nums}
 .time b{display:block;font-weight:700;font-stretch:118%;font-size:clamp(1.4rem,2.6vw,2.2rem);line-height:1}
 .time span{color:var(--muted);font-size:.85rem}
@@ -126,7 +125,6 @@ html{scrollbar-width:none}html::-webkit-scrollbar{display:none}
 .time.u-prod b{font-size:var(--clock-prod)}
 .time.u-now b{font-size:var(--clock-now)}
 .brand{font-stretch:var(--brand-stretch) !important;font-weight:var(--brand-weight) !important;letter-spacing:var(--brand-track)}
-.brand span{font-family:var(--serif);font-style:italic;font-stretch:100% !important}
 .intro .intro-title{font-family:var(--sans);font-style:normal;opacity:1;font-stretch:var(--intro-stretch);font-weight:var(--intro-weight);font-size:var(--intro-size);letter-spacing:var(--intro-track)}
 .intro p{font-family:var(--serif);font-style:italic;font-size:var(--intro-line-size);color:var(--ink);opacity:var(--intro-line-opacity)}
 .cut p{font-family:var(--serif) !important;font-style:italic;font-weight:var(--cut-weight) !important;font-stretch:100% !important;font-size:var(--cut-size) !important;font-variation-settings:"opsz" var(--cut-opsz)}
