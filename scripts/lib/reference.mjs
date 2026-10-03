@@ -9,8 +9,9 @@ import { readFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 
 /** The behavioural spec of the current phase comes first. */
-export const REFERENCES = ['v8', 'v6', 'v5'];
-export const referenceFile = (version = REFERENCES[0]) => fileURLToPath(new URL(`../../reference/blockout-${version}.html`, import.meta.url));
+export const REFERENCES = ['v10', 'v8', 'v6', 'v5'];
+const FILES = { v10: 'v10-lit.html' };
+export const referenceFile = (version = REFERENCES[0]) => fileURLToPath(new URL(`../../reference/${FILES[version] ?? `blockout-${version}.html`}`, import.meta.url));
 
 const PATCHES = [
   ['const dt = Math.min(clock.getDelta(), .05);', 'if (window.__V != null) state.v = window.__V; const dt = Math.min(clock.getDelta(), .05);'],
