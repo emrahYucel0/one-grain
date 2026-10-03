@@ -70,7 +70,7 @@ vec3 travel(vec4 A, vec4 B, vec3 pa, vec3 pb, vec3 R, out float e, out float arc
   else if (uStyle == 19) { // separate: rise as vapour into channels, impurities fall away, the rest whitens and deposits
     float rise = smoothstep(0., .45, uT - R.x * .1), sep = smoothstep(.3, .65, uT), dep = smoothstep(.55, 1., uT - (1. - R.y) * .08);
     float ch = floor(R.x * 6.); vec3 chan = vec3(-6. + ch * 2.4, 0., -1.);
-    vec3 up = vec3(mix(pa.x, chan.x, rise) + sin(uT * 12. + R.y * 20.) * .2 * (1. - sep) * uMotion, pa.y + rise * 8.5 * (.6 + .4 * R.z), mix(pa.z, chan.z, rise));
+    vec3 up = vec3(mix(pa.x, chan.x, rise) + sin(uT * 12. + R.y * 20.) * .2 * (1. - sep) * rise * uMotion, pa.y + rise * 8.5 * (.6 + .4 * R.z), mix(pa.z, chan.z, rise));
     float impure = step(R.z, .18);
     up.x += impure * sign(chan.x + .01) * sep * 5.; up.y -= impure * sep * sep * 7.;
     p = mix(up, pb, dep);
