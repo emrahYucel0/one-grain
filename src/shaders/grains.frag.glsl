@@ -5,7 +5,8 @@
 // and the light vectors handed over in camera space, every N·X is (.62 n·X + .55 sw·X) / |N|, a few
 // dot products, so key, sky/ground fill, specular and rim keep v10's per-pixel shape.
 // Output is linear HDR; the post chain tones it (render/post.ts).
-uniform vec3 uKeyView, uUpView, uKeyCol, uSky, uGround, uRim;
+uniform vec3 uKeyView, uUpView, uKeyCol, uSky, uGround, uRim, uFogLin;
+uniform float uReveal;
 
 in vec3 vAlb; in vec3 vFlat; in vec3 vNv; in vec3 vHv; in vec3 vVv; in vec4 vDots; in vec4 vMisc; in vec2 vSh;
 out highp vec4 fragColor;
@@ -17,6 +18,14 @@ void main(){
   fragColor = vec4(vec3(1. / 32.), 1.);
   return;
 #endif
+  if (vMisc.w > .5) {
+    // the final screen: square pixels that round and swell into grains as the sand appears (v10);
+    // unlit, a little brighter, and only lightly fogged
+    float rr = mix(max(abs(q.x), abs(q.y)) / .965, length(q), uReveal);
+    if (rr > 1.) discard;
+    fragColor = vec4(mix(vAlb * 1.25, uFogLin, (1. - vMisc.y) * .3), 1.);
+    return;
+  }
   float r2 = dot(q, q); if (r2 > 1.) discard;
   vec3 sn = vec3(q.x, -q.y, sqrt(1. - r2)); // sphere normal in camera space
   vec3 col = vAlb;

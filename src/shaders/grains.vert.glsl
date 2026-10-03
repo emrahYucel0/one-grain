@@ -76,9 +76,9 @@ void main(){
 #else
   n = normalize(n + vec3(0., 1e-4, 0.));
   if (fl > .5 && fl < 2.5) spec = .7; // water is glossy
-  // the last world arrives as a neutral screen; the sand image comes in with the reveal
+  // the last world arrives as a neutral screen of pixels; the sand image comes in with the reveal (v10)
   float isPix = (uTo == uLast && e >= .5) ? 1. : 0.;
-  if (isPix > .5) { float g = .4 + .06 * R.y; c = blend(vec3(g * .9, g * .94, g), c, uReveal); }
+  if (isPix > .5) { float g = .24 + .04 * R.y; c = blend(vec3(g * .9, g * .94, g), c, uReveal); }
   float em = emission(fl, tn, uTime * uMotion);
   c = glow(c, p, fl, em);
   c = mix(c, vec3(1., .48, .16) * (1.1 + .3 * R.x), m.heat * .75);
@@ -93,7 +93,7 @@ void main(){
   float fog = clamp(1. - exp(-uFogD * depth), 0., .85), keep = 1. - fog;
   vec3 flat_ = alb * emit * (.88 + .2 * sin(R.x * 30. + p.x));
   vAlb = alb; vNv = vHv = vVv = vec3(0.); vDots = vec4(0.); vMisc = vec4(1., keep, 0., isPix); vSh = vec2(0.);
-  if (uUseLight > .5) {
+  if (uUseLight > .5 && isPix < .5) { // the screen's pixels are not lit (grains.frag.glsl)
     vec3 V = normalize(uCamPos - p);
     vec3 H = normalize(uKeyDir + V);
     float sh = uUseShadow > .5 ? shadowAt(p) : 1.;
@@ -110,7 +110,8 @@ void main(){
     flat_ += alb * uPLCol * max(dot(N0, Ld), 0.) * att + uPLCol * specPl;
   }
   vFlat = flat_ * keep + uFogLin * fog;
-  gl_PointSize = sz < .02 ? 0. : clamp(uGrain * uScale / max(depth, .05), 1.2, uPointMax) * (.8 + .4 * R.z) * sz;
+  gl_PointSize = sz < .02 ? 0. : clamp(uGrain * uScale / max(depth, .05), 1.2, uPointMax) * (.8 + .4 * R.z) * sz
+    * (isPix > .5 ? mix(1., 1.42, uReveal) : 1.); // pixels swell into grains
   gl_Position = projectionMatrix * mv;
 #endif
 }
