@@ -1,4 +1,4 @@
-import { Color } from 'three';
+import { Color, Vector3 } from 'three';
 import { STAGES, type StageAct } from '../story/stages';
 import { WORLDS } from '../story/worlds';
 import type { Stage } from './renderer';
@@ -22,6 +22,9 @@ const actOf = (i: number): StageAct => (WORLDS[i]!.final ? 'end' : WORLDS[i]!.ac
 export class StageColour {
   /** the fog colour for the grains (the interpolated colour itself, not its 8-bit hex) */
   readonly fog = new Color();
+  /** the same colour, linear (the lit shader fogs in linear light); from the current colour every frame */
+  readonly fogLinear = new Vector3();
+  private readonly lin = new Color();
   private readonly ca = new Color();
   private readonly cb = new Color();
   private readonly ce = new Color();
@@ -54,6 +57,8 @@ export class StageColour {
     this.cb.set(STAGES[b === LAST ? 'now' : actOf(b)][k]);
     if (b === LAST) this.cb.lerp(this.ce.set(STAGES.end[k]), reveal);
     if (eg >= 1) this.fog.copy(this.cb); else this.fog.copy(this.ca).lerp(this.cb, eg);
+    this.lin.copy(this.fog).convertSRGBToLinear();
+    this.fogLinear.set(this.lin.r, this.lin.g, this.lin.b);
     const hex = cssHex(this.fog);
     if (hex === this.last) return;
     this.last = hex;

@@ -4,15 +4,16 @@ import common from './common.glsl?raw';
 import grainsFrag from './grains.frag.glsl?raw';
 import grainsVert from './grains.vert.glsl?raw';
 import hero from './hero.glsl?raw';
+import emission from './emission.glsl?raw';
 import interact from './interact.glsl?raw';
 import paint from './paint.glsl?raw';
 import transitions from './transitions.glsl?raw';
 
 export interface ShaderPair { vertexShader: string; fragmentShader: string }
 
-/** The grain cloud: data access, resting behaviours, palette, transition styles, interaction, main. */
+/** The grain cloud: data access, resting behaviours, palette, transition styles, interaction, emission, main. */
 export const grainShaders: ShaderPair = {
-  vertexShader: [common, behaviours, paint, transitions, interact, grainsVert].join('\n'),
+  vertexShader: [common, behaviours, paint, transitions, interact, emission, grainsVert].join('\n'),
   fragmentShader: grainsFrag,
 };
 

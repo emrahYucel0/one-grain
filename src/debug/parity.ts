@@ -5,6 +5,7 @@
 //   ?nosnap          scrolling does not settle on chapters (to hold a position mid-transition)
 //   ?perf            time every render pass on the GPU and publish the timings as window.__gpu
 //   ?pointcap=N      largest grain in pixels (performance experiments)
+//   ?off=a,b         switch render layers off (light, shadows, dof, bloom, grade), for measurements
 //   with ?parity, window.__AT = { tr, t, lean } renders transition tr at t with that camera lean
 import type { GpuTimes } from '../core/gpu-timer';
 import type { GrainPack } from '../sim/pack';
@@ -33,6 +34,7 @@ export const flags = {
   noSnap: params.has('nosnap'),
   perf: params.has('perf'),
   pointCap: params.has('pointcap') ? Number(params.get('pointcap')) : null,
+  off: new Set((params.get('off') ?? '').split(',').filter(Boolean)),
 };
 
 export const progressOverride = (): number | null => (flags.parity && typeof window.__V === 'number' ? window.__V : null);

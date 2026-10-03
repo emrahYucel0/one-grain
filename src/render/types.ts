@@ -1,4 +1,5 @@
-import type { Color, Vector3 } from 'three';
+import type { Camera, Color, Vector3 } from 'three';
+import type { RigState } from '../core/light-rig';
 import type { Vec3 } from '../story/types';
 
 /** Everything the grain layer needs to draw one frame. Filled by core/loop.ts. */
@@ -28,8 +29,15 @@ export interface FrameUniforms {
   grain: number;
   /** resting restlessness (confinement) */
   jitter: number;
-  /** stage colour (CSS), grains fade into it with distance */
+  /** stage colour, grains fade into it with distance (linear, for the lit shader) */
   fog: Color;
+  fogLinear: Vector3;
+  /** the light rig this frame */
+  rig: RigState;
+  /** the camera the frame is drawn with (sphere impostors face it) */
+  camera: Camera;
+  /** layer switches */
+  light: boolean;
   /** index of the last world: grains arriving there stay neutral until the reveal */
   last: number;
   /** the final reveal, 0..1 */

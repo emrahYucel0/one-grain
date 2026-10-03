@@ -8,7 +8,7 @@ vec3 brush(vec3 p, float fl, vec3 R){
   return p;
 }
 
-vec3 glow(vec3 c, vec3 p, float fl){
-  if (uInteract == 2 && fl > 7.5) c += vec3(1., .82, .5) * smoothstep(1.6 + uPress, .2, length(p.xz - uMouseW.xz)) * 1.1;
+vec3 glow(vec3 c, vec3 p, float fl, inout float em){
+  if (uInteract == 2 && fl > 7.5) { float g = smoothstep(1.6 + uPress, .2, length(p.xz - uMouseW.xz)); c += vec3(1., .82, .5) * g * 1.1; em += g * 1.5; }
   return c;
 }

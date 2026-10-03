@@ -108,6 +108,7 @@ function boot(): void {
     },
   });
   loop.onFrame(({ L, now }) => { tiers.frame(now, L.hold); loop.fade = tiers.fade; });
+  for (const k of flags.off) if (k in loop.layers) (loop.layers as Record<string, boolean>)[k] = false;
   if (flags.debug) debugOverlay(tiers, () => stage.renderer.getPixelRatio(), timer);
 
   sim.build(tier.n).then((pack) => {

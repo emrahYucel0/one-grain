@@ -129,3 +129,29 @@ emulation. Per-point cost of that kind is the likely bottleneck.
 - instanced quads instead of points, which avoids the point-sprite emulation; untested here, the
   win is to be measured;
 - a lower point cap: 4 px saves about 0.6–1 ms but changes the look.
+
+## Delta 4: lit grains
+
+Same method (mid tier, 1920×909, `?parity&perf`). Shadow and post are not on yet; the grain
+shader applies the tone curve itself until the HDR pass exists.
+
+| Run | GPU median | GPU worst (where) | Scrub median |
+|---|---|---|---|
+| unlit, delta 1 | 4.66 ms | 7.41 ms (light) | — |
+| lit | 10.08–10.39 ms | 13.34 ms (light) | 9.41–9.54 ms |
+| lit, `?off=light` (lit vertex shader, flat fragment) | 6.09 ms | 8.41 ms (light) | 5.48 ms |
+| lit, `?pointcap=7` | 11.63 ms | 14.93 ms (light) | 8.94 ms |
+
+The lit look costs about 5.5 ms of GPU time over the unlit draw:
+
+- about 1.4 ms from the vertex side (the surface fetch, emission, more varyings) and the 9 px
+  point cap from v10 (it was 7);
+- about 4 ms from the fragment lighting (sphere impostor, key with gloss, hemisphere fill, point
+  light, rim, fog), which scales with covered pixels; the light hold, the most covered world, is
+  the worst.
+
+Capping points at 7 px does not help (the difference is within run-to-run noise). The cost is
+per-fragment shading, not sprite size.
+
+`?off=a,b` switches render layers off for measurements like these; delta 9 turns them into
+the debug panel's toggles.
