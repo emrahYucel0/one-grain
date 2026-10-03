@@ -37,6 +37,11 @@ differences from v8 are expected in this phase. Changes to text and clock are li
   Whole millions are unchanged. `check:text` applies the same rounding to the v8 page
   (`INTENTIONAL` in `scripts/text-parity.mjs`), so any other clock difference still fails.
 
+- **Dark only (v10).** The light stage set and the light CSS variables are gone. The page declares
+  `color-scheme: dark` (meta and CSS) and looks the same whatever the system preference (checked
+  byte for byte at three positions). v8 followed the system preference; the parity runs have always
+  used the dark scheme. `check:a11y` (axe, contrast included) passes on the dark set.
+
 ## Phase 3: differences from v8
 
 v8 already contains the Phase 2.1 rest-state fixes, so those no longer show up as differences.

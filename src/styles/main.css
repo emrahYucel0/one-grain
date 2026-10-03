@@ -39,13 +39,12 @@
 }
 
 /* ---------- ported from reference/blockout-v8.html (keep in sync for parity) ---------- */
+/* dark only (v10) */
 :root{
-  --stage:#d3d7d2;--ink:#13201e;--muted:#4a5754;--rule:rgba(19,32,30,.25);
-  color-scheme:light dark;box-sizing:border-box;
+  --stage:#0d181c;--ink:#ece3d3;--muted:#8d9d99;--rule:rgba(236,227,211,.22);
+  color-scheme:dark;box-sizing:border-box;
   padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);
 }
-@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--stage:#0d181c;--ink:#ece3d3;--muted:#8d9d99;--rule:rgba(236,227,211,.22)}}
-:root[data-theme="dark"]{--stage:#0d181c;--ink:#ece3d3;--muted:#8d9d99;--rule:rgba(236,227,211,.22)}
 html{scroll-padding-top:env(safe-area-inset-top,0px)}
 *,*::before,*::after{box-sizing:border-box}
 body{margin:0;background:var(--stage);color:var(--ink);font-family:var(--sans);font-size:1.0625rem;line-height:1.5;-webkit-font-smoothing:antialiased}

@@ -16,8 +16,7 @@ const actOf = (i: number): StageAct => (WORLDS[i]!.final ? 'end' : WORLDS[i]!.ac
 /**
  * The stage colour follows the act, eased like the camera between acts. On the last chapter the
  * end colour comes in with the reveal. Fog, the HDR target's clear colour (render/pipeline.ts) and
- * the page's --stage stay in sync.
- * Dark or light comes from data-theme, else the system preference.
+ * the page's --stage stay in sync. Dark only (v10).
  */
 export class StageColour {
   /** the fog colour for the grains (the interpolated colour itself, not its 8-bit hex) */
@@ -30,25 +29,13 @@ export class StageColour {
   private readonly ce = new Color();
   private last = '';
   private readonly root: HTMLElement;
-  private readonly dark = matchMedia('(prefers-color-scheme: dark)');
 
-  constructor(root: HTMLElement = document.documentElement) {
-    this.root = root;
-    const invalidate = (): void => { this.last = ''; };
-    this.dark.addEventListener('change', invalidate);
-    new MutationObserver(invalidate).observe(root, { attributes: true, attributeFilter: ['data-theme'] });
-  }
-
-  private get isDark(): boolean {
-    const theme = this.root.dataset.theme;
-    return theme ? theme === 'dark' : this.dark.matches;
-  }
+  constructor(root: HTMLElement = document.documentElement) { this.root = root; }
 
   update(a: number, b: number, eg: number, reveal: number): void {
-    const k = this.isDark ? 0 : 1;
-    this.ca.set(STAGES[actOf(a)][k]);
-    this.cb.set(STAGES[b === LAST ? 'now' : actOf(b)][k]);
-    if (b === LAST) this.cb.lerp(this.ce.set(STAGES.end[k]), reveal);
+    this.ca.set(STAGES[actOf(a)]);
+    this.cb.set(STAGES[b === LAST ? 'now' : actOf(b)]);
+    if (b === LAST) this.cb.lerp(this.ce.set(STAGES.end), reveal);
     if (eg >= 1) this.fog.copy(this.cb); else this.fog.copy(this.ca).lerp(this.cb, eg);
     this.lin.copy(this.fog).convertSRGBToLinear();
     this.fogLinear.set(this.lin.r, this.lin.g, this.lin.b);

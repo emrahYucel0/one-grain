@@ -164,9 +164,10 @@ alone; computation opens the space again; the end fills your screen. Through
 All of it is interpolated through transitions with the camera's easing. Colour is not driven by
 it.
 
-**Stage colour.** One per act (Nature, Industry, Now, End), dark and light
-(`story/stages.ts`), eased between acts. Clear colour, fog and `--stage` stay in sync
-(`core/stage-colour.ts`).
+**Stage colour.** One per act (Nature, Industry, Now, End), dark only as in v10
+(`story/stages.ts`), eased between acts. Fog, the HDR clear colour and `--stage` stay in sync
+(`core/stage-colour.ts`). The page declares `color-scheme: dark` and ignores the system
+preference.
 
 **The ending.** The last world arrives as a neutral screen with "Now" on the clock. The sentence
 follows at 1.2 s. The sand image fades into the screen from 4 s to 8 s while the End colour comes

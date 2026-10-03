@@ -46,7 +46,7 @@ async function coldLoad(browser, { gate = true } = {}) {
 const browser = await launch();
 try {
   const gated = await coldLoad(browser);
-  check('no layout shift when fonts arrive late (experience)', gated.cls === 0, `CLS ${gated.cls.toFixed(4)}, fonts ${gated.fonts}`);
+  check('no layout shift when fonts arrive late (experience)', gated.cls === 0, `CLS ${gated.cls.toFixed(4)}, fonts ${gated.fonts}${gated.shifts.length ? ` from ${[...new Set(gated.shifts)].join(' / ')}` : ''}`);
   const ungated = await coldLoad(browser, { gate: false });
   check('control: without the gate the same load does shift', ungated.cls > 0, `CLS ${ungated.cls.toFixed(4)} from ${[...new Set(ungated.shifts)].join(' / ') || '—'}`);
 
