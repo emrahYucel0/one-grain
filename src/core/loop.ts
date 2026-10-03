@@ -1,7 +1,7 @@
 import { Vector3 } from 'three';
 import { frameShot } from '../camera/rig';
 import { shot } from '../camera/shot';
-import { progressOverride, timeOverride } from '../debug/parity';
+import { progressOverride, reportProgress, timeOverride } from '../debug/parity';
 import type { GrainCloud } from '../render/grains';
 import type { HeroGrain } from '../render/hero';
 import type { FrameUniforms } from '../render/types';
@@ -78,6 +78,7 @@ export class Loop {
     const { stage, grains, hero, timeline, hash } = this.d;
     const reduced = env.reduced;
     const v = progressOverride() ?? timeline.state.v;
+    reportProgress(v);
     const dt = this.clock.tick(reduced);
     const time = timeOverride() ?? this.clock.time;
     const L = locate(v), { a, b, tr } = L;

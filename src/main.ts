@@ -47,7 +47,7 @@ function boot(): void {
   onResize(resize);
 
   // story position
-  const timeline = new ScrollTimeline($('track'));
+  const timeline = new ScrollTimeline($('track'), { snap: !flags.noSnap });
   const hash = new HashRouter(timeline);
   bindChapterKeys(timeline);
   const loop = new Loop({ stage, grains, hero, timeline, hash });

@@ -16,13 +16,13 @@ export class ScrollTimeline {
   private target = -1;
   private targetAt = 0;
 
-  constructor(track: HTMLElement) {
+  constructor(track: HTMLElement, { snap = true }: { snap?: boolean } = {}) {
     track.style.height = `${TOTAL * 100 + 100}vh`;
     gsap.to(this.state, {
       v: 1, ease: 'none',
       scrollTrigger: {
         trigger: track, start: 'top top', end: 'bottom bottom', scrub: 1,
-        snap: { snapTo: [...SNAP_POINTS], duration: { min: .4, max: 1.2 }, delay: .2, ease: 'power1.inOut' },
+        ...(snap ? { snap: { snapTo: [...SNAP_POINTS], duration: { min: .4, max: 1.2 }, delay: .2, ease: 'power1.inOut' } } : {}),
       },
     });
   }

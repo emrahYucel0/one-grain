@@ -4,9 +4,10 @@ A scroll-driven WebGL story about one grain of sand, from magma to the screen yo
 it on. Fifteen worlds, each a cloud of grains computed on the GPU; scrolling carries the same
 grains from one world to the next.
 
-This is **Phase 1**: the project foundation, plus a faithful port of the behavioural spec in
-`reference/blockout-v5.html`. It has no new visuals. The parity evidence is in `parity/`, and
-`docs/parity-notes.md` lists everything that is not identical, with the reason.
+The behavioural spec is `reference/blockout-v6.html` (Phase 2: content v1, clock semantics,
+causal transitions). Phase 1 ported `blockout-v5.html`, which is kept alongside. The parity
+evidence is in `parity/`, and `docs/parity-notes.md` lists everything that is not identical,
+with the reason, including the one intentional change beyond v6.
 
 ## Quick start
 
@@ -21,8 +22,10 @@ npm run lint
 
 | Check | What it proves |
 |---|---|
-| `npm run check:data` | The grain data is bit-identical to the reference at 90 000 and 36 000 grains per world |
-| `npm run parity` | Screenshots of the reference next to the port at every hold and transition midpoint, plus pixel diffs → `parity/` |
+| `npm run check:data` | The grain data is bit-identical to every reference (v6 and v5) at 90 000 and 36 000 grains per world |
+| `npm run parity` | Screenshots of the reference next to the port at every hold, every transition midpoint and three more points in each v6 transition, plus pixel diffs → `parity/` |
+| `npm run check:text` | Overlay text and clock state match the reference at every hold and five points in every transition |
+| `npm run check:reverse` | Scrolling backwards through drift, break, separate and grow renders exactly what scrolling forwards does |
 | `npm run check:console` | Zero console warnings or errors in dev and build, Chromium and Firefox |
 | `npm run check:a11y` | axe WCAG 2.1 AA, keyboard chapter steps, status line, focus ring, reduced motion, no-WebGL2 and no-JS fallbacks |
 | `npm run perf` | Frame times at every position, headed, on this machine's GPU |
@@ -55,12 +58,12 @@ One responsibility per module:
 | Folder | Responsibility |
 |---|---|
 | `src/core` | Renderer and colour setup, render loop (`loop.ts`), fixed clock, resize, quality tiers and the frame-time monitor, environment probes |
-| `src/story` | `worlds.ts` and `transitions.ts`: typed data only (slug, act, hold length, clock value and unit, palette, grain size, camera/look offsets). No logic, no copy |
+| `src/story` | `worlds.ts` and `transitions.ts`: typed data only (slug, act, hold length, clock unit and value, palette, grain size, camera/look offsets; per transition its verb, grain style, camera move, length and hero curve). No logic, no copy |
 | `src/worlds` | One generator per world: pure functions of `(context, N)` → typed arrays. `wafer` and `light` derive from the previous world's arrays, in the same grain order |
 | `src/sim` | `build.ts` runs the generators in story order and packs the result into a `GrainPack`; `sim.worker.ts` does this off the main thread and transfers the buffers |
 | `src/render` | How grains are drawn: the grain material and uniforms, the hero grain, and binding pack layers to textures |
 | `src/shaders` | GLSL as raw-imported files: resting behaviours, palette, transition styles, interaction, main, hero/halo |
-| `src/camera` | The shot director (bezier flights with per-style handles, orbit, cut) and the camera rig |
+| `src/camera` | The shot director (bezier flights with per-style handles, orbit, cut, the hold lean, an optional subject to aim at) and the camera rig |
 | `src/timeline` | Uneven scroll segments, `locate()`, ScrollTrigger scrub and snap to holds, `#slug` routing, keyboard chapter steps |
 | `src/ui` | Clock, chapter card, act label, timeline nav, hero marker, cut card, intro, timed ending, accessibility glue |
 | `src/input` | Mouse hover and touch tap state; projecting the pointer onto the scene for the desert and chip holds |
@@ -110,7 +113,9 @@ Drawing changes (materials, lighting) stay inside `render/` and `shaders/`, with
 
 1. Reads progress (the ScrollTrigger-scrubbed scroll position).
 2. `locate()`s it to worlds *a → b* at *t*.
-3. Asks `camera/shot` for the camera and the hero grain.
+3. Asks `camera/shot` for the camera and the hero grain. While resting, the camera already
+   leans towards the next move (up to 0.6 units by the end of the hold); the lean fades out as
+   the move runs, so a hold flows into its transition without a seam.
 4. Runs listeners in two phases: `camera` (pointer smoothing, before the camera is placed) and
    `scene` (interaction, UI, audio, quality, after it).
 5. Hands a `FrameUniforms` object to `render/grains` and draws.
@@ -121,8 +126,14 @@ All words live in `index.html`:
 
 - **Chapters** are semantic `<section data-slug>` elements grouped by act. JS reads them with
   `ui/copy.ts`, which also checks that their order matches `story/worlds.ts`.
-- **UI microcopy** (clock units, "Day {n}", sound states, nav labels, the status-line format)
-  lives in `data-*` attributes on the element that shows it.
+- **Micro lines** (a small aside under a chapter's text) are `<p data-micro>` in the section.
+- **Clock labels** belong to chapters: `data-clock` (and `data-clock-sub`) on the section.
+  The clock means one thing, time elapsed on the grain's journey. *Years* chapters interpolate
+  "≈" values on a log scale and may carry a label shown only while resting there ("≈ hundreds
+  of thousands"). *Production* chapters always show their label ("Day 1", "Weeks later"…). The
+  final chapter shows "Now", and the interlude ("One day,") hides the clock.
+- **UI microcopy** (unit names, sound states, nav labels, the status-line format) lives in
+  `data-*` attributes on the element that shows it.
 
 No copy is hard-coded in TypeScript; the `?debug` overlay is a developer tool, not copy.
 
@@ -176,5 +187,6 @@ Measured with `npm run perf`, headed Chromium, Intel UHD Graphics (i5-12450H lap
 | `?tier=low\|mid\|high` | Force a tier (also turns off the automatic drop) |
 | `?debug` | Corner readout: tier, grains, DPR, fps, median frame time |
 | `?debug&forceDrop` | Act as if the frame budget were blown, to watch a queued drop |
-| `?parity` | Let a harness drive progress (`window.__V`) and shader time (`window.__T`) |
+| `?parity` | Let a harness drive progress (`window.__V`) and shader time (`window.__T`); the rendered progress is published as `window.__progress` |
+| `?nosnap` | Scrolling does not settle on chapters, so a position mid-transition can be held |
 | `#magma` … `#now` | Open at that chapter |

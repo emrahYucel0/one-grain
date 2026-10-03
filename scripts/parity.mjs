@@ -12,7 +12,7 @@ import pixelmatch from 'pixelmatch';
 import { PNG } from 'pngjs';
 import { createServer } from 'vite';
 import { launch, watchConsole } from './lib/browser.mjs';
-import { routeReference } from './lib/reference.mjs';
+import { REFERENCES, routeReference } from './lib/reference.mjs';
 import { startPreview } from './lib/servers.mjs';
 
 const OUT = new URL('../parity/', import.meta.url);
@@ -24,7 +24,7 @@ const REVIEW_PCT = 2;
 
 // Story layout, straight from the source (no copy of the numbers here).
 const vite = await createServer({ server: { middlewareMode: true }, appType: 'custom', logLevel: 'error' });
-const { SNAP_POINTS, transitionMidpoint } = await vite.ssrLoadModule('/src/timeline/segments.ts');
+const { SEGMENTS, SNAP_POINTS, TOTAL, transitionMidpoint } = await vite.ssrLoadModule('/src/timeline/segments.ts');
 const { WORLDS } = await vite.ssrLoadModule('/src/story/worlds.ts');
 const { TRANSITIONS } = await vite.ssrLoadModule('/src/story/transitions.ts');
 await vite.close();
@@ -34,7 +34,7 @@ WORLDS.forEach((w, i) => {
   shots.push({ id: `${String(shots.length + 1).padStart(2, '0')}-hold-${w.slug}`, kind: 'hold', label: `Hold · ${w.slug}`, v: SNAP_POINTS[i], wait: i === WORLDS.length - 1 ? ENDING_MS : SETTLE_MS });
   if (i < WORLDS.length - 1) {
     const tr = TRANSITIONS[i];
-    shots.push({ id: `${String(shots.length + 1).padStart(2, '0')}-tr-${w.slug}-${WORLDS[i + 1].slug}`, kind: 'transition', label: `Transition midpoint · ${w.slug} → ${WORLDS[i + 1].slug} (${tr.cam}, style ${tr.g})`, v: transitionMidpoint(i), wait: SETTLE_MS });
+    shots.push({ id: `${String(shots.length + 1).padStart(2, '0')}-tr-${w.slug}-${WORLDS[i + 1].slug}`, kind: 'transition', label: `Transition midpoint · ${w.slug} → ${WORLDS[i + 1].slug} (${tr.cam}, style ${tr.g})`, v: transitionMidpoint(i), wait: SETTLE_MS, intentional: !!tr.subject });
   }
 });
 // hands-on holds, with the pointer parked over the scene (taken last: hovering adds camera parallax)
@@ -42,6 +42,20 @@ const hover = [
   { id: '30-hover-desert', kind: 'interaction', label: 'Desert · cursor brushing the dunes', v: SNAP_POINTS[4], mouse: [760, 560], wait: 3500 },
   { id: '31-hover-chip', kind: 'interaction', label: 'Chip · cursor lighting the switches', v: SNAP_POINTS[12], mouse: [640, 520], wait: 3500 },
 ];
+
+// the transitions added from blockout v6, at three more points each
+const NEW_STYLES = new Set([17, 18, 19, 20]);
+const extra = [];
+for (const seg of SEGMENTS.filter((x) => x.type === 'tr' && NEW_STYLES.has(TRANSITIONS[x.i].g))) {
+  const tr = TRANSITIONS[seg.i], a = WORLDS[seg.i].slug, b = WORLDS[seg.i + 1].slug;
+  for (const t of [.2, .45, .75]) {
+    extra.push({
+      id: `${32 + extra.length}-tr-${a}-${b}-t${Math.round(t * 100)}`, kind: 'transition',
+      label: `Transition · ${a} → ${b} at t = ${t} (${tr.cam}, style ${tr.g})`,
+      v: (seg.start + seg.len * t) / TOTAL, wait: SETTLE_MS, intentional: !!tr.subject,
+    });
+  }
+}
 
 await rm(OUT, { recursive: true, force: true });
 for (const d of ['ref', 'port', 'diff']) await mkdir(new URL(`${d}/`, OUT), { recursive: true });
@@ -51,8 +65,9 @@ const browser = await launch();
 const consoleLog = [];
 const results = [];
 try {
-  const ctx = await browser.newContext({ viewport: VIEW, deviceScaleFactor: 1 });
-  const ref = await ctx.newPage(), port = await ctx.newPage();
+  // one context (window) each: a background tab would have its frames throttled
+  const ref = await (await browser.newContext({ viewport: VIEW, deviceScaleFactor: 1 })).newPage();
+  const port = await (await browser.newContext({ viewport: VIEW, deviceScaleFactor: 1 })).newPage();
   watchConsole(ref, 'ref', consoleLog); watchConsole(port, 'port', consoleLog);
   await routeReference(ref, `${server.origin}/__reference.html`);
   await Promise.all([ref.goto(`${server.origin}/__reference.html`), port.goto(`${server.origin}/?parity&tier=mid`)]);
@@ -61,7 +76,7 @@ try {
   const n = await port.evaluate(() => window.__PACK.n), refN = await ref.evaluate(() => window.__HEROES.length && Math.round(window.__DATA.length / 15 / 4));
   console.log(`grains per world: port ${n}, reference texture sized for ${refN}`);
 
-  for (const s of [...shots, ...hover]) {
+  for (const s of [...shots, ...hover, ...extra]) {
     for (const p of [ref, port]) await p.evaluate(([v, t]) => { window.__V = v; window.__T = t; }, [s.v, TIME]);
     if (s.mouse) for (const p of [ref, port]) await p.mouse.move(s.mouse[0], s.mouse[1]);
     await ref.waitForTimeout(s.wait);
@@ -81,13 +96,17 @@ try {
 }
 
 // ---------- report ----------
-const status = (r) => (r.pct <= REVIEW_PCT ? '✓' : 'review');
+const status = (r) => (r.intentional ? 'intentional change' : r.pct <= REVIEW_PCT ? '✓' : 'review');
+const compared = results.filter((r) => !r.intentional), intentional = results.filter((r) => r.intentional);
 const md = [
-  '# Parity checklist: blockout v5 → port',
+  `# Parity checklist: blockout ${REFERENCES[0]} → port`,
   '',
   `Generated by \`npm run parity\` on ${new Date().toISOString().slice(0, 10)}. Viewport ${VIEW.width}×${VIEW.height} at DPR 1, mid tier (90 000 grains per world, the reference's desktop setting), shader time frozen at ${TIME} s, Chromium on the real GPU (ANGLE/D3D11).`,
   '',
   `"Diff" is the share of pixels that differ beyond pixelmatch's default perceptual threshold (0.1), measured on lossless captures. Rows above ${REVIEW_PCT} % are marked for review; open \`parity/index.html\` to see each pair and its diff mask. For scale: the reference compared with a second copy of itself under the same settings differs by about 0.02 % (0.2 % at the quarry hold), so differences of that size are capture noise; see docs/parity-notes.md.`,
+  '',
+  `${compared.filter((r) => r.pct <= REVIEW_PCT).length} of ${compared.length} compared positions within ${REVIEW_PCT} %. ` +
+    `${intentional.length} positions show an intentional change beyond the reference and are not held to it: ${intentional.map((r) => r.id).join(', ')} (see docs/parity-notes.md).`,
   '',
   '| # | Position | Progress | Diff | Status |',
   '|---|---|---|---|---|',
@@ -112,19 +131,20 @@ header{padding:24px 16px 8px;max-width:1500px;margin:0 auto}h1{margin:0 0 4px;fo
 main{max-width:1500px;margin:0 auto;padding:8px 16px 48px}
 section{border-top:1px solid var(--rule);padding:16px 0}
 h2{font-size:15px;margin:0 0 8px;display:flex;gap:12px;flex-wrap:wrap;align-items:baseline}
-h2 .pct{font-variant-numeric:tabular-nums;color:var(--muted)}h2 .ok{color:var(--ok)}h2 .review{color:var(--warn)}
+h2 .pct{font-variant-numeric:tabular-nums;color:var(--muted)}h2 .ok{color:var(--ok)}h2 .review{color:var(--warn)}h2 .intentional{color:var(--muted);font-style:italic}
 .row{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
 figure{margin:0}figure img{width:100%;height:auto;display:block;border:1px solid var(--rule)}figcaption{font-size:12px;color:var(--muted);padding-top:2px}
 @media (max-width:800px){.row{grid-template-columns:1fr}}
 </style></head><body>
-<header><h1>Parity: reference blockout v5 vs port</h1><p>${results.length} positions · ${results.filter((r) => r.pct <= REVIEW_PCT).length} within ${REVIEW_PCT} % · see checklist.md for the method</p></header>
+<header><h1>Parity: reference blockout ${REFERENCES[0]} vs port</h1><p>${results.length} positions · ${compared.filter((r) => r.pct <= REVIEW_PCT).length} of ${compared.length} compared within ${REVIEW_PCT} % · ${intentional.length} intentional changes · see checklist.md for the method</p></header>
 <main>
-${results.map((r, i) => `<section id="${r.id}"><h2><span>${i + 1}. ${esc(r.label)}</span><span class="pct">v = ${r.v.toFixed(4)} · diff ${r.pct.toFixed(3)} %</span><span class="${r.pct <= REVIEW_PCT ? 'ok' : 'review'}">${status(r)}</span></h2>
+${results.map((r, i) => `<section id="${r.id}"><h2><span>${i + 1}. ${esc(r.label)}</span><span class="pct">v = ${r.v.toFixed(4)} · diff ${r.pct.toFixed(3)} %</span><span class="${r.intentional ? 'intentional' : r.pct <= REVIEW_PCT ? 'ok' : 'review'}">${status(r)}</span></h2>
 <div class="row"><figure><img loading="lazy" src="ref/${r.id}.jpg" alt="Reference, ${esc(r.label)}"><figcaption>Reference</figcaption></figure>
 <figure><img loading="lazy" src="port/${r.id}.jpg" alt="Port, ${esc(r.label)}"><figcaption>Port</figcaption></figure>
 <figure><img loading="lazy" src="diff/${r.id}.png" alt="Differing pixels, ${esc(r.label)}"><figcaption>Differing pixels (red)</figcaption></figure></div></section>`).join('\n')}
 </main></body></html>`;
 await writeFile(new URL('index.html', OUT), html);
 
-const review = results.filter((r) => r.pct > REVIEW_PCT);
-console.log(`\n${results.length - review.length}/${results.length} within ${REVIEW_PCT} %${review.length ? `; review: ${review.map((r) => r.id).join(', ')}` : ''}`);
+const review = compared.filter((r) => r.pct > REVIEW_PCT);
+console.log(`\n${compared.length - review.length}/${compared.length} compared within ${REVIEW_PCT} %${review.length ? `; review: ${review.map((r) => r.id).join(', ')}` : ''}`);
+console.log(`intentional: ${intentional.map((r) => `${r.id} (${r.pct.toFixed(2)} %)`).join(', ')}`);

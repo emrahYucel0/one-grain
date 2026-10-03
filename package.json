@@ -15,7 +15,8 @@
     "check:data": "node scripts/data-gate.mjs",
     "check:a11y": "node scripts/a11y-check.mjs",
     "perf": "vite build && node scripts/perf.mjs",
-    "check:text": "node scripts/text-parity.mjs"
+    "check:text": "node scripts/text-parity.mjs",
+    "check:reverse": "node scripts/reverse-scrub.mjs"
   },
   "engines": {
     "node": ">=20"
