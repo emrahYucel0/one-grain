@@ -59,19 +59,23 @@ vec3 travel(vec4 A, vec4 B, vec3 pa, vec3 pb, vec3 R, out float e, out float arc
     m.size = blend(1. - water * rec * .85, 1., grow);
   }
   // the styles below take over the whole move: they replace p, e and arc computed above
-  if (uStyle == 18) { // break: blocks crack apart, tumble into the hopper, heat up as they feed the furnace
+  if (uStyle == 18) { // break: crack, fall grey into the dark hopper, glow only once fed; the furnace builds bottom-up from what falls in
     vec2 cell = floor(pa.xz / 2.4);                                   // block identity: a spatial hash, no data layer
     float hb = fract(sin(dot(cell, vec2(12.9898, 78.233))) * 43758.5453);
     vec3 bc = vec3((cell.x + .5) * 2.4, pa.y, (cell.y + .5) * 2.4);
-    float tb = clamp((uT - hb * .45) / .55, 0., 1.);
-    float crack = smoothstep(0., .18, tb), fall = smoothstep(.15, .7, tb), feed = smoothstep(.65, 1., tb);
+    float tb = clamp((uT - hb * .25) / .55, 0., 1.);
+    float crack = smoothstep(0., .2, tb), fall = smoothstep(.15, 1., tb);
+    float fy = clamp((pb.y - uHeroB.y + 1.) / 10., 0., 1.);           // lower furnace grains are fed first
+    float feed = clamp((uT - .55 - hb * .2 - fy * .1) / .15, 0., 1.); feed = feed * feed * (3. - 2. * feed);
     vec3 loc = (pa - bc) * (1. - .55 * fall) * (1. + .12 * crack);
     float an = fall * 2.4 * (hb - .5) * uMotion, ca = cos(an), sa2 = sin(an); loc.xz = vec2(loc.x * ca - loc.z * sa2, loc.x * sa2 + loc.z * ca);
     vec3 hop = uHeroB + vec3(0., 6., -.5), c1 = bc + vec3(0., 3., 0.), c2 = hop + vec3(0., 5., 0.);
-    float u = fall, iu = 1. - u;
+    float u = fall * fall, iu = 1. - u;                                // gravity: a slow start, then an accelerating fall
     vec3 ctr = iu * iu * iu * bc + 3. * iu * iu * u * c1 + 3. * iu * u * u * c2 + u * u * u * hop;
     p = tb <= 0. ? pa : blend(ctr + loc, pb, feed); // at tb = 0, ctr + loc is pa (bc + (pa - bc))
-    e = feed; arc = hump(tb, 3.14159) * uMotion; m.heat = smoothstep(.45, .85, tb) * (1. - smoothstep(.85, 1., tb));
+    e = feed; arc = hump(crack, 3.14159) * .4 * uMotion;
+    m.darken = smoothstep(.55, 1., fall) * .55 * (1. - feed);         // grey in the dark hopper
+    m.heat = smoothstep(0., .45, feed) * (1. - smoothstep(.8, 1., feed));   // glow only once fed
   }
   else if (uStyle == 19) { // separate: rise as vapour into channels, impurities fall away, the rest whitens and deposits
     float rise = smoothstep(0., .45, uT - R.x * .1), sep = smoothstep(.3, .65, uT), dep = smoothstep(.55, .92, uT - (1. - R.y) * .08);
