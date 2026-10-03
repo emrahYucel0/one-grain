@@ -72,7 +72,7 @@ void main(){
   p += vec3(sin(uTime * 1.3 + R.x * 40.), sin(uTime * 1.1 + R.y * 40.), sin(uTime * 1.7 + R.z * 40.)) * uJitter * uMotion;
 #ifdef SHADOW
   gl_Position = uLightVP * vec4(p, 1.);
-  gl_PointSize = sz < .02 ? 0. : max(1., uGrain * uPx * (.8 + .4 * R.z) * sz);
+  gl_PointSize = sz < .02 ? 0. : max(1., uGrain * uPx * uShadowGrow * (.8 + .4 * R.z) * sz);
 #else
   n = normalize(n + vec3(0., 1e-4, 0.));
   if (fl > .5 && fl < 2.5) spec = .7; // water is glossy

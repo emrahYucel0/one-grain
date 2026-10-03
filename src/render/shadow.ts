@@ -1,4 +1,4 @@
-import { Color, DepthTexture, Matrix4, OrthographicCamera, Scene, WebGLRenderTarget, type Vector3, type WebGLRenderer } from 'three';
+import { DepthTexture, Matrix4, OrthographicCamera, Scene, WebGLRenderTarget, type Vector3, type WebGLRenderer } from 'three';
 
 /** Shadow map resolution (v10). */
 export const SHADOW_SIZE = 1024;
@@ -19,7 +19,6 @@ export class ShadowMap {
   pxPerUnit = 1;
   private tick = 0;
   private fresh = false;
-  private readonly clear = new Color();
 
   constructor() { this.target.depthTexture = new DepthTexture(SHADOW_SIZE, SHADOW_SIZE); }
 
@@ -40,16 +39,12 @@ export class ShadowMap {
   /** Shadows were off: the next frame that has them refreshes the map first. */
   invalidate(): void { this.fresh = false; }
 
+  /** Leaves the clear colour white; the pipeline sets its own before the next clear. */
   render(renderer: WebGLRenderer): void {
-    // the stage sets its clear colour only when it changes: keep it
-    renderer.getClearColor(this.clear);
-    const alpha = renderer.getClearAlpha();
     renderer.setRenderTarget(this.target);
     renderer.setClearColor(0xffffff, 1);
     renderer.clear();
     renderer.render(this.scene, this.camera);
-    renderer.setRenderTarget(null);
-    renderer.setClearColor(this.clear, alpha);
     this.fresh = true;
   }
 }

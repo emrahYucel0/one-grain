@@ -8,8 +8,14 @@ import { layerDefines, layerTextures, layerUniform } from './bind';
 import type { ShadowMap } from './shadow';
 import type { FrameUniforms } from './types';
 
-/** Until the HDR post pass exists, the grain shader applies the tone curve itself. */
-const OUTPUT_DEFINES: Record<string, string> = { DIRECT_OUTPUT: '' };
+/** A point per n-th grain id (the same grains, so the same per-grain randoms). */
+function strided(n: number, stride: number): BufferGeometry {
+  const count = Math.ceil(n / stride), ids = new Float32Array(count * 3);
+  for (let i = 0; i < count; i++) ids[i * 3] = i * stride;
+  const geo = new BufferGeometry();
+  geo.setAttribute('position', new BufferAttribute(ids, 3));
+  return geo;
+}
 
 /** The grain cloud: one point per grain, all motion computed on the GPU from the pack layers. */
 export class GrainCloud {
@@ -21,6 +27,8 @@ export class GrainCloud {
   private readonly u: Record<string, IUniform>;
   private textures = new Map<LayerName, DataTexture>();
   private colorKeys = ['', '', '', ''];
+  /** every n-th grain casts shadows (1: all) */
+  private shadowStride = 1;
 
   constructor() {
     this.u = {
@@ -32,7 +40,7 @@ export class GrainCloud {
       uLoA: { value: new Color() }, uHiA: { value: new Color() }, uLoB: { value: new Color() }, uHiB: { value: new Color() },
       uFog: { value: new Color() }, uFogD: { value: .02 }, uJitter: { value: 0 },
       // lighting (v10)
-      uSpecA: { value: .3 }, uSpecB: { value: .3 }, uPx: { value: 1 }, uLightVP: { value: new Matrix4() },
+      uSpecA: { value: .3 }, uSpecB: { value: .3 }, uPx: { value: 1 }, uShadowGrow: { value: 1 }, uLightVP: { value: new Matrix4() },
       uKeyDir: { value: new Vector3(0, 1, 0) }, uKeyCol: { value: new Vector3() }, uSky: { value: new Vector3() }, uGround: { value: new Vector3() }, uRim: { value: new Vector3() },
       uPLPos: { value: new Vector3() }, uPLCol: { value: new Vector3() }, uPLRange: { value: 1 },
       uCamPos: { value: new Vector3() }, uCamR: { value: new Vector3() }, uCamU: { value: new Vector3() }, uCamB: { value: new Vector3() }, uFogLin: { value: new Vector3() },
@@ -40,7 +48,7 @@ export class GrainCloud {
       [layerUniform('pos')]: { value: null },
       [layerUniform('surface')]: { value: null },
     };
-    this.material = new ShaderMaterial({ glslVersion: GLSL3, uniforms: this.u, defines: { TEX_WIDTH: 1024, ...OUTPUT_DEFINES }, ...grainShaders });
+    this.material = new ShaderMaterial({ glslVersion: GLSL3, uniforms: this.u, defines: { TEX_WIDTH: 1024 }, ...grainShaders });
     this.object = new Points(new BufferGeometry(), this.material);
     this.object.frustumCulled = false;
     this.object.visible = false;
@@ -65,7 +73,7 @@ export class GrainCloud {
       (this.u[key] ??= { value: null }).value = tex;
     }
     this.u.uRows!.value = pack.rows;
-    this.material.defines = { ...layerDefines(pack), ...OUTPUT_DEFINES, ...('OVERDRAW' in this.material.defines ? { OVERDRAW: '' } : {}) };
+    this.material.defines = { ...layerDefines(pack), ...('OVERDRAW' in this.material.defines ? { OVERDRAW: '' } : {}) };
     this.material.needsUpdate = true;
     this.shadowMaterial.defines = { ...layerDefines(pack), SHADOW: '' };
     this.shadowMaterial.needsUpdate = true;
@@ -75,7 +83,9 @@ export class GrainCloud {
     const geo = new BufferGeometry();
     geo.setAttribute('position', new BufferAttribute(ids, 3));
     this.object.geometry.dispose();
-    this.object.geometry = this.shadowObject.geometry = geo;
+    if (this.shadowObject.geometry !== this.object.geometry) this.shadowObject.geometry.dispose();
+    this.object.geometry = geo;
+    this.shadowObject.geometry = this.shadowStride > 1 ? strided(pack.n, this.shadowStride) : geo;
     this.object.visible = this.shadowObject.visible = true;
   }
 
@@ -91,6 +101,12 @@ export class GrainCloud {
     mat.depthTest = mat.depthWrite = !on;
     mat.needsUpdate = true;
   }
+
+  /**
+   * Experiment (?shadowstride, ?shadowgrow): only every n-th grain casts shadows, its disc in the
+   * shadow map scaled by `grow`. Applies from the next pack.
+   */
+  setShadowSubset(stride: number, grow: number): void { this.shadowStride = Math.max(1, Math.round(stride)); this.u.uShadowGrow!.value = grow; }
 
   /** Largest grain, in pixels, before the per-grain size factor (9 as v10). */
   setPointMax(px: number): void { this.u.uPointMax!.value = px; }

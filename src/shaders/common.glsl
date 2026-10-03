@@ -9,6 +9,7 @@ uniform float uReveal;
 uniform float uPointMax; // largest grain, in pixels, before the per-grain size factor
 uniform float uSpecA, uSpecB; // each world's gloss
 uniform float uPx;            // shadow map pixels per world unit
+uniform float uShadowGrow;    // disc size factor in the shadow map (1; for the every-other-grain experiment)
 uniform mat4 uLightVP;        // the key light's view-projection (shadow map)
 uniform float uTime, uT, uMotion, uScale, uGrain, uFogD, uK, uSpan, uSpread, uPress, uJitter;
 uniform vec3 uHeroA, uHeroB, uDir, uMouseW, uLoA, uHiA, uLoB, uHiB, uFog;

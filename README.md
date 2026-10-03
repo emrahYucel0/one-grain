@@ -129,7 +129,13 @@ Drawing changes (materials, lighting) stay inside `render/` and `shaders/`, with
    the move runs, so a hold flows into its transition without a seam.
 4. Runs listeners in two phases: `camera` (pointer smoothing, before the camera is placed) and
    `scene` (interaction, UI, audio, quality, after it).
-5. Hands a `FrameUniforms` object to `render/grains` and draws.
+5. Hands a `FrameUniforms` object to `render/grains`, then `render/pipeline` draws the passes:
+   - the key light's shadow map (every other frame);
+   - grains and the hero grain into a half-float HDR target;
+   - bloom, half-resolution depth of field focused on the hero, and the composite (shoulder
+     tone curve, vignette, film grain, display gamma).
+
+   Each pass is timed on the GPU with `?perf`; `docs/perf.md` has the numbers.
 
 ## Art direction
 

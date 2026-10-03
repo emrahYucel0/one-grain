@@ -1,4 +1,5 @@
-// The grain itself and its halo: always drawn on top, independent of the scene palette.
+// The grain itself and its halo: always drawn on top, independent of the scene palette. Drawn into
+// the HDR target: the grain is 2.4× white, so it blooms (v10).
 // Sections are split by the //#vertex-hero, //#fragment-hero, //#vertex-halo, //#fragment-halo markers.
 
 //#vertex-hero
@@ -7,7 +8,7 @@ void main(){ gl_PointSize = 9. * uPR; gl_Position = projectionMatrix * modelView
 
 //#fragment-hero
 out highp vec4 fragColor;
-void main(){ vec2 q = gl_PointCoord * 2. - 1.; float r = dot(q, q); if (r > 1.) discard; fragColor = vec4(mix(vec3(1.), vec3(1., .88, .62), r), 1.); }
+void main(){ vec2 q = gl_PointCoord * 2. - 1.; float r = dot(q, q); if (r > 1.) discard; fragColor = vec4(mix(vec3(1.), vec3(1., .88, .62), r) * 2.4, 1.); }
 
 //#vertex-halo
 uniform float uPR;

@@ -8,6 +8,7 @@ import hero from './hero.glsl?raw';
 import emission from './emission.glsl?raw';
 import interact from './interact.glsl?raw';
 import paint from './paint.glsl?raw';
+import post from './post.glsl?raw';
 import transitions from './transitions.glsl?raw';
 
 export interface ShaderPair { vertexShader: string; fragmentShader: string }
@@ -21,16 +22,27 @@ export const grainShaders: ShaderPair = {
 /** The grain cloud drawn into the key light's shadow map (with the SHADOW define). */
 export const grainShadowShaders: ShaderPair = { vertexShader: grainShaders.vertexShader, fragmentShader: grainsShadowFrag };
 
-const sections = new Map<string, string>();
-for (const part of hero.split(/^\/\/#/m).slice(1)) {
-  const nl = part.indexOf('\n');
-  sections.set(part.slice(0, nl).trim(), part.slice(nl + 1));
+/** Splits a file into the sections marked //#name. */
+function sectionsOf(file: string, src: string): (name: string) => string {
+  const sections = new Map<string, string>();
+  for (const part of src.split(/^\/\/#/m).slice(1)) {
+    const nl = part.indexOf('\n');
+    sections.set(part.slice(0, nl).trim(), part.slice(nl + 1));
+  }
+  return (name) => {
+    const s = sections.get(name);
+    if (s === undefined) throw new Error(`${file} is missing //#${name}`);
+    return s;
+  };
 }
-const section = (name: string): string => {
-  const s = sections.get(name);
-  if (s === undefined) throw new Error(`hero.glsl is missing //#${name}`);
-  return s;
-};
 
-export const heroShaders: ShaderPair = { vertexShader: section('vertex-hero'), fragmentShader: section('fragment-hero') };
-export const haloShaders: ShaderPair = { vertexShader: section('vertex-halo'), fragmentShader: section('fragment-halo') };
+const heroSection = sectionsOf('hero.glsl', hero);
+export const heroShaders: ShaderPair = { vertexShader: heroSection('vertex-hero'), fragmentShader: heroSection('fragment-hero') };
+export const haloShaders: ShaderPair = { vertexShader: heroSection('vertex-halo'), fragmentShader: heroSection('fragment-halo') };
+
+const postSection = sectionsOf('post.glsl', post);
+const fullscreen = (name: string): ShaderPair => ({ vertexShader: postSection('vertex'), fragmentShader: postSection(name) });
+/** The HDR post passes, each a fullscreen quad (render/post.ts). */
+export const postShaders = {
+  bright: fullscreen('bright'), blur: fullscreen('blur'), dof: fullscreen('dof'), composite: fullscreen('composite'),
+} as const;

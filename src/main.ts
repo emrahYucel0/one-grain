@@ -50,6 +50,7 @@ function boot(): void {
   const grains = new GrainCloud(), hero = new HeroGrain(dpr);
   stage.scene.add(grains.object);
   if (flags.pointCap) grains.setPointMax(flags.pointCap);
+  if (flags.shadowStride > 1) grains.setShadowSubset(flags.shadowStride, flags.shadowGrow);
   stage.overlay.add(...hero.objects);
   const timer = new GpuTimer(stage.renderer.getContext() as WebGL2RenderingContext, flags.perf || flags.debug);
   const projection = new Projection(stage, (s) => grains.setScale(s));
@@ -63,7 +64,7 @@ function boot(): void {
   bindChapterKeys(timeline);
   const pipeline = new Pipeline(stage.renderer, timer);
   grains.attachShadow(pipeline.shadow);
-  const loop = new Loop({ stage, grains, hero, timeline, hash, projection, typeAxes: new TypeAxes(), stageColour: new StageColour(stage), pipeline, timer });
+  const loop = new Loop({ stage, grains, hero, timeline, hash, projection, typeAxes: new TypeAxes(), stageColour: new StageColour(), pipeline, timer });
   const go = (i: number): void => timeline.goTo(i);
 
   // words and instruments

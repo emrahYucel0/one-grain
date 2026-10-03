@@ -266,3 +266,112 @@ method and the current shaders (no post yet).
 Every 30 000 grains cost about 2–2.5 ms at the median and about 3 ms at the light hold. The
 shadow pass fits a fixed part of about 1.7 ms plus about 17 ns per grain. The mid tier stays at 90 000 until it is decided. These numbers come back in the budget
 report after delta 6, next to point size and DPR.
+
+## Delta 6: HDR target and post
+
+The grains and the hero grain now render into a half-float target with a depth texture, cleared to
+the linear stage colour. The post chain (v10) follows:
+
+- **bloom:** a bright pass into quarter resolution, then blurred, copied down to eighth resolution
+  and blurred again;
+- **dof:** half resolution, 12 taps, focused on the camera → hero distance;
+- **composite:** depth of field, bloom, the shoulder tone curve, vignette, film grain, display
+  gamma.
+
+The grain shader no longer tones its own output (`DIRECT_OUTPUT` is gone). The hero grain is 2.4×
+white, so it blooms. The overdraw view still draws straight to the screen.
+
+Same method: mid tier, 1920×909, every layer on. GPU total counts the shadow pass at its full
+per-refresh cost.
+
+| Position | GPU total | shadow | grains | hero | bloom | dof | composite |
+|---|---|---|---|---|---|---|---|
+| hold magma | 14.03 ms | 3.07 | 4.47 | 0.05 | 1.15 | 2.88 | 2.42 |
+| hold granite | 14.02 ms | 3.00 | 4.55 | 0.05 | 1.14 | 2.87 | 2.42 |
+| hold river | 14.28 ms | 3.00 | 4.81 | 0.05 | 1.12 | 2.88 | 2.42 |
+| hold coast | 14.77 ms | 3.02 | 5.24 | 0.05 | 1.14 | 2.88 | 2.43 |
+| hold desert | 14.60 ms | 3.00 | 5.09 | 0.05 | 1.15 | 2.90 | 2.42 |
+| hold again | 16.63 ms | 3.36 | 6.55 | 0.05 | 1.23 | 2.94 | 2.50 |
+| hold quarry | 15.98 ms | 3.53 | 5.73 | 0.05 | 1.19 | 2.85 | 2.62 |
+| hold furnace | 14.56 ms | 3.03 | 5.13 | 0.05 | 1.14 | 2.80 | 2.40 |
+| hold purity | 13.83 ms | 2.93 | 4.46 | 0.05 | 1.14 | 2.85 | 2.40 |
+| hold crystal | 13.84 ms | 3.03 | 4.37 | 0.05 | 1.13 | 2.87 | 2.40 |
+| hold wafer | 14.17 ms | 3.13 | 4.60 | 0.05 | 1.12 | 2.85 | 2.41 |
+| hold light | 16.20 ms | 3.39 | 6.47 | 0.05 | 1.15 | 2.74 | 2.40 |
+| hold chip | 13.95 ms | 2.95 | 4.53 | 0.05 | 1.13 | 2.90 | 2.40 |
+| hold display | 14.39 ms | 2.99 | 4.92 | 0.05 | 1.15 | 2.87 | 2.42 |
+| hold now | 14.79 ms | 3.02 | 5.22 | 0.05 | 1.15 | 2.91 | 2.44 |
+
+GPU total: median 14.77 ms. Worst 17.91 ms, at the coast → again midpoint. Scrub median 14.66 ms
+(worst 15.90).
+
+Back-to-back runs on this integrated GPU drift by up to about 1 ms, even in passes nothing touched.
+Comparisons below therefore use interleaved A/B runs (`scripts/_ab.mjs`, a scratch tool): two
+pages, one frozen while the other renders, alternating at desert, light, chip and again, median of
+12 samples each.
+
+### Cost per effect
+
+| Effect | GPU time | How measured |
+|---|---|---|
+| bloom (bright pass, 2-level blur) | 1.15 ms | its own pass |
+| depth of field, half resolution | 2.88 ms | its own pass |
+| composite, tone curve only | 1.72 ms | `?off=dof,bloom,grade` |
+| + depth-of-field mix and bloom add in the composite | +0.40 ms | composite without grade: 2.12 ms |
+| + vignette and film grain | +0.30 ms | composite with everything: 2.42 ms |
+
+Post costs about 6.5 ms in all. Depth of field is the most expensive single effect: 2.9 ms plus
+0.2 ms of its mix in the composite.
+
+The grain pass got cheaper (desert 7.12 → 5.09 ms, light 10.40 → 6.47 ms), because the HDR target
+has no MSAA. The canvas has; v10 creates it with `antialias: true`. Turning that off is
+pixel-identical (only the fullscreen composite lands on the canvas), but it was not faster: the
+composite measured 2.68–2.69 ms without MSAA against 2.42–2.51 ms with it, in both A/B orders.
+The canvas keeps MSAA.
+
+### Option: every other grain in the shadow pass (measured, not adopted)
+
+`?shadowstride=2` draws every second grain id into the shadow map (the same grains each frame).
+`&shadowgrow=1.414` additionally grows their discs to keep the map's coverage.
+
+| Shadow pass, A/B | GPU time per refresh |
+|---|---|
+| every grain | 3.69 ms |
+| every other grain | 2.69 ms |
+| every other grain, discs ×1.41 | 2.74 ms |
+| 1 grain (fixed cost) | 1.78–1.90 ms |
+| shadows off | — (the grain pass grows from 5.76 to 6.76 ms) |
+
+- **Saving:** 1.0 ms on a refreshing frame. The map refreshes every other frame, so that is about
+  0.5 ms per frame on average.
+- **Look against every grain** (share of pixels that differ, perceptual; strict counts every
+  changed byte):
+
+  | Hold | Every other grain | Discs ×1.41 | No shadows at all |
+  |---|---|---|---|
+  | desert | 1.51 % | 1.37 % | 14.25 % |
+  | chip | 0.01 % | 0.02 % | 0.02 % |
+
+  In-focus crops at 2× look the same, with a few shaded grains marginally lighter. Chip hardly
+  uses its shadows at all.
+- **The fixed part is mostly not shadows.** With shadows off, the grain pass grows by 1.0 ms
+  although it no longer samples the map. About 1 ms of work is left over at the start of each
+  frame (the previous frame's present, presumably, on ANGLE/D3D11), and it lands in whichever
+  pass is timed first. The shadow pass's own fixed cost is about 0.5 ms; drawing 90 000 grains
+  into the map costs about 1.9 ms.
+
+### Where the budget stands (mid tier, 1080p, every layer on)
+
+The median of 14.8 ms is inside 16.7 ms. The again and light holds (16.2–16.6 ms) are at the
+limit, and the busiest midpoints (coast → again 17.9 ms) are over it on frames that refresh the
+shadow map. The levers, with their measured size:
+
+| Lever | Saves | Cost to the look |
+|---|---|---|
+| depth of field off | about 3.1 ms | no focus falloff (v10 drops it on small screens) |
+| every other grain in the shadow pass | 1.0 ms per refresh, about 0.5 ms per frame | desert 1.5 % of pixels, barely visible |
+| 30 000 fewer grains (90 000 → 60 000) | about 2–2.5 ms median, about 3 ms at the light hold (measured before post) | thinner worlds |
+| bloom off | about 1.2 ms | no glow on emissive matter or the hero |
+| vignette and film grain off | about 0.3 ms | flatter frame |
+
+The tiers and the adaptive downgrade (delta 9) build on this table.

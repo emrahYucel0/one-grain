@@ -1,7 +1,6 @@
 import { Color, Vector3 } from 'three';
 import { STAGES, type StageAct } from '../story/stages';
 import { WORLDS } from '../story/worlds';
-import type { Stage } from './renderer';
 
 const LAST = WORLDS.length - 1;
 
@@ -16,25 +15,25 @@ const actOf = (i: number): StageAct => (WORLDS[i]!.final ? 'end' : WORLDS[i]!.ac
 
 /**
  * The stage colour follows the act, eased like the camera between acts. On the last chapter the
- * end colour comes in with the reveal. Clear colour, fog and the page's --stage stay in sync.
+ * end colour comes in with the reveal. Fog, the HDR target's clear colour (render/pipeline.ts) and
+ * the page's --stage stay in sync.
  * Dark or light comes from data-theme, else the system preference.
  */
 export class StageColour {
   /** the fog colour for the grains (the interpolated colour itself, not its 8-bit hex) */
   readonly fog = new Color();
-  /** the same colour, linear (the lit shader fogs in linear light); from the current colour every frame */
+  /** the same colour, linear (fog and the HDR clear colour); from the current colour every frame */
   readonly fogLinear = new Vector3();
   private readonly lin = new Color();
   private readonly ca = new Color();
   private readonly cb = new Color();
   private readonly ce = new Color();
   private last = '';
-  private readonly stage: Stage;
   private readonly root: HTMLElement;
   private readonly dark = matchMedia('(prefers-color-scheme: dark)');
 
-  constructor(stage: Stage, root: HTMLElement = document.documentElement) {
-    this.stage = stage; this.root = root;
+  constructor(root: HTMLElement = document.documentElement) {
+    this.root = root;
     const invalidate = (): void => { this.last = ''; };
     this.dark.addEventListener('change', invalidate);
     new MutationObserver(invalidate).observe(root, { attributes: true, attributeFilter: ['data-theme'] });
@@ -43,12 +42,6 @@ export class StageColour {
   private get isDark(): boolean {
     const theme = this.root.dataset.theme;
     return theme ? theme === 'dark' : this.dark.matches;
-  }
-
-  /** Debug: a black clear colour (the overdraw view counts on it); the stage colour returns next update. */
-  blackout(): void {
-    this.stage.renderer.setClearColor(0x000000, 1);
-    this.last = '';
   }
 
   update(a: number, b: number, eg: number, reveal: number): void {
@@ -62,7 +55,6 @@ export class StageColour {
     const hex = cssHex(this.fog);
     if (hex === this.last) return;
     this.last = hex;
-    this.stage.renderer.setClearColor(this.fog, 1);
     this.root.style.setProperty('--stage', hex);
   }
 }

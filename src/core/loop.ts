@@ -73,7 +73,7 @@ export class Loop {
   /** set by the interaction listener, applied in the same frame */
   readonly interaction = { mode: 0, at: new Vector3(0, -99, 0), press: 0 };
   /** render layers that can be switched (debug panel, tiers) */
-  readonly layers = { light: true, shadows: true };
+  readonly layers = { light: true, shadows: true, dof: true, bloom: true, grade: true };
   /** the final reveal, 0..1 (set by the ending, in the 'story' phase) */
   reveal = 0;
   /** extra canvas opacity factor (quality swaps) */
@@ -143,10 +143,13 @@ export class Loop {
     };
     const overdraw = overdrawView();
     grains.setOverdrawView(overdraw);
-    if (overdraw) stageColour.blackout();
     grains.update(u);
     hash.update(L.hold);
-    pipeline.render(stage.scene, stage.overlay, stage.camera, shadows && !overdraw);
+    const cam = stage.camera, ly = this.layers;
+    pipeline.render({
+      grains: stage.scene, overlay: stage.overlay, camera: cam, shadows: shadows && !overdraw, clear: stageColour.fogLinear, direct: overdraw,
+      post: { bloom: ly.bloom, dof: ly.dof, grade: ly.grade, near: cam.near, far: cam.far, focus: cam.position.distanceTo(S.hero), time, grainMoves: !reduced },
+    });
     timer.tick();
     reportGpu(timer.times());
   }

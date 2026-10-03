@@ -6,6 +6,7 @@
 //   ?perf            time every render pass on the GPU and publish the timings as window.__gpu
 //   ?pointcap=N      largest grain in pixels (performance experiments)
 //   ?grains=N        grains per world instead of the tier's count (performance experiments)
+//   ?shadowstride=N  only every N-th grain casts shadows; &shadowgrow=F scales its disc (experiment)
 //   ?off=a,b         switch render layers off (light, shadows, dof, bloom, grade), for measurements
 //   with ?parity, window.__AT = { tr, t, lean } renders transition tr at t with that camera lean
 import type { GpuTimes } from '../core/gpu-timer';
@@ -36,6 +37,8 @@ export const flags = {
   perf: params.has('perf'),
   pointCap: params.has('pointcap') ? Number(params.get('pointcap')) : null,
   grains: params.has('grains') ? Number(params.get('grains')) : null,
+  shadowStride: Number(params.get('shadowstride') ?? 1),
+  shadowGrow: Number(params.get('shadowgrow') ?? 1),
   off: new Set((params.get('off') ?? '').split(',').filter(Boolean)),
 };
 
