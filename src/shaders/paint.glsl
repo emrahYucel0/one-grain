@@ -2,7 +2,7 @@
 vec3 paint(vec4 P, vec3 lo, vec3 hi, vec3 R){
   float f = floor(P.w + .001), tn = fract(P.w), t = uTime * uMotion;
   vec3 c = mix(lo, hi, tn);
-  if (f > .5 && f < 2.5) c = mix(vec3(.2, .43, .47), vec3(.5, .75, .78), tn);
+  if (f > .5 && f < 2.5) { c = mix(vec3(.2, .43, .47), vec3(.5, .75, .78), tn); c = mix(c, vec3(dot(c, vec3(.299, .587, .114))), .12); } // water, 12 % less saturated (v15)
   else if (f > 4.5 && f < 5.5) c = mix(vec3(.75, .22, .08), vec3(1., .82, .45), tn) * (.85 + .25 * sin(t * 2. + R.x * 20.));
   else if (f > 6.5 && f < 7.5) c = vec3(1., .8, .45) * (1.2 - fract(t * (.3 + .4 * R.x) + R.y * 10.));
   else if (f > 7.5 && f < 8.5) { vec3 base = mix(vec3(.42, .47, .55), vec3(.7, .76, .84), R.y * .5); c = mix(base, vec3(.98, .74, .42), step(.6, tn) * step(.5, fract(t * .5 + floor(tn * 8.) / 8.)) * .75); }

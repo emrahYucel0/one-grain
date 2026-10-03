@@ -14,7 +14,7 @@ export const WORLDS: readonly WorldDef[] = [
   { slug: 'purity', act: 'industry', hold: .8, clock: { unit: 'prod' }, lo: '#46525e', hi: '#dbe3ea', grain: .06, cam: [4, 1.2, 9], look: [-3.5, 1.5, -5], conf: .75, frame: 1.6 },
   { slug: 'crystal', act: 'industry', hold: 1.3, clock: { unit: 'prod' }, lo: '#46525e', hi: '#eef3f6', grain: .05, cam: [7, 5.5, 14], look: [-4.5, 4.6, -2], conf: 1, frame: 1.55 },
   { slug: 'wafer', act: 'industry', hold: .8, clock: { unit: 'prod' }, lo: '#3e4a59', hi: '#e8eef4', grain: .05, cam: [5, 2.6, 7], look: [-2, 1.8, -2], conf: .85, frame: 1.25 },
-  { slug: 'light', act: 'industry', hold: .9, clock: { unit: 'prod' }, lo: '#2e2a45', hi: '#d6cff2', grain: .045, cam: [2.2, 5.4, 4.2], look: [-.5, -1.2, -1.6], conf: .55, frame: 1.2 },
+  { slug: 'light', act: 'industry', hold: .9, clock: { unit: 'prod' }, lo: '#2f2c40', hi: '#d4d0e6', grain: .045, cam: [2.2, 5.4, 4.2], look: [-.5, -1.2, -1.6], conf: .55, frame: 1.2 },
 
   { slug: 'chip', act: 'now', hold: 1.3, clock: { unit: 'prod' }, lo: '#121519', hi: '#b9c1cc', grain: .032, cam: [3, 3.8, 5], look: [-2.2, -1.6, -3.6], conf: .25, frame: 1 },
   { slug: 'display', act: 'now', hold: 1.4, clock: { unit: 'prod' }, lo: '#4f8286', hi: '#dff2f0', grain: .06, cam: [6, 2, 9], look: [-6, -1, -2], conf: .4, frame: 1.15 },
