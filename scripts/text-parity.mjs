@@ -12,6 +12,8 @@ import { startDev } from './lib/servers.mjs';
 const TEXT_REFERENCE = 'v15';
 /** Intentional changes since the reference, applied to its page (docs/parity-notes.md). None at present. */
 const INTENTIONAL = [];
+/** The reference publishes the progress each frame rendered, after its words and clock are set (as the port's __progress). */
+const HOOKS = [['    fxTick();\n  }', '    fxTick(); window.__progress = state.v;\n  }']];
 
 const vite = await createServer({ server: { middlewareMode: true }, appType: 'custom', logLevel: 'error' });
 const { WORLDS } = await vite.ssrLoadModule('/src/story/worlds.ts');
@@ -32,7 +34,7 @@ const progress = (lens, i, t, kind) => { // kind: hold → middle of hold i; tr 
 const b = await launch();
 const ctx = await b.newContext({ viewport: { width: 1440, height: 900 } });
 const port = await ctx.newPage(), ref = await ctx.newPage();
-await routeReference(ref, 'http://localhost:5189/__r.html', TEXT_REFERENCE, INTENTIONAL);
+await routeReference(ref, 'http://localhost:5189/__r.html', TEXT_REFERENCE, [...HOOKS, ...INTENTIONAL]);
 await port.goto('http://localhost:5189/?parity&tier=mid'); await ref.goto('http://localhost:5189/__r.html');
 await ref.waitForFunction(() => window.__DATA, null, { timeout: 90000 });
 await port.waitForFunction(() => window.__PACK, null, { timeout: 90000 });
@@ -48,15 +50,23 @@ let diffs = 0, n = 0;
 const cases = [];
 WORLDS.forEach((w, i) => { cases.push(['hold', i, 0]); if (i < WORLDS.length - 1) for (const t of [.1, .3, .5, .7, .9]) cases.push(['tr', i, t]); });
 for (const [kind, i, t] of cases) {
+  // each page publishes the progress it rendered (__progress): wait for the frame at v, then two more
+  // for anything the frame's listeners write to the DOM, all by condition (no fixed delays)
   const at = async (p, v) => {
     await p.bringToFront(); await p.evaluate((x) => { window.__V = x; window.__T = 10; }, v);
-    // the port publishes the progress it rendered: wait for that frame, then one more for the DOM
-    if (p === port) await p.waitForFunction((x) => window.__progress === x, v, { timeout: 5000 }).catch(() => {});
-    await p.waitForTimeout(250); return read(p);
+    const rendered = await p.waitForFunction((x) => window.__progress === x, v, { timeout: 10000 }).then(() => true, () => false);
+    await p.evaluate(() => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r))));
+    return { text: await read(p), rendered, v: await p.evaluate(() => window.__progress) };
   };
-  const x = await at(port, progress(portLens, i, t, kind)), y = await at(ref, progress(refLens, i, t, kind));
+  const px = await at(port, progress(portLens, i, t, kind)), py = await at(ref, progress(refLens, i, t, kind));
+  const x = px.text, y = py.text;
   n++;
-  if (x !== y) { diffs++; console.log(`DIFF ${kind} ${WORLDS[i].slug} t=${t}\n  port: ${x}\n  ref:  ${y}`); }
+  // a page that never rendered the position fails it too, with the progress it is stuck at
+  if (x !== y || !px.rendered || !py.rendered) {
+    diffs++;
+    const note = (r) => (r.rendered ? '' : `  (no frame at this position; rendered ${r.v})`);
+    console.log(`DIFF ${kind} ${WORLDS[i].slug} t=${t}\n  port: ${x}${note(px)}\n  ref:  ${y}${note(py)}`);
+  }
 }
 console.log(`${n - diffs}/${n} positions identical`);
 await b.close(); await dev.close();
