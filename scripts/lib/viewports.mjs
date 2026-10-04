@@ -16,4 +16,5 @@ export const VIEWPORTS = [
   { name: 'desktop-1728x1117', width: 1728, height: 1117, dpr: 2, touch: false, mobile: false },
   { name: 'desktop-1920x1080', width: 1920, height: 1080, dpr: 1, touch: false, mobile: false },
   { name: 'desktop-2560x1080-21x9', width: 2560, height: 1080, dpr: 1, touch: false, mobile: false },
+  { name: 'desktop-3440x1440-21x9', width: 3440, height: 1440, dpr: 1, touch: false, mobile: false },
 ];

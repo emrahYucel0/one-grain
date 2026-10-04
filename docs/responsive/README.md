@@ -18,6 +18,7 @@ hold plus display → now at t = .3 and .7, the tier picked as on a real visit:
 | 1728×1117 | MacBook 16, DPR 2 | [before](before/desktop-1728x1117.jpg) | [after](after/desktop-1728x1117.jpg) |
 | 1920×1080 | desktop, DPR 1 | [before](before/desktop-1920x1080.jpg) | [after](after/desktop-1920x1080.jpg) |
 | 2560×1080 | 21:9, DPR 1 | [before](before/desktop-2560x1080-21x9.jpg) | [after](after/desktop-2560x1080-21x9.jpg) |
+| 3440×1440 | 21:9, DPR 1 (added with the per-world anchor) | — | [after](after/desktop-3440x1440-21x9.jpg) |
 
 Regenerate with `npm run responsive <label> [viewport]`; check with `npm run check:responsive`.
 
@@ -68,16 +69,22 @@ The "after" sheets above include these.
    844×390 starts on low, like the same phone upright. The tier is picked once per visit; turning a
    phone or resizing the window never changes it (checked on every phone viewport). A desktop window
    narrower than 760 px no longer starts on low by itself.
-3. **21:9: one global rule.** Past 2:1 the camera's look target goes down in proportion to
-   (aspect − 2): by (aspect − 2)/2 of the visible half-height, which keeps the 2:1 frame's bottom edge
-   (nearly) where it was, so the crop comes from the top. 2560×1080, clamp only vs. look lowered:
-   [before](21x9/before-clamp-only.jpg) · [after](21x9/after-look-lowered.jpg).
-   - Better: crystal, wafer and purity sit lower with their bases in view; magma shows more of its
-     crystals.
-   - Worse: river, desert and quarry move up and leave more empty ground below them (the empty
-     lower areas from the first report grow); quarry, the furnace's electrodes and the light column
-     are cut at the top.
-   - Per-world tweaks not made: waiting for a decision.
+3. **21:9: a vertical anchor per world.** Past 2:1 the frame loses height; each world's
+   `wideAnchor` says which edge of the 2:1 frame stays: 0 the bottom edge (crops from the top),
+   1 the top edge (crops from the bottom), .5 crops evenly. It is eased between worlds like the
+   rest of the camera; at 2:1 and below nothing changes. Values: magma 0, granite .5, river .85,
+   coast .5, desert .85, again .5, quarry .7, furnace .6, purity 0, crystal 0, wafer 0, light .65,
+   chip .8, display .5, now .5. Sheets: [2560×1080](after/desktop-2560x1080-21x9.jpg),
+   [3440×1440](after/desktop-3440x1440-21x9.jpg). The first round's single rule (every world 0)
+   for comparison: [clamp only](21x9/before-clamp-only.jpg) · [global rule](21x9/after-look-lowered.jpg).
+   - Still floating over empty ground: **quarry**. The pit fills the top half and the lower third or
+     more is dark ground (about 30 % already at 16:9); anchor 1 would take a little more from the
+     bottom, but most of the gap is the shot itself.
+   - Cut at the top, as at 16:9 (the shot, not the crop): the furnace's electrodes and the light
+     column come in from above.
+   - Fixed by the anchors: river and desert sit low again with little empty ground below; crystal,
+     wafer (all five wafers, the top one is cut at 16:9) and purity keep their bases.
+   - Not vertical: display leaves its left third empty at every width (the wall is on the right).
 4. **Pixel budget.** On high the budget never takes the pixel ratio below 1 (a 4K screen at DPR 1
    renders all 8.3 MP; Retina screens still come down to the budget, not below DPR 1). Low and mid
    are unchanged (2560×1080 on mid: 2283×963).

@@ -37,6 +37,11 @@ export interface WorldDef {
   conf: number;
   /** framing against the blockout shot, applied after the lens change (> 1: the subject owns less of the frame) */
   frame: number;
+  /**
+   * Screens wider than 2:1 lose height (camera/rig.ts): which edge of the 2:1 frame stays. 0 keeps the
+   * bottom edge (crops from the top), 1 the top edge (crops from the bottom), .5 crops evenly.
+   */
+  wideAnchor: number;
   /** the last chapter: ending sequence, own nav label, own audio act */
   final?: boolean;
 }

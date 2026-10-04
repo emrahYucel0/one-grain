@@ -146,7 +146,7 @@ export class Loop {
     hero.moveTo(S.hero);
     hero.visible = heroVisible;
     for (const fn of this.listeners.camera) fn(info);
-    frameShot(stage.camera, S, reduced ? null : this.parallax);
+    frameShot(stage.camera, S, reduced ? null : this.parallax, towards(wa.wideAnchor, wb.wideAnchor, S.eg));
     const hp = this.heroNdc.copy(S.hero).project(stage.camera);
     reportHero(hp.x, hp.y, hp.z, heroVisible);
     const grain = towards(wa.grain, wb.grain, S.eg);
