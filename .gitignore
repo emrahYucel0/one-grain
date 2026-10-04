@@ -9,3 +9,6 @@ Thumbs.db
 
 # scratch tools (never committed)
 scripts/_*
+
+# per-run outputs of the checks (the parity baselines from `npm run parity` stay tracked)
+parity/fonts/
