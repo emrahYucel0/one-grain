@@ -135,7 +135,7 @@ function boot(): void {
   exposeTiers(tiers);
   let firstFrame = true;
   loop.onFrame(({ L, now }) => {
-    if (firstFrame) { firstFrame = false; tiers.monitor.start(now); }
+    if (firstFrame) { firstFrame = false; tiers.monitor.start(now); requestAnimationFrame(() => root.classList.add('ready')); }
     tiers.frame(now, L.hold, stage.renderer.info.programs?.length ?? 0);
     loop.fade = tiers.fade;
   });

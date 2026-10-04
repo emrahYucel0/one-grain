@@ -8,6 +8,16 @@
 <link rel="icon" href="data:,">
 <meta name="description" content="The story of one grain of sand, from magma to the screen you are reading this on.">
 <script>if ('noModule' in HTMLScriptElement.prototype) document.documentElement.classList.add('js', 'fonts-pending');</script>
+<style>
+/* Critical styles, inline so that even the first paint (before the stylesheet, which the dev server
+   injects through the script) is the stage: no article, no HUD, no native scrollbar. The HUD and the
+   words appear with the first rendered frame (html.ready). The rest is in src/styles/main.css. */
+html{background:#0d181c;color:#ece3d3;color-scheme:dark;scrollbar-width:none}
+html::-webkit-scrollbar{display:none}
+body{margin:0;background:#0d181c}
+html.js:not(.nogl) #story{position:absolute;width:1px;height:1px;margin:-1px;padding:0;overflow:hidden;clip:rect(0 0 0 0);clip-path:inset(50%);white-space:nowrap;border:0}
+html.js:not(.ready):not(.nogl) :is(.hud,.intro,.story,.timeline,.marker,.cut){visibility:hidden}
+</style>
 <script type="module" src="/src/main.ts"></script>
 </head>
 <body>
