@@ -1,6 +1,6 @@
 import type { GrainPack } from '../sim/pack';
 import type { RenderLayers } from './layers';
-import { FrameMonitor, lowerTier, pixelRatioFor, type Tier } from './quality';
+import { FrameMonitor, lowerTier, type Tier } from './quality';
 
 export interface TierHooks {
   /** watch frame times and step down on our own (off when a tier is forced) */
@@ -8,8 +8,8 @@ export interface TierHooks {
   /** debug: behave as if the budget stayed blown once each warm-up is over (walks the whole ladder) */
   forceDrop: boolean;
   build(n: number): Promise<GrainPack>;
-  /** apply a new pixel ratio and grain pack together (called mid-dip, while resting) */
-  swap(pack: GrainPack, pixelRatio: number): void;
+  /** apply the next tier's grain pack and pixel ratio together (called mid-dip, while resting) */
+  swap(pack: GrainPack, tier: Tier): void;
 }
 
 /** One step down: an effect off, or the next tier's grain count and pixel ratio. */
@@ -79,7 +79,7 @@ export class TierManager {
     if (!this.applied && !resting) { this.dipStart = -1; this.fade = 1; return; } // scrolled away: wait for the next hold
     if (!this.applied && k >= .5) {
       if (step.kind === 'fx') this.layers.drop(step.layer);
-      else { this.hooks.swap(this.ready!, pixelRatioFor(step.tier)); this.layers.limit(step.tier.fx); }
+      else { this.hooks.swap(this.ready!, step.tier); this.layers.limit(step.tier.fx); }
       this.applied = true;
     }
     this.fade = Math.min(1, Math.abs(1 - 2 * Math.min(k, 1)));

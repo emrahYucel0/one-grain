@@ -19,14 +19,16 @@ await vite.close();
 
 const server = await startPreview(5191);
 const browser = await chromium.launch({ channel: 'chromium', headless: false, args: [`--window-size=${+width + 16},${+height + 140}`] });
-const page = await (await browser.newContext({ viewport: { width: +width, height: +height } })).newPage();
+const DPR = +(process.env.DPR ?? 1); // DPR=2: emulate a 2× screen (the tier's pixel budget then decides the drawing buffer)
+const page = await (await browser.newContext({ viewport: { width: +width, height: +height }, deviceScaleFactor: DPR })).newPage();
 await page.goto(`${server.origin}/?parity&perf&tier=${tier}${extra ? '&' + extra : ''}`);
 await page.waitForFunction(() => window.__PACK && window.__gpu, null, { timeout: 90000 });
 const env = await page.evaluate(() => {
   const gl = document.createElement('canvas').getContext('webgl2'), e = gl.getExtension('WEBGL_debug_renderer_info');
-  return { gpu: e ? gl.getParameter(e.UNMASKED_RENDERER_WEBGL) : '?', n: window.__PACK.n, dpr: devicePixelRatio, timer: window.__gpu.gpu };
+  const c = document.getElementById('scene');
+  return { gpu: e ? gl.getParameter(e.UNMASKED_RENDERER_WEBGL) : '?', n: window.__PACK.n, dpr: devicePixelRatio, timer: window.__gpu.gpu, buffer: `${c.width}×${c.height}` };
 });
-console.log(`tier ${tier} · ${width}×${height} · grains ${env.n} · ${env.gpu} · GPU timer ${env.timer ? 'on' : 'unavailable (CPU frame time only)'}${extra ? ' · ' + extra : ''}`);
+console.log(`tier ${tier} · ${width}×${height} @${env.dpr} · buffer ${env.buffer} · grains ${env.n} · ${env.gpu} · GPU timer ${env.timer ? 'on' : 'unavailable (CPU frame time only)'}${extra ? ' · ' + extra : ''}`);
 
 /** ~150 frames at a fixed position: median frame interval, raw GPU frames, the pass times at the end. */
 const sample = () => page.evaluate(() => new Promise((res) => {

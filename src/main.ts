@@ -55,12 +55,18 @@ function boot(): void {
   stage.overlay.add(...hero.objects);
   const timer = new GpuTimer(stage.renderer.getContext() as WebGL2RenderingContext, flags.perf || flags.debug);
   const projection = new Projection(stage, (s) => grains.setScale(s));
-  const resize = (): void => projection.fit();
+  // the pixel ratio follows the window: the tier's DPR cap and its pixel budget (core/quality.ts)
+  let activeTier = tier;
+  const resize = (): void => {
+    const pr = pixelRatioFor(activeTier);
+    if (pr !== stage.renderer.getPixelRatio()) { stage.renderer.setPixelRatio(pr); hero.setPixelRatio(pr); }
+    projection.fit();
+  };
   resize();
-  onResize(resize);
 
   // story position
   const timeline = new ScrollTimeline($('track'), { snap: !flags.noSnap });
+  onResize(() => { resize(); timeline.refresh(); });
   const hash = new HashRouter(timeline);
   bindChapterKeys(timeline);
   const pipeline = new Pipeline(stage.renderer, timer);
@@ -113,10 +119,9 @@ function boot(): void {
   const tiers = new TierManager(tier, layers, {
     auto: !flags.tier, forceDrop: flags.forceDrop,
     build: (n) => sim.build(n),
-    swap: (pack, pixelRatio) => {
+    swap: (pack, next) => {
       pacer.reset(performance.now());
-      stage.renderer.setPixelRatio(pixelRatio);
-      hero.setPixelRatio(pixelRatio);
+      activeTier = next;
       resize();
       exposePack(pack);
       loop.setPack(pack);

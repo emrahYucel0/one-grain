@@ -4,6 +4,10 @@ import { env } from '../core/env';
 import { SCROLL_SNAP, SNAP_POINTS, TOTAL, nearestChapter } from './segments';
 
 gsap.registerPlugin(ScrollTrigger);
+// Mobile browsers resize the viewport as their bars come and go: no refresh (no jump) for that.
+// ScrollTrigger's own rule ignores height changes under 25 % only (a landscape phone's bar is more);
+// resizes refresh it from core/resize.ts onResize instead, which skips height-only changes under 120 px.
+ScrollTrigger.config({ ignoreMobileResize: true, autoRefreshEvents: 'visibilitychange,DOMContentLoaded,load' });
 
 /** How long a chapter jump owns the snap target. */
 const JUMP_MS = 3000;

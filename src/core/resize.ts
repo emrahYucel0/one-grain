@@ -47,8 +47,22 @@ export class Projection {
   }
 }
 
-/** Calls `fn` once things settle after a window resize (150 ms, as the reference). */
+/** Below this, a height-only resize is a mobile browser's bars coming or going. */
+const BAR_PX = 120;
+
+/**
+ * Calls `fn` once things settle after a window resize (150 ms, as the reference). Height-only changes
+ * under 120 px (iOS/Android address bars while scrolling) are ignored: the canvas is sized to the
+ * largest viewport (styles/main.css), so nothing needs rebuilding and nothing may jump.
+ */
 export function onResize(fn: () => void): void {
-  let timer: ReturnType<typeof setTimeout> | undefined;
-  addEventListener('resize', () => { clearTimeout(timer); timer = setTimeout(fn, 150); });
+  let timer: ReturnType<typeof setTimeout> | undefined, w = innerWidth, h = innerHeight;
+  addEventListener('resize', () => {
+    clearTimeout(timer);
+    timer = setTimeout(() => {
+      if (innerWidth === w && Math.abs(innerHeight - h) < BAR_PX) return;
+      w = innerWidth; h = innerHeight;
+      fn();
+    }, 150);
+  });
 }
