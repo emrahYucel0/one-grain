@@ -31,7 +31,7 @@ npm run lint
 | `npm run check:reverse` | Scrolling backwards through drift, break, separate and grow renders exactly what scrolling forwards does |
 | `npm run check:seams` | No transition leaves a trace on a resting chapter: the previous transition at t = 1 and the next at t = 0 render byte-identical frames, equal to the hold |
 | `npm run check:fonts` | No layout shift when the web fonts arrive (on the built site, fonts held back 1.5 s), and the wdth axis really renders |
-| `npm run check:tiers` | The downgrade is queued mid-transition, applied only while resting, in order (depth of field, shadows, grains); the low tier's layers; the debug panel's toggles |
+| `npm run check:tiers` | The downgrade is queued mid-transition, applied only while resting, in order (depth of field, shadows, grains); the low tier's layers; the debug panel's toggles; with simulated loads: no step during the warm-up, none for an external slowdown, back up once the load is gone, no oscillation, and the three-window rule without the GPU timer |
 | `npm run check:console` | Zero console warnings or errors in dev and build, Chromium and Firefox |
 | `npm run check:a11y` | axe WCAG 2.1 AA, keyboard chapter steps, status line, focus ring, reduced motion, no-WebGL2 and no-JS fallbacks |
 | `npm run check:responsive` | Across 14 viewports: the hero ring on the grain at every hold (≤ 2 px), 44 px touch targets, the pixel budget, a mobile browser bar changing nothing, and the tier picked per device class |
