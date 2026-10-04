@@ -5,11 +5,13 @@
 // and words included) and piped to ffmpeg; the sound is rendered offline (OfflineAudioContext, seeded)
 // for the same frames and muxed in. Output: capture/out/one-grain-<W>x<H>.mp4 (60 fps, H.264 + AAC)
 // and the sound alone as .wav. --seconds a-b renders an excerpt (the frames before it are still
-// stepped, unrecorded, so the page's own timers see them).
+// stepped, unrecorded, so the page's own timers see them). --sound-only steps the path in a small
+// window without recording frames, renders the sound and puts it into every finished
+// capture/out/one-grain-<W>x<H>.mp4 (the picture is copied, not re-encoded): for a new seed.
 // ffmpeg: $FFMPEG, else the ffmpeg-static dev dependency, else ffmpeg on the PATH.
 import { spawn } from 'node:child_process';
 import { existsSync } from 'node:fs';
-import { mkdir, readFile, rm, writeFile } from 'node:fs/promises';
+import { mkdir, readFile, readdir, rename, rm, writeFile } from 'node:fs/promises';
 import { createRequire } from 'node:module';
 import { build, createServer } from 'vite';
 import { launch } from './lib/browser.mjs';
@@ -17,7 +19,8 @@ import { startPreview } from './lib/servers.mjs';
 
 const args = process.argv.slice(2);
 const opt = (k, d) => { const i = args.indexOf(k); return i >= 0 ? args[i + 1] : d; };
-const [W, H] = (args.find((a) => /^\d+x\d+$/.test(a)) ?? '1920x1080').split('x').map(Number);
+const soundOnly = args.includes('--sound-only');
+const [W, H] = soundOnly ? [640, 360] : (args.find((a) => /^\d+x\d+$/.test(a)) ?? '1920x1080').split('x').map(Number);
 const PATH = opt('--path', 'capture/path.json');
 const range = opt('--seconds', null)?.split('-').map(Number) ?? null;
 const OUT = 'capture/out';
@@ -66,31 +69,51 @@ const name = `${OUT}/one-grain-${W}x${H}${range ? `-${range[0]}-${range[1]}s` : 
 try {
   const page = await (await browser.newContext({ viewport: { width: W, height: H }, deviceScaleFactor: 1 })).newPage();
   page.on('console', (m) => { if (m.type() === 'error' || m.type() === 'warning') console.log(`page ${m.type()}: ${m.text()}`); });
+  // a crashed page or browser must end the run, not leave it waiting
+  let lost = null;
+  page.on('crash', () => { lost = 'the page crashed'; });
+  browser.on('disconnected', () => { lost ??= 'the browser closed'; });
   await page.goto(`${server.origin}/?capture`);
   await page.waitForFunction(() => window.__PACK && window.__capture, null, { timeout: 180000 });
   const env = await page.evaluate(() => ({ n: window.__PACK.n, buffer: `${document.getElementById('scene').width}×${document.getElementById('scene').height}` }));
   console.log(`high tier: ${env.n} grains · drawing buffer ${env.buffer}`);
   const cdp = await page.context().newCDPSession(page);
-  const step = (i) => page.evaluate(([ms, v]) => window.__capture.step(ms, v, null), [i * 1000 / fps, progressAt(i / fps)]);
+  const within = (p, what) => Promise.race([p, new Promise((_, fail) => setTimeout(() => fail(new Error(lost ?? `${what} took over 60 s`)), 60000))]);
+  const step = (i) => within(page.evaluate(([ms, v]) => window.__capture.step(ms, v, null), [i * 1000 / fps, progressAt(i / fps)]), `frame ${i}`)
+    .catch((e) => { throw new Error(`frame ${i} (${(i / fps).toFixed(2)} s): ${lost ?? e.message}`); });
   await step(0);
   await page.waitForFunction(() => !document.documentElement.classList.contains('fonts-pending'), null, { timeout: 10000 });
   for (let i = 1; i < first; i++) await step(i);
-  const enc = run(['-f', 'image2pipe', '-framerate', String(fps), '-c:v', 'png', '-i', '-', '-c:v', 'libx264', '-preset', 'slow', '-crf', '14', '-pix_fmt', 'yuv420p', `${name}.video.mp4`], 'pipe');
-  const t0 = Date.now();
-  for (let i = first; i < last; i++) {
-    if (i > 0) await step(i);
-    const { data } = await cdp.send('Page.captureScreenshot', { format: 'png', optimizeForSpeed: true });
-    if (!enc.p.stdin.write(Buffer.from(data, 'base64'))) await new Promise((ok) => enc.p.stdin.once('drain', ok));
-    if ((i - first) % 300 === 299) { const done = i - first + 1, per = (Date.now() - t0) / done; console.log(`  ${done}/${last - first} frames · ${per.toFixed(0)} ms per frame · ${((last - first - done) * per / 60000).toFixed(1)} min left`); }
+  if (soundOnly) {
+    const t0 = Date.now();
+    for (let i = 1; i < count; i++) await step(i);
+    console.log(`stepped ${count} frames in ${((Date.now() - t0) / 60000).toFixed(1)} min`);
+    const wav = `${OUT}/one-grain.wav`;
+    await writeFile(wav, Buffer.from(await page.evaluate(([f, seed]) => window.__capture.sound(f, seed), [fps, path.seed]), 'base64'));
+    for (const f of (await readdir(OUT)).filter((x) => /^one-grain-\d+x\d+\.mp4$/.test(x))) {
+      await run(['-i', `${OUT}/${f}`, '-i', wav, '-map', '0:v', '-map', '1:a', '-c:v', 'copy', '-c:a', 'aac', '-b:a', '320k', '-shortest', '-movflags', '+faststart', `${OUT}/new-${f}`]).done;
+      await rename(`${OUT}/new-${f}`, `${OUT}/${f}`);
+      await writeFile(`${OUT}/${f.replace(/\.mp4$/, '.wav')}`, await readFile(wav));
+      console.log(`→ new sound in ${OUT}/${f}`);
+    }
+  } else {
+    const enc = run(['-f', 'image2pipe', '-framerate', String(fps), '-c:v', 'png', '-i', '-', '-c:v', 'libx264', '-preset', 'slow', '-crf', '14', '-pix_fmt', 'yuv420p', `${name}.video.mp4`], 'pipe');
+    const t0 = Date.now();
+    for (let i = first; i < last; i++) {
+      if (i > 0) await step(i);
+      const { data } = await within(cdp.send('Page.captureScreenshot', { format: 'png', optimizeForSpeed: true }), `reading frame ${i}`);
+      if (!enc.p.stdin.write(Buffer.from(data, 'base64'))) await new Promise((ok) => enc.p.stdin.once('drain', ok));
+      if ((i - first) % 300 === 299) { const done = i - first + 1, per = (Date.now() - t0) / done; console.log(`  ${done}/${last - first} frames · ${per.toFixed(0)} ms per frame · ${((last - first - done) * per / 60000).toFixed(1)} min left`); }
+    }
+    enc.p.stdin.end(); await enc.done;
+    console.log(`video: ${last - first} frames in ${((Date.now() - t0) / 60000).toFixed(1)} min`);
+    // the sound for every frame stepped (from the story's start; an excerpt's offset is cut below)
+    const t1 = Date.now();
+    const wav = await page.evaluate(([f, seed]) => window.__capture.sound(f, seed), [fps, path.seed]);
+    await writeFile(`${name}.wav`, Buffer.from(wav, 'base64'));
+    console.log(`sound: ${((Date.now() - t1) / 1000).toFixed(0)} s`);
+    await run(['-i', `${name}.video.mp4`, '-ss', String(first / fps), '-i', `${name}.wav`, '-map', '0:v', '-map', '1:a', '-c:v', 'copy', '-c:a', 'aac', '-b:a', '320k', '-shortest', '-movflags', '+faststart', `${name}.mp4`]).done;
+    await rm(`${name}.video.mp4`);
+    console.log(`→ ${name}.mp4 (the sound alone: ${name}.wav)`);
   }
-  enc.p.stdin.end(); await enc.done;
-  console.log(`video: ${last - first} frames in ${((Date.now() - t0) / 60000).toFixed(1)} min`);
-  // the sound for every frame stepped (from the story's start; an excerpt's offset is cut below)
-  const t1 = Date.now();
-  const wav = await page.evaluate(([f, seed]) => window.__capture.sound(f, seed), [fps, path.seed]);
-  await writeFile(`${name}.wav`, Buffer.from(wav, 'base64'));
-  console.log(`sound: ${((Date.now() - t1) / 1000).toFixed(0)} s`);
-  await run(['-i', `${name}.video.mp4`, '-ss', String(first / fps), '-i', `${name}.wav`, '-map', '0:v', '-map', '1:a', '-c:v', 'copy', '-c:a', 'aac', '-b:a', '320k', '-shortest', '-movflags', '+faststart', `${name}.mp4`]).done;
-  await rm(`${name}.video.mp4`);
-  console.log(`→ ${name}.mp4 (the sound alone: ${name}.wav)`);
 } finally { await browser.close(); await server.close(); }

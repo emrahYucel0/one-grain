@@ -109,7 +109,13 @@ export class Sound {
     this.gate = gate;
     const g = e.master.gain, at = e.now;
     if (gate < .02) {
-      if (!this.zeroed) { g.cancelScheduledValues(at); g.setValueAtTime(g.value, at); g.linearRampToValueAtTime(0, at + .5); this.zeroed = true; }
+      if (!this.zeroed) {
+        // hold the level the automation has reached, then ramp to exactly 0 (cancelAndHoldAtTime where the
+        // browser has it: it needs no read of the audio thread's value, which an offline render ahead of
+        // time does not have)
+        if (g.cancelAndHoldAtTime) g.cancelAndHoldAtTime(at); else { g.cancelScheduledValues(at); g.setValueAtTime(g.value, at); }
+        g.linearRampToValueAtTime(0, at + .5); this.zeroed = true;
+      }
     } else {
       if (this.zeroed) { g.cancelScheduledValues(at); g.setValueAtTime(0, at); this.zeroed = false; }
       e.glide(g, LEVELS.master * gate, gate < this.lastGate ? .3 : .6);

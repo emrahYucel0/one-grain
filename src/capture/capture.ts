@@ -27,8 +27,8 @@ const SCHEDULE_EVERY_S = .05;
  * scripts/capture.mjs. Each step sets the page's virtual clock (debug/parity.ts), the progress and
  * the seconds in the hold, renders one frame, and moves CSS transitions and Web Animations (the
  * clock's punch) to the same clock, so a frame shows the same whatever the render takes. The
- * sound's view of each frame is recorded; afterwards the whole score is rendered on an
- * OfflineAudioContext with a seeded random source, frame by frame at the same times.
+ * sound's view of each frame is recorded; afterwards the whole score is scheduled frame by frame at
+ * the same times, with a seeded random source, and rendered on an OfflineAudioContext.
  * Returns the recorder the frame listener feeds.
  */
 export function exposeCapture(loop: { step(): void }): (f: SoundFrame) => void {
@@ -51,11 +51,12 @@ export function exposeCapture(loop: { step(): void }): (f: SoundFrame) => void {
       seedRandom(seed);
       window.__FT = null; // the sound times its holds from the frame times below
       const ctx = new OfflineAudioContext(2, Math.ceil((frames.length / fps + TAIL_S) * RATE), RATE);
-      const sound = Sound.driven(Engine.offline(ctx));
+      const engine = Engine.offline(ctx), sound = Sound.driven(engine);
       const every = Math.max(1, Math.round(SCHEDULE_EVERY_S * fps));
-      const at = (i: number): void => { sound.frame(frames[i]!, i * 1000 / fps); if (i % every === 0) sound.schedule(); };
-      at(0);
-      for (let i = 1; i < frames.length; i++) void ctx.suspend(i / fps).then(() => { at(i); void ctx.resume(); });
+      // The whole score is scheduled before rendering starts, frame by frame on the frame's exact time
+      // (Engine.clock): nodes created while an OfflineAudioContext is suspended join its graph at a
+      // moment that varies from run to run, so their starts would too.
+      for (let i = 0; i < frames.length; i++) { engine.clock = i / fps; sound.frame(frames[i]!, i * 1000 / fps); if (i % every === 0) sound.schedule(); }
       return wavBase64(await ctx.startRendering());
     },
   };

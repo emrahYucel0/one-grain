@@ -98,7 +98,7 @@ export class Score {
 
   /** A soft electric-piano / celesta note: FM with a quickly mellowing brightness and a long, gentle decay. */
   private note(m: number, vel: number, act: number, when?: number): void {
-    const e = this.e, ctx = e.ctx, t = when ?? ctx.currentTime + .02, f = midi(m), S = ACTS[act]!;
+    const e = this.e, ctx = e.ctx, t = when ?? e.now + .02, f = midi(m), S = ACTS[act]!;
     const car = ctx.createOscillator(), mod = ctx.createOscillator(), mg = ctx.createGain(), env = ctx.createGain(), lp = ctx.createBiquadFilter();
     car.frequency.value = f; mod.frequency.value = f * S.ratio;
     mg.gain.setValueAtTime(f * S.index * vel, t); mg.gain.exponentialRampToValueAtTime(f * .05, t + 1.2);

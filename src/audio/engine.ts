@@ -56,7 +56,13 @@ export class Engine {
   /** Capture mode: the same plumbing on an OfflineAudioContext. */
   static offline(ctx: OfflineAudioContext): Engine { return new Engine(ctx, false); }
 
-  get now(): number { return this.ctx.currentTime; }
+  /**
+   * Capture mode sets the clock itself (the frame's exact time): an OfflineAudioContext's currentTime,
+   * read on the main thread while suspended, can trail the suspension point by a varying amount.
+   */
+  clock: number | null = null;
+
+  get now(): number { return this.clock ?? this.ctx.currentTime; }
 
   /** Count audio nodes created for an event. */
   count(n: number): void { this.stats.nodes += n; }
@@ -65,7 +71,7 @@ export class Engine {
   gain(v: number): GainNode { const g = this.ctx.createGain(); g.gain.value = v; return g; }
 
   /** Glide towards v (time constant tc, seconds). */
-  glide(param: AudioParam, v: number, tc = .2): void { param.setTargetAtTime(v, this.ctx.currentTime, tc); }
+  glide(param: AudioParam, v: number, tc = .2): void { param.setTargetAtTime(v, this.now, tc); }
 
   /** A stereo panner after `node` where the browser has one; returns what to connect onwards. */
   pan(node: AudioNode, value: number): AudioNode {

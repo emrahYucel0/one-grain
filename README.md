@@ -209,9 +209,13 @@ video offline, one frame at a time, from the built site in capture mode (`?captu
 - **Read back** from the compositor (`Page.captureScreenshot`), so the HUD and the words are in the
   picture, and piped to ffmpeg: H.264 (CRF 14, yuv420p), 60 fps.
 - **Sound**, rendered offline on an `OfflineAudioContext` (48 kHz) from the story state of every
-  frame, the scheduler at its realtime 50 ms period, every random choice seeded (`seed`), then muxed
-  in as AAC 320 kb/s; the WAV is kept too. Two renders agree to within one least significant bit on a
-  few hundred samples (the reverb's own rounding).
+  frame: the whole score is scheduled before rendering, frame by frame on each frame's exact time,
+  the scheduler at its realtime 50 ms period, every random choice seeded (`seed`), then muxed in as
+  AAC 320 kb/s; the WAV is kept too. (Scheduling while the context is suspended is not repeatable in
+  Chrome: nodes created then join the graph at varying moments.) Two renders agree to within one
+  least significant bit on a few hundred samples: Chrome sums a node's inputs in varying order.
+  `--sound-only` renders the sound again and puts it into the finished videos without re-encoding
+  the picture.
 - **Output:** `capture/out/one-grain-<W>x<H>.mp4` (ignored by git). `--seconds a-b` renders an
   excerpt to check a passage.
 - **ffmpeg:** `$FFMPEG`, else the `ffmpeg-static` dev dependency (its install script downloads the
