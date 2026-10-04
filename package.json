@@ -24,7 +24,8 @@
     "check:tiers": "node scripts/tier-check.mjs",
     "check:audio": "node scripts/audio-check.mjs",
     "responsive": "vite build && node scripts/responsive.mjs",
-    "check:responsive": "node scripts/responsive-check.mjs"
+    "check:responsive": "node scripts/responsive-check.mjs",
+    "check:load": "node scripts/load-check.mjs"
   },
   "engines": {
     "node": ">=20"

@@ -19,6 +19,7 @@ html.js:not(.nogl) #story{position:absolute;width:1px;height:1px;margin:-1px;pad
 html.js:not(.ready):not(.nogl) :is(.hud,.intro,.story,.timeline,.marker,.cut){visibility:hidden}
 .loader{position:fixed;inset:0;z-index:6;background:#0d181c;pointer-events:none}
 html:not(.js) .loader,html.nogl .loader{display:none}
+html.fonts-pending .loader .brand{visibility:hidden}
 </style>
 <script type="module" src="/src/main.ts"></script>
 </head>
