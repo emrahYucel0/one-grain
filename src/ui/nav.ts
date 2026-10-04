@@ -3,8 +3,11 @@ import { attr, fill, type Copy } from './copy';
 /** The chapter timeline on the right: one group per act, one button per chapter. */
 export class TimelineNav {
   private readonly buttons: HTMLButtonElement[] = [];
+  private readonly nav: HTMLElement;
+  private progress = '';
 
   constructor(nav: HTMLElement, copy: Copy, go: (i: number) => void) {
+    this.nav = nav;
     for (const act of copy.acts) {
       const g = document.createElement('div'); g.className = 'group';
       const l = document.createElement('div'); l.className = 'label'; l.textContent = act.label; g.appendChild(l);
@@ -23,5 +26,11 @@ export class TimelineNav {
 
   setCurrent(i: number): void {
     this.buttons.forEach((b, k) => (k === i ? b.setAttribute('aria-current', 'step') : b.removeAttribute('aria-current')));
+  }
+
+  /** Story progress, 0..1: the collapsed rail on short screens draws it as a line (--p, on the rail only). */
+  setProgress(v: number): void {
+    const p = v.toFixed(3);
+    if (p !== this.progress) { this.progress = p; this.nav.style.setProperty('--p', p); }
   }
 }

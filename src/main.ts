@@ -95,6 +95,7 @@ function boot(): void {
     const { a, b, tr, hold } = L;
     updateInteraction(loop.interaction, pointer, { hold, reduced: env.reduced, heroes: loop.heroes, camera: stage.camera, now });
     if (chapter.show(t < .5 ? a : b)) nav.setCurrent(chapter.current);
+    nav.setProgress(v);
     const op = chapterOpacity(tr, t);
     chapter.setOpacity(op);
     typeAxes.showTitle(op > 0);

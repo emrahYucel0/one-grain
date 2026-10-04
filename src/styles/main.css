@@ -107,6 +107,31 @@ body{margin:0;background:var(--stage);color:var(--ink);font-family:var(--sans);f
 /* the sound button stays clickable at every viewport size: the HUD above the rail, a tighter rail on short screens (v23) */
 .hud{z-index:5}
 @media (max-height:760px){.timeline{gap:.45rem}.timeline .group{gap:0}.timeline button{padding:.04rem 0}}
+
+/* ---------- responsive (Phase 6a) ---------- */
+/* the scrims follow the visible viewport (mobile browser bars); the top one sits behind the HUD */
+.scrim{height:42vh;height:42dvh}
+.scrim-top{top:0;bottom:auto;height:20vh;height:20dvh}
+/* touch targets of at least 44 px, without changing how things look */
+.sound{position:relative}
+.sound::after{content:'';position:absolute;inset:-12px -12px}
+.timeline button{position:relative}
+.timeline button::after{content:'';position:absolute;top:0;bottom:0;left:-14px;right:-14px}
+/* narrow phones: a smaller clock, at most two lines, right-aligned, clear of the brand */
+@media (max-width:479px){
+  :root{--clock-years:1.4rem;--clock-label:1rem;--clock-prod:1.6rem;--clock-now:2.4rem}
+  .time b{max-width:58vw;white-space:normal;text-align:right;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;line-clamp:2;overflow:hidden}
+}
+/* short screens (landscape phones): the rail becomes a thin progress line at the right edge, clear
+   of the HUD; its buttons stay in the document for keyboards and come back while focused */
+@media (max-height:559px){
+  .timeline{top:96px;bottom:1rem;right:.55rem;transform:none;width:2px;gap:0;background:var(--rule);border-radius:1px}
+  .timeline::after{content:'';position:absolute;left:0;top:0;width:100%;height:calc(var(--p, 0) * 100%);background:var(--ink);border-radius:1px}
+  .timeline .group{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
+  .timeline:focus-within{width:auto;bottom:auto;background:none;gap:.45rem}
+  .timeline:focus-within::after{display:none}
+  .timeline:focus-within .group{position:static;width:auto;height:auto;overflow:visible;clip-path:none}
+}
 /* legibility over bright worlds (v15): a soft shadow under all overlay text; no native scrollbar */
 .hud,.timeline,.time,.story{text-shadow:0 1px 10px rgba(0,0,0,.55),0 0 2px rgba(0,0,0,.35)}
 html{scrollbar-width:none}html::-webkit-scrollbar{display:none}
