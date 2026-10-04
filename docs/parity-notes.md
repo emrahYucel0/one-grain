@@ -32,7 +32,7 @@ override, time override, and exposing the built texture (`scripts/lib/reference.
 ## Phase 6a: responsive changes beyond the reference
 
 - **Top scrim.** A subtle gradient in the stage colour behind the HUD on every chapter (70 %, fading
-  over 20vh), for the clock on bright scenes. The reference has none, so  judges
+  over 20vh), for the clock on bright scenes. The reference has none, so `npm run parity` judges
   positions below the top 20 % of the frame and reports the full-frame diff alongside (42/42 within
   2 % below the band; 0.57 % at most, crystal hold).
 - **Framing past 2:1.** Wider screens keep the 2:1 horizontal field of view and crop top and bottom.
