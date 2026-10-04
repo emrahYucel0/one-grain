@@ -33,7 +33,7 @@ Regenerate with `npm run responsive <label> [viewport]`; check with `npm run che
 | Apple Silicon | Started on mid | "Apple M…" / "Apple GPU" on a Mac (not an iPad) with ≥ 8 cores starts on high |
 | Pixel budget | 2116×1374 at 1512×982 @2 (2.9 MP on mid) | low 1.5 MP, mid 2.2 MP, high 4.5 MP, whatever the DPR |
 | Mobile browser bars | A bar resized the canvas and refreshed ScrollTrigger | Canvas sized to the largest viewport (lvh), dynamic units for the scrims; height-only resizes under 120 px rebuild and refresh nothing (ScrollTrigger's own rule only ignores changes under 25 %, less than a landscape phone's bar) |
-| Touch targets | Sound button ~20 px high, rail ticks 3–22 px | Sound button 44×44 px; rail buttons 44 px wide (height: see decisions) |
+| Touch targets | Sound button ~20 px high, rail ticks 3–22 px | Sound button 44×44 px; rail buttons 44 px wide on tablets and desktops (phones: no buttons, see decisions) |
 
 ## Timings at DPR 2 (pixel budget in effect)
 
@@ -54,23 +54,42 @@ Regenerate with `npm run responsive <label> [viewport]`; check with `npm run che
 A first run of these measurements came right after the 15-minute matrix, with the GPU throttled
 (mid 29–30 ms at both sizes). Re-measured once it had recovered; those numbers are above.
 
-## Needs a design decision (screenshots in the sheets above)
+## Decisions (after the first report)
 
-1. **The rail on phones.** Under 720 px wide the rail shows ticks only, and its buttons are 3–6 px
-   tall (22 px on tablets). They are 44 px wide now, but 15 chapters at 44 px do not fit a phone's
-   height. Options:
-   - only the three acts as targets on phones;
-   - the progress line (as on short screens) on all phones, perhaps as a scrubber;
-   - spread the ticks over the full height (about 30 px each at 667 px);
-   - keep it as a position indicator only (scrolling, keys and the article navigate).
-2. **The landscape phone picks the mid tier.** 844×390 starts with 90 000 grains, because the tier
-   follows the window width (760 px). Phones in landscape could start on low (for example by the
-   shorter side, or touch with a short side under 500 px).
-3. **21:9 framing.** With the clamp, wider screens crop top and bottom. Some worlds now have empty
-   ground in the lower part (river, desert, chip; see the 2560×1080 sheet). Each world's framing
-   (look offset) could be tuned for very wide screens.
-4. **The pixel budget at DPR 1.** On large DPR-1 screens the budget also applies: 2560×1080 renders
-   2283×963 (0.89×), upscaled. Alternative: never go below DPR 1 (2.76 MP at 2560×1080).
+The "after" sheets above include these.
+
+1. **The rail on phones: an indicator only.** On touch phones (coarse pointer, narrower than 720 px
+   or shorter than 560 px) the rail is the thin progress line at the right edge, with a faint mark
+   where one act gives way to the next (the middle of the transition between them), and no buttons.
+   Phones navigate by scrolling; screen readers keep the article (the emptied nav is aria-hidden
+   there). Short screens without touch keep the line and the marks, and their buttons come back
+   while focused. Tablets keep the rail with 44 px wide buttons.
+2. **Tier by device.** The starting tier follows the screen's shorter side (under 760 px: low), so
+   844×390 starts on low, like the same phone upright. The tier is picked once per visit; turning a
+   phone or resizing the window never changes it (checked on every phone viewport). A desktop window
+   narrower than 760 px no longer starts on low by itself.
+3. **21:9: one global rule.** Past 2:1 the camera's look target goes down in proportion to
+   (aspect − 2): by (aspect − 2)/2 of the visible half-height, which keeps the 2:1 frame's bottom edge
+   (nearly) where it was, so the crop comes from the top. 2560×1080, clamp only vs. look lowered:
+   [before](21x9/before-clamp-only.jpg) · [after](21x9/after-look-lowered.jpg).
+   - Better: crystal, wafer and purity sit lower with their bases in view; magma shows more of its
+     crystals.
+   - Worse: river, desert and quarry move up and leave more empty ground below them (the empty
+     lower areas from the first report grow); quarry, the furnace's electrodes and the light column
+     are cut at the top.
+   - Per-world tweaks not made: waiting for a decision.
+4. **Pixel budget.** On high the budget never takes the pixel ratio below 1 (a 4K screen at DPR 1
+   renders all 8.3 MP; Retina screens still come down to the budget, not below DPR 1). Low and mid
+   are unchanged (2560×1080 on mid: 2283×963).
+
+## Found on the way
+
+With the lowered look target the ring sat about 100 px below the grain at 21:9, while
+`check:responsive` still passed. three.js's `lookAt` refreshes the camera's world matrix before it
+turns the camera, so after the second `lookAt` every projection that frame (the ring and the
+check's `window.__hero`) used the view before the turn. `frameShot` now refreshes the matrix at the
+end, and the check measures the ring against `window.__heroRendered`, the grain projected after
+rendering through the matrices the frame was drawn with, so it no longer shares the loop's path.
 
 ## Not verifiable here
 
