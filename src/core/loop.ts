@@ -4,7 +4,7 @@ import { CONFINEMENT, towards } from '../camera/confinement';
 import { ss } from './ease';
 import { LightRigBlend, type RigState } from './light-rig';
 import { shot } from '../camera/shot';
-import { overdrawView, progressOverride, reportGpu, reportProgress, reportRender, restPathAllowed, timeOverride, transitionOverride } from '../debug/parity';
+import { overdrawView, progressOverride, reportGpu, reportHero, reportProgress, reportRender, restPathAllowed, timeOverride, transitionOverride } from '../debug/parity';
 import type { GrainCloud } from '../render/grains';
 import type { Pipeline } from '../render/pipeline';
 import type { GpuTimer } from './gpu-timer';
@@ -81,6 +81,7 @@ export class Loop {
   /** set by the interaction listener, applied in the same frame */
   readonly interaction = { mode: 0, at: new Vector3(0, -99, 0), press: 0 };
   private canvasOpacity = '';
+  private readonly heroNdc = new Vector3();
   /** seconds since the final chapter was reached, -1 elsewhere (set by the ending, in the 'story' phase) */
   finalTime = -1;
   /** extra canvas opacity factor (quality swaps) */
@@ -146,6 +147,8 @@ export class Loop {
     hero.visible = heroVisible;
     for (const fn of this.listeners.camera) fn(info);
     frameShot(stage.camera, S, reduced ? null : this.parallax);
+    const hp = this.heroNdc.copy(S.hero).project(stage.camera);
+    reportHero(hp.x, hp.y, hp.z, heroVisible);
     const grain = towards(wa.grain, wb.grain, S.eg);
     hero.setLight(info.heroLight, grain * projection.scale / Math.max(.1, stage.camera.position.distanceTo(S.hero)));
     for (const fn of this.listeners.scene) fn(info);

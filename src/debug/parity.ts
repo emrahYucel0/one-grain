@@ -30,6 +30,8 @@ declare global {
     __renderT?: number[];
     /** ?parity: the sound, once created (the audio check reads its taps and counters) */
     __audio?: unknown;
+    /** ?parity: the hero grain projected by the camera (NDC x, y, z) and whether it is shown, each frame */
+    __hero?: { x: number; y: number; z: number; visible: boolean };
     /** ?perf: the pacer's lock at each rendered frame (0 = none) */
     __renderLock?: number[];
   }
@@ -71,6 +73,9 @@ export function reportProgress(v: number): void {
 }
 
 /** With ?perf or ?debug, publish the per-pass GPU timings (for scripts/perf.mjs). */
+/** ?parity: the hero grain in normalised device coordinates, for the ring check. */
+export function reportHero(x: number, y: number, z: number, visible: boolean): void { if (flags.parity) window.__hero = { x, y, z, visible }; }
+
 /** ?parity: expose the sound for the audio check. */
 export function exposeAudio(sound: unknown): void { if (flags.parity) window.__audio = sound; }
 

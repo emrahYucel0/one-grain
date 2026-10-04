@@ -22,7 +22,8 @@
     "check:seams": "node scripts/seams.mjs",
     "check:fonts": "vite build && node scripts/fonts-check.mjs",
     "check:tiers": "node scripts/tier-check.mjs",
-    "check:audio": "node scripts/audio-check.mjs"
+    "check:audio": "node scripts/audio-check.mjs",
+    "responsive": "vite build && node scripts/responsive.mjs"
   },
   "engines": {
     "node": ">=20"
