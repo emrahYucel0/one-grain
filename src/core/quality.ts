@@ -11,6 +11,8 @@ export interface Tier {
   dpr: number;
   /** drawing-buffer budget in pixels, whatever the screen's DPR (4K and Retina must not multiply the cost) */
   pixels: number;
+  /** the budget never takes the pixel ratio below this (high: never under the screen's own pixels) */
+  dprFloor: number;
   /** the render layers this tier draws */
   fx: LayerSet;
 }
@@ -20,9 +22,9 @@ const ALL: LayerSet = { light: true, shadows: true, dof: true, bloom: true, grad
 // low = v10 on small screens (no shadows, no depth of field), mid = v10 on desktop (the parity
 // baseline). The pixel-ratio caps are v10's: post costs per pixel. high is ours.
 export const TIERS: Readonly<Record<TierName, Tier>> = {
-  low: { name: 'low', n: 36000, dpr: 1.25, pixels: 1.5e6, fx: { ...ALL, shadows: false, dof: false } },
-  mid: { name: 'mid', n: 90000, dpr: 1.4, pixels: 2.2e6, fx: ALL },
-  high: { name: 'high', n: 160000, dpr: 1.75, pixels: 4.5e6, fx: ALL },
+  low: { name: 'low', n: 36000, dpr: 1.25, pixels: 1.5e6, dprFloor: 0, fx: { ...ALL, shadows: false, dof: false } },
+  mid: { name: 'mid', n: 90000, dpr: 1.4, pixels: 2.2e6, dprFloor: 0, fx: ALL },
+  high: { name: 'high', n: 160000, dpr: 1.75, pixels: 4.5e6, dprFloor: 1, fx: ALL },
 };
 
 const ORDER: readonly TierName[] = ['low', 'mid', 'high'];
@@ -68,9 +70,9 @@ export const lowerTier = (t: Tier): Tier | null => {
   return i > 0 ? TIERS[ORDER[i - 1]!] : null;
 };
 
-/** The screen's DPR, capped by the tier and by its pixel budget for this window size. */
+/** The screen's DPR, capped by the tier and by its pixel budget for this window size (not below the tier's floor). */
 export const pixelRatioFor = (t: Tier, width = innerWidth, height = innerHeight): number =>
-  Math.min(devicePixelRatio || 1, t.dpr, Math.sqrt(t.pixels / Math.max(1, width * height)));
+  Math.min(devicePixelRatio || 1, t.dpr, Math.max(t.dprFloor, Math.sqrt(t.pixels / Math.max(1, width * height))));
 
 /**
  * Frame-time watchdog. 60 fps is the target; the budget is the point below which fewer grains

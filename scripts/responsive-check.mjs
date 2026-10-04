@@ -5,7 +5,8 @@
 //     tablets: every rail button takes one in a 44 px wide box (elementFromPoint; their height is
 //     reported); phones: the rail is an indicator only (a progress line with a mark per act change,
 //     no buttons, hidden from screen readers, never taking a touch)
-//  3. the drawing buffer stays within its tier's pixel budget (core/quality.ts), whatever the DPR
+//  3. the drawing buffer stays within its tier's pixel budget (core/quality.ts), whatever the DPR,
+//     except that high never goes below DPR 1 (and mid does), checked on a 4K screen at DPR 1
 //  4. phones: a mobile browser bar coming in (height −100 px) rebuilds nothing: same drawing buffer,
 //     same scroll position, same story progress (no ScrollTrigger refresh, no jump)
 //     and turning the phone (width and height swapped) keeps the tier
@@ -50,7 +51,8 @@ try {
     check(`${vp.name}: ring on the grain at every hold`, worst <= 2, `${n} holds, at most ${worst.toFixed(2)} px${where ? ` (${where})` : ''}`);
     // 3: the pixel budget
     const buf = await page.evaluate(() => ({ w: document.getElementById('scene').width, h: document.getElementById('scene').height, n: window.__PACK.n }));
-    const tierName = Object.values(TIERS).find((t) => t.n === buf.n)?.name ?? '?', budget = TIERS[tierName]?.pixels ?? Infinity;
+    const tierName = Object.values(TIERS).find((t) => t.n === buf.n)?.name ?? '?', floor = Math.min(vp.dpr, TIERS[tierName]?.dprFloor ?? 0);
+    const budget = Math.max(TIERS[tierName]?.pixels ?? Infinity, vp.width * vp.height * floor * floor);
     check(`${vp.name}: drawing buffer within the ${tierName} tier's pixel budget`, buf.w * buf.h <= budget * 1.01, `${buf.w}×${buf.h} = ${(buf.w * buf.h / 1e6).toFixed(2)} MP, budget ${(budget / 1e6).toFixed(1)} MP, DPR ${vp.dpr}`);
     // 4: a mobile browser bar
     if (vp.mobile) {
@@ -121,6 +123,15 @@ try {
         return q.pickTier({ webgl2: true, performant: true, maxTextureSize: 16384, renderer: r }, null).name;
       }, [ua, touch, cores, renderer, scr, win]);
       check(`device class: ${name} → ${want}`, got === want, got);
+    }
+    // the DPR floor: a 4K screen at DPR 1, and a 5K one at DPR 2
+    for (const [w, h, dpr, tier, want] of [[3840, 2160, 1, 'high', 1], [3840, 2160, 1, 'mid', Math.sqrt(2.2e6 / (3840 * 2160))], [2560, 1440, 2, 'high', Math.sqrt(4.5e6 / (2560 * 1440))]]) {
+      const got = await page.evaluate(async ([w, h, dpr, tier]) => {
+        Object.defineProperty(window, 'devicePixelRatio', { configurable: true, get: () => dpr });
+        const q = await import('/src/core/quality.ts');
+        return q.pixelRatioFor(q.TIERS[tier], w, h);
+      }, [w, h, dpr, tier]);
+      check(`pixel ratio: ${tier} at ${w}×${h} @${dpr} → ${want.toFixed(3)}`, Math.abs(got - want) < 1e-6, `${got.toFixed(3)} (${Math.round(w * got)}×${Math.round(h * got)})`);
     }
     await page.context().close();
   }
