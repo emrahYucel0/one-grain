@@ -11,11 +11,36 @@
  *
  * Only rendering is paced: scroll input (ScrollTrigger runs on GSAP's own ticker) and the scrubbed
  * progress keep updating on every refresh; a skipped refresh simply draws nothing new.
- * The refresh interval is measured once, from rAF while nothing heavy draws (during loading).
+ * The refresh interval is measured in every mode (?debug shows it), from 60 rAF intervals during
+ * loading; the estimate is the interval the samples are whole multiples of, so frames that span two
+ * or three refreshes do not fool it. An unusable sample (a hidden tab, a busy machine) is retried a
+ * second later, up to five times, and again whenever the tab becomes visible while still unknown.
  * A lock is released and re-evaluated on a resize, a quality step, a tab switch, and for one second
  * every ten seconds (a probe), since a locked cadence hides whether frames would fit again.
  */
 export type PacingMode = 'off' | 'on' | 'auto';
+
+/**
+ * The display's refresh interval from rAF intervals (ms), or 0 when they do not say. The 10th
+ * percentile divided by 1–4: the smallest divisor that leaves (nearly) every interval a whole
+ * multiple, within 20–330 Hz, refined as the median interval per refresh. Idle loading frames give the interval itself; rendered frames that
+ * mix two and three refreshes give it too (14 and 21 ms → 7 ms).
+ */
+export function refreshFrom(deltas: readonly number[]): number {
+  const d = deltas.filter((x) => x > 0).sort((a, b) => a - b);
+  if (d.length < 20) return 0;
+  const base = d[Math.floor(d.length * .1)]!;
+  for (let k = 1; k <= 4; k++) {
+    const r = base / k;
+    if (r <= 3 || r >= 50) continue;
+    const fits = d.filter((x) => Math.abs(x / r - Math.round(x / r)) < .15);
+    if (fits.length < d.length * .85) continue;
+    // refined: the median of each fitting interval divided by its whole multiple
+    const per = fits.map((x) => x / Math.max(1, Math.round(x / r))).sort((a, b) => a - b);
+    return per[per.length >> 1]!;
+  }
+  return 0;
+}
 
 const WINDOW_MS = 2000, MIN_FRAMES = 40, PROBE_EVERY_MS = 10000, PROBE_MS = 1000, QUIET_MS = 1500;
 /** the slowest cadence it locks to (every 4th refresh: 36 fps at 144 Hz); slower frames are left as they come */
@@ -38,22 +63,23 @@ export class Pacer {
 
   constructor(mode: PacingMode) {
     this.mode = mode;
-    document.addEventListener('visibilitychange', () => this.reset(performance.now()));
+    document.addEventListener('visibilitychange', () => {
+      this.reset(performance.now());
+      if (!document.hidden && !this.refresh) void this.measureRefresh(1);
+    });
     addEventListener('resize', () => this.reset(performance.now()));
   }
 
-  /** Measure the refresh interval: the median rAF interval over ~60 frames. Call while nothing heavy draws. */
-  measureRefresh(): Promise<void> {
-    if (this.mode === 'off') return Promise.resolve();
+  /** Measure the refresh interval (see above); resolves once known or given up. */
+  measureRefresh(tries = 5): Promise<void> {
     return new Promise((done) => {
       const t: number[] = [];
       const f = (x: number): void => {
         t.push(x);
         if (t.length < 61) { requestAnimationFrame(f); return; }
-        const d = t.slice(1).map((v, i) => v - t[i]!).sort((a, b) => a - b);
-        const m = d[d.length >> 1]!;
-        this.refresh = m > 3 && m < 50 ? m : 0; // 20–330 Hz; otherwise (hidden tab) unknown
-        done();
+        this.refresh = refreshFrom(t.slice(1).map((v, i) => v - t[i]!));
+        if (this.refresh || tries <= 1) { done(); return; }
+        setTimeout(() => void this.measureRefresh(tries - 1).then(done), 1000);
       };
       requestAnimationFrame(f);
     });

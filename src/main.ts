@@ -79,7 +79,7 @@ function boot(): void {
   const layers = new RenderLayers(tier.fx);
   for (const k of flags.off) if (isLayerName(k)) layers.override[k] = false;
   const pacer = new Pacer(flags.pacing);
-  void pacer.measureRefresh(); // while the worlds build, nothing heavy draws
+  void pacer.measureRefresh(); // while the worlds build, nothing heavy draws (in every mode: ?debug shows it)
   const loop = new Loop({ stage, grains, hero, timeline, hash, projection, typeAxes, stageColour: new StageColour(), pipeline, timer, layers, pacer });
   const go = (i: number): void => timeline.goTo(i);
 
