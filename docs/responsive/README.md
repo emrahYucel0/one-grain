@@ -77,14 +77,14 @@ The "after" sheets above include these.
    chip .8, display .5, now .5. Sheets: [2560×1080](after/desktop-2560x1080-21x9.jpg),
    [3440×1440](after/desktop-3440x1440-21x9.jpg). The first round's single rule (every world 0)
    for comparison: [clamp only](21x9/before-clamp-only.jpg) · [global rule](21x9/after-look-lowered.jpg).
-   - Still floating over empty ground: **quarry**. The pit fills the top half and the lower third or
-     more is dark ground (about 30 % already at 16:9); anchor 1 would take a little more from the
-     bottom, but most of the gap is the shot itself.
-   - Cut at the top, as at 16:9 (the shot, not the crop): the furnace's electrodes and the light
-     column come in from above.
+   - Quarry floated over empty ground at every width (about 45 % at 16:9). It is reframed since (all
+     widths): seen from the pit's side, higher and closer, the pit fills the frame with its centre a
+     little below the middle and the hero grain right of centre. Before/after, with the cut in and the
+     break out: [16:9](quarry/quarry-1920x1080.jpg), [2560×1080](quarry/quarry-2560x1080.jpg).
+   - Cut at the top, as at 16:9, by design: the furnace's electrodes and the light column come in
+     from above. Display's empty left third is the space for the chapter text.
    - Fixed by the anchors: river and desert sit low again with little empty ground below; crystal,
      wafer (all five wafers, the top one is cut at 16:9) and purity keep their bases.
-   - Not vertical: display leaves its left third empty at every width (the wall is on the right).
 4. **Pixel budget.** On high the budget never takes the pixel ratio below 1 (a 4K screen at DPR 1
    renders all 8.3 MP; Retina screens still come down to the budget, not below DPR 1). Low and mid
    are unchanged (2560×1080 on mid: 2283×963).

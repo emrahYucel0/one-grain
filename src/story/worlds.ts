@@ -9,7 +9,7 @@ export const WORLDS: readonly WorldDef[] = [
   { slug: 'desert', act: 'nature', hold: 1.6, clock: { unit: 'years', value: 2.1e7 }, lo: '#97653a', hi: '#e8ba7b', grain: .17, cam: [-7, 3.2, 11], look: [3, -.5, -4], conf: .15, frame: 1, wideAnchor: .85 },
   { slug: 'again', act: 'nature', hold: .9, clock: { unit: 'years', value: 3e8 }, lo: '#8a4a2c', hi: '#ead0a6', grain: .09, cam: [7, 3.5, 11], look: [-2.5, .5, -1.5], conf: 0, frame: 1, wideAnchor: .5 },
 
-  { slug: 'quarry', act: 'industry', hold: 1.0, clock: { unit: 'prod' }, lo: '#6f6252', hi: '#e8dfd2', grain: .12, cam: [-4, 8, 16], look: [3, -5, -8], conf: .3, frame: 1, wideAnchor: .7 },
+  { slug: 'quarry', act: 'industry', hold: 1.0, clock: { unit: 'prod' }, lo: '#6f6252', hi: '#e8dfd2', grain: .12, cam: [-17, 18, -2], look: [0, -2, -7.6], conf: .3, frame: 1, wideAnchor: .7 },
   { slug: 'furnace', act: 'industry', hold: 1.0, clock: { unit: 'prod' }, lo: '#2f2b29', hi: '#8c8178', grain: .08, cam: [0, 6, 12], look: [0, -2, -3], conf: .5, frame: 1.25, wideAnchor: .6 },
   { slug: 'purity', act: 'industry', hold: .8, clock: { unit: 'prod' }, lo: '#46525e', hi: '#dbe3ea', grain: .06, cam: [4, 1.2, 9], look: [-3.5, 1.5, -5], conf: .75, frame: 1.6, wideAnchor: 0 },
   { slug: 'crystal', act: 'industry', hold: 1.3, clock: { unit: 'prod' }, lo: '#46525e', hi: '#eef3f6', grain: .05, cam: [7, 5.5, 14], look: [-4.5, 4.6, -2], conf: 1, frame: 1.55, wideAnchor: 0 },

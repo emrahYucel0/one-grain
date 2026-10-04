@@ -35,8 +35,18 @@ override, time override, and exposing the built texture (`scripts/lib/reference.
   over 20vh), for the clock on bright scenes. The reference has none, so `npm run parity` judges
   positions below the top 20 % of the frame and reports the full-frame diff alongside (42/42 within
   2 % below the band; 0.57 % at most, crystal hold).
-- **Framing past 2:1.** Wider screens keep the 2:1 horizontal field of view and crop top and bottom.
-  The reference shows more of the sides (and the worlds' edges). It does not apply at the parity size.
+- **Framing past 2:1.** Wider screens keep the 2:1 horizontal field of view and lose height; each
+  world's `wideAnchor` picks which edge of the 2:1 frame stays. The reference shows more of the sides
+  (and the worlds' edges). It does not apply at the parity size.
+- **Quarry is reframed (intentional, all widths).** v15 looks at the pit from in front and low, so the
+  pit fills only the top half and the lower ~45 % at 16:9 is empty ground. The port looks from the pit's
+  −x side, higher and closer (cam [−17, 18, −2], look [0, −2, −7.6] from the hero; v15
+  [−4, 8, 16] / [3, −5, −8]): the pit fills the frame, its centre sits about 10 % below the middle, and
+  the hero grain is right of centre above the scrim. A front view cannot do all three: the hero sits
+  under the second bench, next to the near rim, so filling the frame from the front puts it at the
+  bottom edge inside the scrim. The cut into quarry needs no continuity; the break out of it starts from
+  the new camera on the same curve (check:seams and check:reverse pass). The quarry hold and the break
+  (quarry → furnace) differ from v15 on purpose. Before/after: docs/responsive/quarry/.
 - **Pixel budget.** The drawing buffer is capped by total pixels per tier (low 1.5 MP, mid 2.2 MP, high
   4.5 MP). It does not apply at the parity size (1440×900 = 1.3 MP).
 - **Narrow and short screens.** Under 480 px wide the clock is smaller; below 560 px high the rail is a
