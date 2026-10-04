@@ -22,10 +22,11 @@ import { WORLDS } from './story/worlds';
 import { HashRouter } from './timeline/hash';
 import { bindChapterKeys } from './timeline/keys';
 import { ScrollTimeline } from './timeline/scroll';
+import { transitionMidpoint } from './timeline/segments';
 import { StoryA11y } from './ui/a11y';
 import { ChapterView } from './ui/chapter';
 import { ClockView, clockProgress } from './ui/clock';
-import { readCopy } from './ui/copy';
+import { readCopy, type Copy } from './ui/copy';
 import { revealWhenFontsReady } from './ui/fonts';
 import { HeroMarker } from './ui/marker';
 import { TimelineNav } from './ui/nav';
@@ -34,6 +35,9 @@ import { Ending, Intro, chapterOpacity, cutOpacity } from './ui/overlays';
 
 const root = document.documentElement;
 const $ = <T extends HTMLElement = HTMLElement>(id: string): T => document.getElementById(id) as T;
+/** Where one act gives way to the next: the middle of the transition between them (progress 0..1). */
+const actBoundaries = (copy: Copy): number[] =>
+  copy.chapters.slice(1).flatMap((c, k) => (c.act !== copy.chapters[k]!.act ? [transitionMidpoint(k)] : []));
 const LAST = WORLDS.length - 1;
 
 function boot(): void {
@@ -81,7 +85,7 @@ function boot(): void {
 
   // words and instruments
   const chapter = new ChapterView($('chapter'), copy, env.touchOnly);
-  const nav = new TimelineNav($('timeline'), copy, go);
+  const nav = new TimelineNav($('timeline'), copy, go, actBoundaries(copy));
   const clock = new ClockView($('time'), $('clock'), $('clockUnit'), copy);
   const intro = new Intro($('intro'), $('introHint'));
   const ending = new Ending($('chapter'));

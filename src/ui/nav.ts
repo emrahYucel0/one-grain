@@ -1,13 +1,27 @@
 import { attr, fill, type Copy } from './copy';
 
-/** The chapter timeline on the right: one group per act, one button per chapter. */
+/** Touch phones: the rail is only an indicator (a progress line), with no buttons. */
+const PHONE = '(hover:none) and (pointer:coarse) and (max-width:719px), (hover:none) and (pointer:coarse) and (max-height:559px)';
+
+/**
+ * The chapter timeline on the right: one group per act, one button per chapter. As a progress line
+ * (short screens, touch phones) it also marks where one act gives way to the next (`boundaries`, 0..1).
+ */
 export class TimelineNav {
   private readonly buttons: HTMLButtonElement[] = [];
   private readonly nav: HTMLElement;
   private progress = '';
 
-  constructor(nav: HTMLElement, copy: Copy, go: (i: number) => void) {
+  constructor(nav: HTMLElement, copy: Copy, go: (i: number) => void, boundaries: readonly number[]) {
     this.nav = nav;
+    for (const at of boundaries) {
+      const tick = document.createElement('i'); tick.className = 'tick'; tick.setAttribute('aria-hidden', 'true');
+      tick.style.setProperty('--at', at.toFixed(4)); nav.appendChild(tick);
+    }
+    // on phones navigation is scrolling; screen readers keep the article, not an empty landmark
+    const phone = matchMedia(PHONE);
+    const hide = (): void => { if (phone.matches) nav.setAttribute('aria-hidden', 'true'); else nav.removeAttribute('aria-hidden'); };
+    hide(); phone.addEventListener('change', hide);
     for (const act of copy.acts) {
       const g = document.createElement('div'); g.className = 'group';
       const l = document.createElement('div'); l.className = 'label'; l.textContent = act.label; g.appendChild(l);
@@ -28,7 +42,7 @@ export class TimelineNav {
     this.buttons.forEach((b, k) => (k === i ? b.setAttribute('aria-current', 'step') : b.removeAttribute('aria-current')));
   }
 
-  /** Story progress, 0..1: the collapsed rail on short screens draws it as a line (--p, on the rail only). */
+  /** Story progress, 0..1: the rail as a line (short screens, phones) draws it (--p, on the rail only). */
   setProgress(v: number): void {
     const p = v.toFixed(3);
     if (p !== this.progress) { this.progress = p; this.nav.style.setProperty('--p', p); }

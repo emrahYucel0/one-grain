@@ -122,15 +122,25 @@ body{margin:0;background:var(--stage);color:var(--ink);font-family:var(--sans);f
   :root{--clock-years:1.4rem;--clock-label:1rem;--clock-prod:1.6rem;--clock-now:2.4rem}
   .time b{max-width:58vw;white-space:normal;text-align:right;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;line-clamp:2;overflow:hidden}
 }
-/* short screens (landscape phones): the rail becomes a thin progress line at the right edge, clear
-   of the HUD; its buttons stay in the document for keyboards and come back while focused */
-@media (max-height:559px){
-  .timeline{top:96px;bottom:1rem;right:.55rem;transform:none;width:2px;gap:0;background:var(--rule);border-radius:1px}
+/* the rail as a thin progress line at the right edge, clear of the HUD, with faint marks where the
+   acts change: on short screens and on touch phones */
+.timeline .tick{display:none}
+@media (max-height:559px),(hover:none) and (pointer:coarse) and (max-width:719px){
+  .timeline{top:96px;bottom:calc(env(safe-area-inset-bottom,0px) + 1rem);right:.55rem;transform:none;width:2px;gap:0;background:var(--rule);border-radius:1px}
   .timeline::after{content:'';position:absolute;left:0;top:0;width:100%;height:calc(var(--p, 0) * 100%);background:var(--ink);border-radius:1px}
+  .timeline .tick{display:block;position:absolute;left:-3px;top:calc(var(--at) * 100%);width:8px;height:1px;background:var(--muted);opacity:.55}
   .timeline .group{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
+}
+/* short screens without touch: the buttons stay in the document for keyboards and come back while focused */
+@media (max-height:559px){
   .timeline:focus-within{width:auto;bottom:auto;background:none;gap:.45rem}
-  .timeline:focus-within::after{display:none}
+  .timeline:focus-within::after,.timeline:focus-within .tick{display:none}
   .timeline:focus-within .group{position:static;width:auto;height:auto;overflow:visible;clip-path:none}
+}
+/* touch phones: an indicator only. Navigation is scrolling; screen readers keep the article */
+@media (hover:none) and (pointer:coarse) and (max-width:719px),(hover:none) and (pointer:coarse) and (max-height:559px){
+  .timeline{pointer-events:none}
+  .timeline .group{display:none}
 }
 /* legibility over bright worlds (v15): a soft shadow under all overlay text; no native scrollbar */
 .hud,.timeline,.time,.story{text-shadow:0 1px 10px rgba(0,0,0,.55),0 0 2px rgba(0,0,0,.35)}

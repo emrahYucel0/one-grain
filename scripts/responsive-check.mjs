@@ -1,14 +1,16 @@
 // Responsive check (npm run check:responsive), on the dev server across the matrix's viewports:
 //  1. the hero ring's centre is within 2 px of the hero grain as the camera projects it, at every
 //     chapter hold (window.__hero mapped through the canvas's own box on screen)
-//  2. touch viewports: the sound button takes a touch anywhere in a 44×44 px box around its centre,
-//     and every rail button in a 44 px wide one (elementFromPoint); the rail buttons' height is
-//     reported (15 chapters do not fit 44 px each on a phone)
+//  2. touch viewports: the sound button takes a touch anywhere in a 44×44 px box around its centre;
+//     tablets: every rail button takes one in a 44 px wide box (elementFromPoint; their height is
+//     reported); phones: the rail is an indicator only (a progress line with a mark per act change,
+//     no buttons, hidden from screen readers, never taking a touch)
 //  3. the drawing buffer stays within its tier's pixel budget (core/quality.ts), whatever the DPR
 //  4. phones: a mobile browser bar coming in (height −100 px) rebuilds nothing: same drawing buffer,
 //     same scroll position, same story progress (no ScrollTrigger refresh, no jump)
 //  5. device classes: the tier picked for an Apple Silicon Mac (Chromium and Safari), an iPad, a
 //     4-core Mac, an Intel PC and an RTX PC (core/quality.ts with a stubbed navigator)
+import { readFileSync } from 'node:fs';
 import { createServer } from 'vite';
 import { launch, watchConsole } from './lib/browser.mjs';
 import { startDev } from './lib/servers.mjs';
@@ -17,6 +19,7 @@ import { VIEWPORTS } from './lib/viewports.mjs';
 const vite = await createServer({ server: { middlewareMode: true }, appType: 'custom', logLevel: 'error' });
 const { SNAP_POINTS } = await vite.ssrLoadModule('/src/timeline/segments.ts');
 const { TIERS } = await vite.ssrLoadModule('/src/core/quality.ts');
+const ACTS = readFileSync('index.html', 'utf8').match(/class="act-group" data-act=/g)?.length ?? 0;
 await vite.close();
 const dev = await startDev(5176);
 const browser = await launch();
@@ -66,19 +69,23 @@ try {
         const hits = (el, x, y) => { const e = document.elementFromPoint(x, y); return !!e && (e === el || el.contains(e)); };
         const s = document.getElementById('sound'), r = s.getBoundingClientRect(), cx = r.left + r.width / 2, cy = r.top + r.height / 2;
         const sound = [[-21, 0], [21, 0], [0, -21], [0, 21]].every(([dx, dy]) => hits(s, cx + dx, cy + dy));
-        const rail = document.getElementById('timeline'), collapsed = rail.getBoundingClientRect().width < 10;
-        const buttons = [...rail.querySelectorAll('button')];
+        const rail = document.getElementById('timeline'), rr = rail.getBoundingClientRect();
+        const buttons = [...rail.querySelectorAll('button')], shown = buttons.filter((b) => b.getClientRects().length > 0);
+        const ticks = [...rail.querySelectorAll('.tick')].filter((k) => k.getClientRects().length > 0).length;
+        const indicator = { line: rr.width <= 4 && rr.height > 100, top: rr.top, ticks, buttons: shown.length, hidden: rail.getAttribute('aria-hidden') === 'true', inert: getComputedStyle(rail).pointerEvents === 'none' };
         let wide = true, minH = Infinity;
-        if (!collapsed) for (const b of buttons) {
+        for (const b of shown) {
           const br = b.getBoundingClientRect(), tick = b.querySelector('i').getBoundingClientRect(), x = tick.left + tick.width / 2, y = br.top + br.height / 2;
           wide &&= hits(b, x - 21, y) && hits(b, x + 21, y);
           minH = Math.min(minH, br.height);
         }
-        return { sound, collapsed, wide, minH };
+        return { sound, wide, minH, indicator };
       });
       check(`${vp.name}: sound button takes a touch across 44×44 px`, t.sound, t.sound ? 'all four edges' : 'an edge misses');
-      if (!t.collapsed) check(`${vp.name}: rail buttons take a touch across 44 px of width`, t.wide, `button height ${t.minH.toFixed(0)} px (44 px of height does not fit 15 chapters here)`);
-      else console.log(`INFO  ${vp.name}: rail collapsed to the progress line (short screen)`);
+      const ind = t.indicator;
+      if (vp.mobile) check(`${vp.name}: rail is an indicator only (progress line, act marks, no buttons)`, ind.line && ind.top >= 96 && ind.ticks === ACTS - 1 && ind.buttons === 0 && ind.hidden && ind.inert,
+        `line ${ind.line}, top ${ind.top.toFixed(0)} px, ${ind.ticks} act marks, ${ind.buttons} buttons shown, aria-hidden ${ind.hidden}, takes touches ${!ind.inert}`);
+      else check(`${vp.name}: rail buttons take a touch across 44 px of width`, ind.buttons > 0 && !ind.hidden && t.wide, `${ind.buttons} buttons, height ${t.minH.toFixed(0)} px (44 px of height does not fit 15 chapters here)`);
     }
     await ctx.close();
   }
