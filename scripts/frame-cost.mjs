@@ -23,7 +23,8 @@ await vite.close();
 
 const W = 1920, H = 909, BUDGET = 13.9;
 const server = await startPreview(5193);
-const browser = await chromium.launch({ channel: 'chromium', headless: false, args: [`--window-size=${W + 16},${H + 140}`] });
+const SOUND = process.env.SOUND === '1'; // SOUND=1: switch the sound on first (autoplay allowed), to measure its main-thread cost
+const browser = await chromium.launch({ channel: 'chromium', headless: false, args: [`--window-size=${W + 16},${H + 140}`, ...(SOUND ? ['--autoplay-policy=no-user-gesture-required'] : [])] });
 const ctx = await browser.newContext({ viewport: { width: W, height: H } });
 // the display's refresh interval: rAF on a page that draws nothing
 const blank = await ctx.newPage();
@@ -34,6 +35,7 @@ const page = await ctx.newPage();
 await page.bringToFront();
 await page.goto(`${server.origin}/?parity&perf&tier=mid${extra ? '&' + extra : ''}`);
 await page.waitForFunction(() => window.__PACK && window.__gpu, null, { timeout: 90000 });
+if (SOUND) await page.locator('#sound').click();
 await page.waitForTimeout(1500);
 
 const CATEGORIES = ['devtools.timeline', 'disabled-by-default-devtools.timeline', 'disabled-by-default-devtools.timeline.frame', 'toplevel', 'v8.execute'];
@@ -143,7 +145,7 @@ report('scroll-through (wheel)', await measure(0, async () => {
   await page.waitForTimeout(2500);
 }, toTop));
 
-console.log(`frame cost · mid · ${W}×${H}${extra ? ' · ' + extra : ''} · refresh ≈ ${refresh.toFixed(2)} ms (${(1000 / refresh).toFixed(0)} Hz)\n`);
+console.log(`frame cost · mid · ${W}×${H}${extra ? ' · ' + extra : ''}${SOUND ? ' · sound on' : ''} · refresh ≈ ${refresh.toFixed(2)} ms (${(1000 / refresh).toFixed(0)} Hz)\n`);
 console.log('| Position | Frame interval | Cadence (refreshes per frame) | Main thread median / p95 / max | script | style | layout | paint | forced layouts | GPU frame median / p95 / max |');
 console.log('|---|---|---|---|---|---|---|---|---|---|');
 for (const r of rows) console.log(r);

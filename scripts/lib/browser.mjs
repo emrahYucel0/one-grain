@@ -3,9 +3,9 @@
 // SwiftShader, which renders 90 000 grains at a few frames per second.
 import { chromium } from 'playwright';
 
-export const launch = (extra = {}) => chromium.launch({
+export const launch = ({ args = [], ...extra } = {}) => chromium.launch({
   channel: 'chromium',
-  args: ['--use-angle=d3d11', '--enable-gpu', '--ignore-gpu-blocklist', '--enable-unsafe-swiftshader'],
+  args: ['--use-angle=d3d11', '--enable-gpu', '--ignore-gpu-blocklist', '--enable-unsafe-swiftshader', ...args],
   ...extra,
 });
 

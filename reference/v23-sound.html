@@ -1,0 +1,1496 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="color-scheme" content="dark">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>One Grain · v23 sound</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,300..900&family=Newsreader:ital,opsz,wght@0,6..72,300..600;1,6..72,300..600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --stage:#0d181c;--ink:#ece3d3;--muted:#8d9d99;--rule:rgba(236,227,211,.22);
+  color-scheme:dark;box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--stage:#0d181c;--ink:#ece3d3;--muted:#8d9d99;--rule:rgba(236,227,211,.22)}}
+:root[data-theme="dark"]{--stage:#0d181c;--ink:#ece3d3;--muted:#8d9d99;--rule:rgba(236,227,211,.22)}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*,*::before,*::after{box-sizing:border-box}
+body{margin:0;background:var(--stage);color:var(--ink);font-family:"Archivo",system-ui,-apple-system,"Segoe UI",sans-serif;font-size:1.0625rem;line-height:1.5;-webkit-font-smoothing:antialiased}
+#scene{position:fixed;top:0;left:0;width:100%;height:100%;display:block;z-index:0}
+#track{height:2000vh}
+.cut{position:fixed;inset:0;z-index:4;background:#06090a;color:#ece3d3;display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none}
+.cut p{margin:0;font-weight:800;font-stretch:125%;font-size:clamp(2.4rem,7vw,6rem)}
+.hint{margin-top:.6rem !important;color:var(--ink) !important;font-size:.9rem}
+@media (hover:none){.hint{display:none}}
+.scrim{position:fixed;left:0;right:0;bottom:0;height:42vh;z-index:2;pointer-events:none;background:linear-gradient(to top,var(--stage) 8%,transparent)}
+
+.hud{position:fixed;top:0;left:0;right:0;z-index:3;display:flex;justify-content:space-between;align-items:flex-start;
+  padding:calc(env(safe-area-inset-top,0px) + 1.2rem) clamp(1.25rem,5vw,4.5rem) 0;pointer-events:none}
+.brand{font-weight:700;font-stretch:118%;font-size:1.05rem}
+.brand span{font-weight:400;font-stretch:100%;color:var(--muted);margin-left:.6rem;font-size:.9rem}
+.time{text-align:right;font-variant-numeric:tabular-nums}
+.time b{display:block;font-weight:700;font-stretch:118%;font-size:clamp(1.4rem,2.6vw,2.2rem);line-height:1}
+.time span{color:var(--muted);font-size:.85rem}
+
+.story{position:fixed;z-index:3;left:clamp(1.25rem,5vw,4.5rem);bottom:calc(env(safe-area-inset-bottom,0px) + 2.2rem);max-width:min(34rem,70vw);pointer-events:none}
+.act{color:var(--muted);font-size:.9rem;margin:0 0 .3rem}
+.chapter h2{margin:0 0 .35rem;font-weight:800;font-stretch:125%;font-size:clamp(1.9rem,4vw,3.4rem);line-height:.95}
+.chapter.final h2{font-size:clamp(2rem,4.6vw,4rem);max-width:14ch}
+.chapter p{margin:0;color:var(--muted);max-width:40ch}
+.chapter a{pointer-events:auto;color:var(--ink)}
+
+.timeline{position:fixed;z-index:3;right:clamp(1rem,3vw,2.5rem);top:50%;transform:translateY(-50%);display:flex;flex-direction:column;gap:.9rem;align-items:flex-end}
+.timeline .group{display:flex;flex-direction:column;align-items:flex-end;gap:.15rem}
+.timeline .label{font-size:.75rem;color:var(--muted);margin-bottom:.15rem}
+.timeline button{all:unset;cursor:pointer;display:flex;align-items:center;gap:.5rem;padding:.12rem 0;font-size:.75rem;color:var(--muted)}
+.timeline button i{display:block;width:16px;height:2px;background:var(--rule);transition:width .3s,background .3s}
+.timeline button span{opacity:0;transition:opacity .2s}
+.timeline button:hover span,.timeline button:focus-visible span{opacity:1}
+.timeline button[aria-current="step"]{color:var(--ink)}
+.timeline button[aria-current="step"] i{width:30px;background:var(--ink)}
+.timeline button:focus-visible{outline:2px solid var(--ink);outline-offset:3px;border-radius:2px}
+
+.marker{position:fixed;z-index:2;left:0;top:0;width:30px;height:30px;margin:-15px 0 0 -15px;border:1.5px solid var(--ink);border-radius:50%;pointer-events:none;opacity:.8}
+.marker span{position:absolute;left:38px;top:5px;font-size:.8rem;white-space:nowrap}
+.intro{position:fixed;z-index:3;left:clamp(1.25rem,5vw,4.5rem);top:calc(env(safe-area-inset-top,0px) + 14vh);pointer-events:none}
+.intro h1{margin:0;font-weight:800;font-stretch:125%;font-size:clamp(2.8rem,8vw,7.5rem);line-height:.9}
+.intro p{margin:.8rem 0 0;color:var(--muted)}
+@media (max-width:720px){.timeline .label,.timeline button span{display:none}.timeline{gap:.6rem}}
+.nogl #scene,.nogl .marker{display:none}
+
+.time{display:flex;flex-direction:column;align-items:flex-end;gap:.2rem;transition:none}
+.time b{font-variant-numeric:tabular-nums;line-height:.95;transition:font-size .5s ease, letter-spacing .5s ease}
+.time.u-years b{font-weight:300;font-stretch:125%;font-size:clamp(1.6rem,3vw,2.6rem)}
+.time.u-days b{font-weight:800;font-stretch:62%;font-size:clamp(1.9rem,3.4vw,3rem);letter-spacing:.01em}
+.time.u-ns b,.time.u-ms b{font-weight:500;font-stretch:100%;font-size:clamp(1.3rem,2.2vw,1.9rem);letter-spacing:.06em}
+.time.u-now b{font-weight:900;font-stretch:125%;font-size:clamp(2.6rem,5.4vw,4.6rem)}
+.time span{color:var(--muted);font-size:.85rem}
+.time.punch b{animation:punch .7s cubic-bezier(.2,.8,.2,1)}
+@keyframes punch{0%{transform:scale(1.35);opacity:.2}60%{opacity:1}100%{transform:scale(1)}}
+@media (prefers-reduced-motion: reduce){.time.punch b{animation:none}}
+.sound{all:unset;pointer-events:auto;cursor:pointer;font-size:.85rem;color:var(--muted);border-bottom:1px solid var(--rule);margin-top:.9rem}
+.sound[aria-pressed="true"]{color:var(--ink)}
+.sound:focus-visible{outline:2px solid var(--ink);outline-offset:4px;border-radius:2px}
+.micro{margin-top:.55rem !important;font-size:.85rem;color:var(--muted)}
+.time.u-live b{font-weight:500;font-stretch:100% !important;font-size:clamp(1.6rem,2.8vw,2.4rem);letter-spacing:.02em;font-variant-numeric:tabular-nums}
+.time.u-prod b{font-weight:800;font-stretch:62%;font-size:clamp(1.9rem,3.4vw,3rem);letter-spacing:.01em}
+.time.u-years.is-label b{font-size:clamp(1.1rem,2vw,1.6rem)}
+.time.hide{opacity:0}
+.time{transition:opacity .3s}
+.marker{border:2px solid #fff !important;box-shadow:0 0 0 1.5px rgba(0,0,0,.55),inset 0 0 0 1px rgba(0,0,0,.35)}
+.marker span{color:#fff !important;text-shadow:0 1px 3px rgba(0,0,0,.8)}
+.chapter.final h2,.chapter.final p{transition:opacity 1.2s ease}
+.chapter.final:not(.in) h2{opacity:0}
+.chapter.final:not(.sig) p,.chapter.final:not(.sig) p:not(.micro){opacity:0}
+
+/* ===== v7 typography + art direction =====
+   Archivo carries the interface and the clock; its width axis follows the story:
+   wide and light while time is slow, condensed and heavy as it compresses, normal again at the end.
+   Newsreader carries the narrative voice. */
+:root{--wdth:125;--wght:330;--serif:"Newsreader",Georgia,"Times New Roman",serif;--sans:"Archivo",system-ui,-apple-system,"Segoe UI",sans-serif}
+body{font-family:var(--sans)}
+.act{display:none}
+.chapter h2{font-family:var(--sans);font-stretch:calc(var(--wdth) * 1%);font-weight:var(--wght);font-size:clamp(2.2rem,4.6vw,4rem);line-height:.92;letter-spacing:-.005em;margin:0 0 .55rem}
+.chapter p{font-family:var(--serif);font-size:clamp(1.1rem,.55vw + .82rem,1.32rem);line-height:1.5;color:var(--ink);opacity:.92;max-width:38ch;font-variation-settings:"opsz" 16}
+.chapter .micro{font-style:italic;font-size:clamp(.95rem,1.1vw,1.02rem);opacity:.62;margin-top:.7rem !important}
+.chapter .hint{font-family:var(--sans);font-size:.85rem;opacity:1;color:var(--ink) !important;margin-top:.9rem !important;letter-spacing:.01em}
+.chapter.final h2{font-stretch:calc(var(--wdth) * 1%);font-weight:var(--wght);font-size:clamp(2.2rem,4.6vw,4.2rem);max-width:16ch;line-height:1}
+.chapter.final p:not(.micro){font-family:var(--sans);font-size:.95rem;opacity:.9}
+.time b{font-stretch:calc(var(--wdth) * 1%) !important;font-weight:var(--wght) !important}
+.time span{font-family:var(--serif);font-style:italic;font-size:.95rem;color:var(--ink);opacity:.62}
+.time.u-years b{font-size:clamp(1.8rem,3.4vw,3rem)}
+.time.u-years.is-label b{font-size:clamp(1.2rem,2.2vw,1.8rem)}
+.time.u-prod b{font-size:clamp(2rem,3.8vw,3.4rem)}
+.time.u-now b{font-size:clamp(2.8rem,6vw,5.2rem)}
+.brand{font-stretch:125% !important;font-weight:500 !important;letter-spacing:.01em}
+.brand span{font-family:var(--serif);font-style:italic;font-stretch:100% !important}
+.intro h1{font-stretch:125%;font-weight:300;font-size:clamp(3rem,9vw,8.5rem);letter-spacing:-.01em}
+.intro p{font-family:var(--serif);font-style:italic;font-size:1.15rem;color:var(--ink);opacity:.75}
+.cut p{font-family:var(--serif) !important;font-style:italic;font-weight:300 !important;font-stretch:100% !important;font-size:clamp(2.6rem,7vw,6rem) !important;font-variation-settings:"opsz" 72}
+.timeline .label{font-family:var(--sans);font-size:.75rem;letter-spacing:.01em}
+.fx{position:fixed;z-index:4;right:clamp(1rem,3vw,2.5rem);bottom:calc(env(safe-area-inset-bottom,0px) + 1.2rem);display:flex;gap:.3rem;align-items:center;flex-wrap:wrap;justify-content:flex-end;max-width:46vw;font-size:.72rem}
+.fx button{font:inherit;color:var(--ink);background:rgba(8,10,12,.5);border:1px solid var(--rule);border-radius:999px;padding:.28rem .6rem;cursor:pointer}
+.fx button[aria-pressed="true"]{background:var(--ink);color:#111}
+.fx button:focus-visible{outline:2px solid var(--ink);outline-offset:3px}
+#fxms{color:var(--muted);font-variant-numeric:tabular-nums;margin-left:.3rem}
+.bench{position:fixed;z-index:6;left:50%;top:50%;transform:translate(-50%,-50%);background:rgba(8,10,12,.92);border:1px solid var(--rule);border-radius:14px;padding:1.2rem 1.4rem;font-size:.9rem;min-width:min(26rem,90vw)}
+.bench table{border-collapse:collapse;width:100%;font-variant-numeric:tabular-nums}
+.bench td{padding:.32rem 0;border-top:1px solid var(--rule)}
+.bench td:last-child{text-align:right}
+.bench-h,.bench-f{margin:0 0 .6rem;color:var(--muted)}
+.bench-f{margin:.8rem 0 .6rem}
+.bench button{font:inherit;color:var(--ink);background:none;border:1px solid var(--rule);border-radius:999px;padding:.3rem .8rem;cursor:pointer}
+.hud,.timeline,.time,.story{text-shadow:0 1px 10px rgba(0,0,0,.55),0 0 2px rgba(0,0,0,.35)}
+.hud{z-index:5}
+@media (max-height:760px){.timeline{gap:.45rem}.timeline .group{gap:0}.timeline button{padding:.04rem 0}}
+html{scrollbar-width:none}html::-webkit-scrollbar{display:none}
+</style>
+</head>
+<body>
+<canvas id="scene" aria-hidden="true"></canvas>
+<div class="scrim" aria-hidden="true"></div>
+<div class="marker" id="marker" aria-hidden="true"><span id="markerLabel">this grain</span></div>
+
+<header class="hud">
+  <div class="brand">One Grain<span>v23, sound</span></div>
+  <div style="display:flex;flex-direction:column;align-items:flex-end"><div class="time u-years" id="time"><b id="clock">0</b><span id="clockUnit">years</span></div><button class="sound" id="sound" type="button" aria-pressed="false">Sound off</button></div>
+</header>
+
+<div class="intro" id="intro"><h1>One Grain</h1><p id="introHint">Gathering sand…</p></div>
+
+<div class="story">
+  <p class="act" id="act">Nature</p>
+  <div class="chapter" id="chapter" aria-live="polite"><h2></h2><p></p><p class="micro" id="micro"></p><p class="hint" id="hint"></p></div>
+</div>
+<nav class="timeline" id="timeline" aria-label="Chapters"></nav>
+
+<div class="cut" id="cut" aria-hidden="true"><p>One day,</p></div>
+<div class="fx" id="fx" aria-label="Render layers">
+  <button type="button" data-fx="light" aria-pressed="true">Light</button><button type="button" data-fx="shadows" aria-pressed="true">Shadows</button><button type="button" data-fx="dof" aria-pressed="true">Depth of field</button><button type="button" data-fx="bloom" aria-pressed="true">Bloom</button><button type="button" data-fx="grade" aria-pressed="true">Grade</button><span id="fxms">— ms</span><button type="button" id="benchBtn">Benchmark</button>
+</div>
+<div class="bench" id="bench" hidden><p class="bench-h">Frame time at this chapter, median of ~2.5 s each</p><table id="benchT"></table><p class="bench-f">Take a screenshot of this table and send it.</p><button type="button" id="benchClose">Close</button></div>
+<div id="track" aria-hidden="true"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/three@0.149.0/build/three.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+<script>
+(() => {
+  'use strict';
+  const root = document.documentElement;
+  if (!window.THREE) { root.classList.add('nogl'); return; }
+  const hasGsap = !!(window.gsap && window.ScrollTrigger);
+  if (hasGsap) gsap.registerPlugin(ScrollTrigger);
+  let reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const touchOnly = matchMedia('(hover: none)').matches;
+
+  // ---------- random + noise ----------
+  let seed = 4242;
+  const rnd = () => { seed ^= seed << 13; seed ^= seed >>> 17; seed ^= seed << 5; return (seed >>> 0) / 4294967296; };
+  const perm = new Uint8Array(512);
+  { const p = [...Array(256).keys()]; for (let i = 255; i > 0; i--) { const j = (rnd() * (i + 1)) | 0; [p[i], p[j]] = [p[j], p[i]]; } for (let i = 0; i < 512; i++) perm[i] = p[i & 255]; }
+  const GR = [[1,1],[-1,1],[1,-1],[-1,-1],[1,0],[-1,0],[0,1],[0,-1]], F2 = .5 * (Math.sqrt(3) - 1), G2 = (3 - Math.sqrt(3)) / 6;
+  function sn(xin, yin) {
+    const s = (xin + yin) * F2, i = Math.floor(xin + s), j = Math.floor(yin + s), t = (i + j) * G2;
+    const x0 = xin - (i - t), y0 = yin - (j - t), i1 = x0 > y0 ? 1 : 0, j1 = 1 - i1;
+    const x1 = x0 - i1 + G2, y1 = y0 - j1 + G2, x2 = x0 - 1 + 2 * G2, y2 = y0 - 1 + 2 * G2, ii = i & 255, jj = j & 255;
+    let n = 0, q, g;
+    q = .5 - x0 * x0 - y0 * y0; if (q > 0) { q *= q; g = GR[perm[ii + perm[jj]] & 7]; n += q * q * (g[0] * x0 + g[1] * y0); }
+    q = .5 - x1 * x1 - y1 * y1; if (q > 0) { q *= q; g = GR[perm[ii + i1 + perm[jj + j1]] & 7]; n += q * q * (g[0] * x1 + g[1] * y1); }
+    q = .5 - x2 * x2 - y2 * y2; if (q > 0) { q *= q; g = GR[perm[ii + 1 + perm[jj + 1]] & 7]; n += q * q * (g[0] * x2 + g[1] * y2); }
+    return 70 * n;
+  }
+  const ss = (a, b, x) => { const t = Math.max(0, Math.min(1, (x - a) / (b - a))); return t * t * (3 - 2 * t); };
+  const ease = t => t < .5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+  const fr = x => x - Math.floor(x);
+  const band = (x, y) => { const yy = y + .35 * Math.sin(x * .3) + .2 * Math.sin(x * .9 + 1); return fr(Math.floor((yy + 9) / 1.25) * .618) * .75 + .12; };
+  const tone = (t, j = .08) => Math.min(.99, Math.max(0, t + (rnd() - .5) * j));
+
+  // ---------- shape helpers ----------
+  const norm = v => { const l = Math.hypot(...v); return v.map(c => c / l); };
+  const cross = (a, b) => [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]];
+  function hexPrism(c, axis, R, L) {
+    const a = norm(axis), u = norm(cross(a, Math.abs(a[2]) < .9 ? [0, 0, 1] : [1, 0, 0])), v = cross(a, u);
+    const tipL = R * 1.4, theta = rnd() * 6.2832, k = Math.floor(theta / 1.0472), phi = theta - k * 1.0472 - .5236;
+    let r = R * .866 / Math.cos(phi), h;
+    if (rnd() < L / (L + tipL * .5)) h = rnd() * L; else { const s = 1 - Math.sqrt(rnd()); r *= (1 - s); h = L + s * tipL; }
+    const ct = Math.cos(theta), st = Math.sin(theta);
+    return [c[0] + a[0] * h + (u[0] * ct + v[0] * st) * r, c[1] + a[1] * h + (u[1] * ct + v[1] * st) * r, c[2] + a[2] * h + (u[2] * ct + v[2] * st) * r];
+  }
+  const tipOf = (c, axis, R, L) => { const a = norm(axis); return [c[0] + a[0] * (L + R * 1.4), c[1] + a[1] * (L + R * 1.4), c[2] + a[2] * (L + R * 1.4)]; };
+  const mountainH = (x, z) => { const r2 = x * x + z * z * 1.2; const h = 11 * Math.exp(-r2 / 70) * (.8 + .35 * sn(x * .15, z * .15)) + Math.abs(sn(x * .4, z * .4)) * 1.2 * Math.exp(-r2 / 150); return Math.max(0, h) + sn(x * .6, z * .6) * .08; };
+  const meander = x => 2.2 * Math.sin(x * .22);
+  const riverH = (x, z) => { const dz = Math.abs(z - meander(x)); return dz < 1.8 ? -.35 * (1 - ss(0, 1.8, dz)) : 2.2 * ss(1.8, 5.5, dz) + .25 * sn(x * .3, z * .3); };
+  const beachH = (x, z) => z < 0 ? -z * .12 + .1 * sn(x * .4, z * .4) : -z * .15;
+  const duneS = (x, z) => { const n = sn(x * .08, z * .08) + sn(x * .21 + 3.1, z * .21 + 3.1) * .45; return fr((x * .38 + z * .92 + n * 2.4) * .2); };
+  const desertH = (x, z) => { const s = duneS(x, z); return ss(0, .78, s) * (1 - ss(.78, 1, s)) * 1.7 + sn(x * .33 + 7, z * .33) * .2; };
+
+  // behaviours (integer part of w):
+  // 0 still · 1 river · 2 sea · 3 hop · 4 fall · 5 magma · 7 spark · 8 switch · 9 sub-pixel · 10 wind streamer
+  // 11 pressure · 12 conveyor · 13 convection · 14 deposition · 15 turning crystal · 17 light ray
+  const CRYSTALS = [[[0, -1, 2], [.15, 1, .1], .9, 4], [[-1.6, -1.2, 1], [-.5, 1, .2], .6, 3.2], [[1.5, -1.3, .5], [.6, 1, -.1], .55, 2.8], [[-.4, -1.4, -.8], [-.1, 1, -.5], .7, 3.6], [[.7, -1.1, 3.2], [.3, .8, .7], .4, 2], [[-2.6, -1.4, -1.5], [-.7, 1, -.2], .45, 2.4], [[2.6, -1.5, -.8], [.8, .9, -.3], .5, 2.6]];
+  const disc = []; // which wafer each grain ended up in (−1 = saw dust)
+
+  const worlds = [
+    { slug: 'magma', wdth: 125, wght: 300, act: 'Nature', title: 'Magma', text: 'Deep underground, molten rock cools slowly. Quartz begins to crystallize.',
+      clock: { u: 'years', v: 0 }, hold: 1.6, lo: '#3c302c', hi: '#ede6dc', grain: .07,
+      hero: () => tipOf(...CRYSTALS[0]), cam: [3, 1.5, 10], look: [-2, -.6, -3],
+      gen(P, W, N) { for (let i = 0; i < N; i++) {
+        if (rnd() < .62) { const t = rnd() * 6.2832, u = rnd() * 2 - 1, r = Math.cbrt(rnd()), s = Math.sqrt(1 - u * u); P.push(16 * r * s * Math.cos(t), -3 + 5 * r * u, -4 + 12 * r * s * Math.sin(t)); W.push(5 + rnd() * .99); }
+        else { const c = CRYSTALS[(rnd() * CRYSTALS.length) | 0]; P.push(...hexPrism(...c)); W.push(tone(.85, .25)); } } } },
+    { slug: 'granite', wdth: 122, wght: 320, act: 'Nature', title: 'Granite', text: 'The crystal is locked inside granite, waiting for uplift and erosion.',
+      clock: { u: 'years', v: 3e5, label: 'hundreds of thousands' }, hold: 1.1, lo: '#55514d', hi: '#cbbaa9', grain: .13,
+      hero: () => [2, mountainH(2, 6) + .06, 6], cam: [-2, 3, 30], look: [-2, 1, -6],
+      gen(P, W, N) { for (let i = 0; i < N; i++) { const r = 24 * Math.sqrt(rnd()), a = rnd() * 6.2832, x = r * Math.cos(a), z = r * Math.sin(a) * .85; P.push(x, mountainH(x, z) - rnd() * .12, z); W.push(rnd() < .04 ? .98 : rnd() * .8); } } },
+    { slug: 'river', wdth: 119, wght: 340, act: 'Nature', title: 'River', text: 'Weathering frees the grain. Running water carries it downstream.',
+      clock: { u: 'years', v: 2e7 }, hold: 1.0, lo: '#5e5040', hi: '#b39b74', grain: .07,
+      hero: () => [-1, riverH(-1, meander(-1)) + .06, meander(-1)], cam: [-5, 2.4, 7.5], look: [2.5, -.2, -1],
+      gen(P, W, N) { for (let i = 0; i < N; i++) {
+        if (rnd() < .3) { P.push(rnd() * 26 - 13, -.25 + rnd() * .85, (rnd() - .5) * 3.2); W.push(1 + rnd() * .99); }
+        else { const x = rnd() * 26 - 13, z = rnd() * 16 - 8; P.push(x, riverH(x, z) - rnd() * .05, z); W.push(rnd() * .99); } } } },
+    { slug: 'coast', wdth: 116, wght: 350, act: 'Nature', title: 'Coast', text: 'Waves sort and tumble it, moving it along the shore.',
+      clock: { u: 'years', v: 2e7 }, hold: 1.0, lo: '#86714f', hi: '#e2cfa8', grain: .065,
+      hero: () => [0, beachH(0, -.6) + .06, -.6], cam: [5, 1.8, 6.5], look: [-2, 0, .8],
+      gen(P, W, N) { for (let i = 0; i < N; i++) {
+        const u = rnd(), x = rnd() * 22 - 11;
+        if (u < .25) { P.push(x, 0, .15 + rnd() * 7.8); W.push(2 + rnd() * .99); }
+        else if (u < .4) { const z = rnd() * 8; P.push(x, beachH(x, z), z); W.push(rnd() * .6); }
+        else { const z = -rnd() * 8; P.push(x, beachH(x, z) - rnd() * .04, z); W.push(.2 + rnd() * .79); } } } },
+    { slug: 'desert', wdth: 113, wght: 360, act: 'Nature', title: 'Desert', text: 'Wind lifts it in short hops, rounding and frosting its surface.',
+      hint: 'Move your cursor across the dunes.', hintTouch: 'Tap the dunes.',
+      clock: { u: 'years', v: 2.1e7 }, hold: 1.6, lo: '#97653a', hi: '#e8ba7b', grain: .17,
+      hero: () => { let bx = 0, by = -9; for (let x = -4; x <= 4; x += .05) { const y = desertH(x, 0); if (y > by) { by = y; bx = x; } } return [bx, by + .06, 0]; },
+      cam: [-7, 3.2, 11], look: [3, -.5, -4],
+      gen(P, W, N) { for (let i = 0; i < N; i++) {
+        let x = rnd() * 44 - 22, z = rnd() * 30 - 22;
+        const u = rnd();
+        if (u < .06) { for (let k = 0; k < 30 && Math.abs(duneS(x, z) - .78) > .03; k++) { x = rnd() * 44 - 22; z = rnd() * 30 - 22; } P.push(x, desertH(x, z), z); W.push(10 + rnd() * .99); }
+        else if (u < .1) { P.push(x, desertH(x, z), z); W.push(3 + rnd() * .99); }
+        else { P.push(x, desertH(x, z) - rnd() * .08, z); W.push(rnd() * .99); } } } },
+    { slug: 'again', wdth: 108, wght: 380, act: 'Nature', title: 'Again', text: 'Buried. Cemented into stone. Lifted. Freed. Buried again, until heat and pressure turn the sandstone into quartzite.',
+      clock: { u: 'years', v: 3e8 }, hold: .9, lo: '#8a4a2c', hi: '#ead0a6', grain: .09,
+      hero: () => [0, -2, 3.08], cam: [7, 3.5, 11], look: [-2.5, .5, -1.5],
+      gen(P, W, N) { for (let i = 0; i < N; i++) {
+        const u = rnd() * 700; let x, y, z;
+        if (u < 280) { x = rnd() * 28 - 14; y = rnd() * 10 - 7; z = 3; }
+        else if (u < 504) { x = rnd() * 28 - 14; y = 3; z = rnd() * 8 - 5; }
+        else if (u < 664) { x = rnd() < .5 ? -14 : 14; y = rnd() * 10 - 7; z = rnd() * 8 - 5; }
+        else { P.push(rnd() * 28 - 14, 3.2 + rnd() * .3, 3 - rnd() * .3); W.push(4 + rnd() * .5); continue; }
+        P.push(x, y, z); W.push(11 + tone(band(x, y))); } } },
+
+    { slug: 'quarry', wdth: 92, wght: 560, act: 'Industry', title: 'Quarry', text: 'The cycle breaks. Silica-rich rock is taken from the ground.',
+      clock: { u: 'prod', label: 'Day 1', sub: 'of production' }, hold: 1.0, lo: '#6f6252', hi: '#e8dfd2', grain: .12,
+      hero: () => [0, -3.6, (8.4 + 6.8) / 2], cam: [-4, 8, 16], look: [3, -5, -8],
+      gen(P, W, N) {
+        const L = 6, hx = j => 14 - 2 * j, hz = j => 10 - 1.6 * j;
+        for (let i = 0; i < N; i++) {
+          const u = rnd();
+          if (u < .07) { const s = rnd(); P.push(2 + 18 * s, -7.2 + 10.2 * s, 2 - 6 * s); W.push(12 + s * .99); continue; }        // moving belt
+          if (u < .1) { const s = rnd(); P.push(2 + 18 * s + (rnd() - .5) * .2, -7.5 + 10.2 * s, 2 - 6 * s + (rnd() < .5 ? -.35 : .35)); W.push(.92); continue; } // belt frame
+          const j = (rnd() * L) | 0, y = -1.2 * (j + 1);
+          if (rnd() < .55) { let x, z; do { x = (rnd() * 2 - 1) * hx(j); z = (rnd() * 2 - 1) * hz(j); } while (j < L - 1 && Math.abs(x) < hx(j + 1) && Math.abs(z) < hz(j + 1)); P.push(x, y, z); W.push(tone(.35 + j * .1)); }
+          else { const per = 4 * (hx(j) + hz(j)), s = rnd() * per, yy = -1.2 * j - rnd() * 1.2; let x, z;
+            if (s < 2 * hx(j)) { x = -hx(j) + s; z = -hz(j); } else if (s < 2 * hx(j) + 2 * hz(j)) { x = hx(j); z = -hz(j) + (s - 2 * hx(j)); }
+            else if (s < 4 * hx(j) + 2 * hz(j)) { x = hx(j) - (s - 2 * hx(j) - 2 * hz(j)); z = hz(j); } else { x = -hx(j); z = hz(j) - (s - 4 * hx(j) - 2 * hz(j)); }
+            P.push(x, yy, z); W.push(tone(.2 + j * .08)); } } } },
+    { slug: 'furnace', wdth: 84, wght: 620, act: 'Industry', title: 'Furnace', text: 'Quartz meets carbon at extreme heat. Oxygen leaves; silicon remains.',
+      clock: { u: 'prod', label: 'Days later' }, hold: 1.0, lo: '#2f2b29', hi: '#8c8178', grain: .08,
+      hero: () => [0, -1.95, 1], cam: [0, 6, 12], look: [0, -2, -3],
+      gen(P, W, N) { const E = [0, 2.094, 4.189].map(a => [Math.cos(a) * 2.8, Math.sin(a) * 2.8]);
+        for (let i = 0; i < N; i++) { const u = rnd();
+          if (u < .3) { const t = Math.PI + rnd() * Math.PI; P.push(7 * Math.cos(t), -3 + rnd() * 7, 7 * Math.sin(t)); W.push(tone(rnd() * .7, 0)); }
+          else if (u < .38) { const t = rnd() * Math.PI; P.push(7 * Math.cos(t), -3 + rnd() * 1.3, 7 * Math.sin(t)); W.push(tone(.5, .3)); }
+          else if (u < .72) { const r = 6.6 * Math.sqrt(rnd()), t = rnd() * 6.2832; P.push(r * Math.cos(t), -2 + rnd() * .05, r * Math.sin(t)); W.push(13 + rnd() * .99); }
+          else if (u < .8) { const r = 5.5 * Math.sqrt(rnd()), t = rnd() * 6.2832; P.push(r * Math.cos(t), -1.9, r * Math.sin(t)); W.push(7 + rnd() * .99); }
+          else { const e = E[(rnd() * 3) | 0], t = rnd() * 6.2832; P.push(e[0] + .8 * Math.cos(t), -1.4 + rnd() * 9.4, e[1] + .8 * Math.sin(t)); W.push(tone(.15, .2)); } } } },
+    { slug: 'purity', wdth: 78, wght: 660, act: 'Industry', title: 'Purity', text: 'Converted, distilled, deposited again. The silicon becomes hyperpure.',
+      clock: { u: 'prod', label: 'Weeks later' }, hold: .8, lo: '#46525e', hi: '#dbe3ea', grain: .06,
+      hero: () => [-1.2 + .36, 2.5, 2.4 * 1.5], cam: [4, 1.2, 9], look: [-3.5, 1.5, -5],
+      gen(P, W, N) { for (let i = 0; i < N; i++) {
+        const gx = (rnd() * 5) | 0, gz = (rnd() * 4) | 0, cx = (gx - 2) * 2.4, cz = (gz - 1.5) * 2.4;
+        const u = rnd(), leg = rnd() < .5 ? -1.2 : 1.2, t = rnd() * 6.2832;
+        if (u < .85) P.push(cx + leg + .35 * Math.cos(t), -3 + rnd() * 8, cz + .35 * Math.sin(t)); else { const b = rnd() * 2.4 - 1.2; P.push(cx + b, 5 + .35 * Math.cos(t), cz + .35 * Math.sin(t)); }
+        W.push(rnd() < .16 ? 14 + rnd() * .99 : tone(.35 + .5 * rnd(), 0)); } } },
+    { slug: 'crystal', wdth: 73, wght: 690, act: 'Industry', title: 'Crystal', text: 'Melted above 1,414 °C, it grows upward from a single seed.',
+      clock: { u: 'prod', label: 'Days later' }, hold: 1.3, lo: '#46525e', hi: '#eef3f6', grain: .05,
+      hero: () => [0, 1, 1.63], cam: [7, 5.5, 14], look: [-4.5, 4.6, -2],
+      gen(P, W, N) { for (let i = 0; i < N; i++) { const u = rnd(), t = rnd() * 6.2832;
+        if (u < .16) { const v = rnd() * 1.5708; P.push(4 * Math.cos(t) * Math.cos(v), -.6 - 4 * Math.sin(v), 4 * Math.sin(t) * Math.cos(v)); W.push(tone(.65, .2)); }
+        else if (u < .26) { const r = 3.8 * Math.sqrt(rnd()); P.push(r * Math.cos(t), -.55, r * Math.sin(t)); W.push(13 + rnd() * .99); }
+        else if (u < .44) { // surface lattice: rings with an offset on every other ring
+          const ring = (rnd() * 75) | 0, k = (rnd() * 160) | 0, a = (k + (ring % 2) * .5) / 160 * 6.2832; P.push(1.6 * Math.cos(a), ring * .12, 1.6 * Math.sin(a)); W.push(15 + tone(.75, .1)); }
+        else if (u < .95) { // interior, snapped to a cubic lattice
+          let x, z; do { x = Math.round((rnd() * 3.2 - 1.6) / .1) * .1; z = Math.round((rnd() * 3.2 - 1.6) / .1) * .1; } while (x * x + z * z > 2.4);
+          P.push(x, Math.round(rnd() * 9 / .1) * .1, z); W.push(15 + tone(.6, .1)); }
+        else { const s = rnd(), r = 1.6 * (1 - s) + .08; P.push(r * Math.cos(t), 9 + s * 2.4, r * Math.sin(t)); W.push(15 + tone(.8, .1)); } } } },
+    { slug: 'wafer', wdth: 69, wght: 720, act: 'Industry', title: 'Wafer', text: 'The ingot is ground, sliced, etched, and polished into mirror-flat wafers.',
+      clock: { u: 'prod', label: 'Days later' }, hold: .8, lo: '#3e4a59', hi: '#e8eef4', grain: .05,
+      hero: () => [0, .03, 1.12], cam: [5, 2.6, 7], look: [-2, 1.8, -2],
+      derive(P0, W0, N) { // same grains, same crystal, now in slices
+        const P = new Float32Array(N * 3), W = new Float32Array(N);
+        for (let i = 0; i < N; i++) {
+          const x = P0[i * 3], y = P0[i * 3 + 1], z = P0[i * 3 + 2], f = Math.floor(W0[i]);
+          if (f === 15 && y >= 0 && y < 9) {
+            const k = Math.min(7, Math.floor(y / 1.125)), th = Math.atan2(z, x), r = 1.6 * Math.sqrt(rnd());
+            P[i * 3] = r * Math.cos(th) + k * .25; P[i * 3 + 1] = k * 1.3 + (rnd() - .5) * .03; P[i * 3 + 2] = r * Math.sin(th);
+            W[i] = tone(.55 + .4 * (r / 1.6), .05); disc[i] = k;
+          } else { const r = 2.2 + rnd() * 2.5, a = rnd() * 6.2832; P[i * 3] = r * Math.cos(a); P[i * 3 + 1] = -.4 - rnd() * .5; P[i * 3 + 2] = r * Math.sin(a); W[i] = tone(.15, .1); disc[i] = -1; }
+        }
+        return { P, W }; } },
+    { slug: 'light', wdth: 65, wght: 760, act: 'Industry', title: 'Light', text: 'Light projects a pattern onto a photosensitive layer.',
+      clock: { u: 'prod', label: 'Weeks later' }, hold: .9, lo: '#2f2c40', hi: '#d4d0e6', grain: .045,
+      hero: () => [0, .03, 1.12], cam: [2.2, 5.4, 4.2], look: [-.5, -1.2, -1.6],
+      derive(P0, W0, N) { // the same disc stays put; the process happens on it
+        const P = new Float32Array(N * 3), W = new Float32Array(N);
+        for (let i = 0; i < N; i++) {
+          const x = P0[i * 3], y = P0[i * 3 + 1], z = P0[i * 3 + 2];
+          if (disc[i] === 0) { P[i * 3] = x; P[i * 3 + 1] = y; P[i * 3 + 2] = z; const fx = fr((x + 100) / .2), fz = fr((z + 100) / .2); W[i] = fx < .12 || fz < .12 ? .06 : tone(.55 + .3 * Math.sin(x * 3 + z * 2), .05); }
+          else if (disc[i] > 0 && rnd() < .16) { let cx, cz; do { cx = (Math.floor(rnd() * 16) - 8) * .2 + .1; cz = (Math.floor(rnd() * 16) - 8) * .2 + .1; } while (cx * cx + cz * cz > 2.3);
+            P[i * 3] = cx + (rnd() - .5) * .04; P[i * 3 + 1] = .3 + rnd() * 2; P[i * 3 + 2] = cz + (rnd() - .5) * .04; W[i] = 17 + rnd() * .99; }
+          else if (disc[i] > 0) { const r = 2.2 + rnd() * 2.5, a = rnd() * 6.2832; P[i * 3] = r * Math.cos(a); P[i * 3 + 1] = -.4 - rnd() * .5; P[i * 3 + 2] = r * Math.sin(a); W[i] = tone(.15, .1); }
+          else { P[i * 3] = x; P[i * 3 + 1] = y; P[i * 3 + 2] = z; W[i] = W0[i]; }
+        }
+        return { P, W }; } },
+
+    { slug: 'chip', wdth: 62, wght: 820, act: 'Now', title: 'Chip', micro: 'Millions of years to arrive. Nanoseconds to act.', text: 'Layer by layer, patterns become transistors and the connections between them.',
+      hint: 'Move your cursor over the circuit.', hintTouch: 'Tap the circuit.',
+      clock: { u: 'prod', label: '≈ 2–4 months' }, hold: 1.3, lo: '#121519', hi: '#b9c1cc', grain: .032,
+      cam: [3, 3.8, 5], look: [-2.2, -1.6, -3.6],
+      // the first fully ordered world: substrate lattice, transistor rows, memory blocks, two metal layers, a clock tree
+      setup() {
+        const q = (v, s) => Math.round(v / s) * s, cl = v => Math.max(-10.8, Math.min(10.8, v));
+        const macros = [{ x0: -9.6, x1: -5.4, z0: -9.4, z1: -4.6 }, { x0: 4.8, x1: 9.6, z0: 4.6, z1: 9.4 }, { x0: -9.4, x1: -4.6, z0: 4.4, z1: 8.8 }];
+        const inMacro = (x, z) => macros.some(m => x > m.x0 - .3 && x < m.x1 + .3 && z > m.z0 - .3 && z < m.z1 + .3);
+        const routes = [];
+        for (let r = 0; r < 180; r++) {
+          let x = q(rnd() * 20 - 10, .6), z = q(rnd() * 20 - 10, .6), horiz = rnd() < .5; const segs = []; let acc = 0;
+          for (let k = 0, n = 2 + ((rnd() * 3) | 0); k < n; k++) {
+            const len = (1 + ((rnd() * 6) | 0)) * .6 * (rnd() < .5 ? -1 : 1), nx = horiz ? cl(x + len) : x, nz = horiz ? z : cl(z + len);
+            const L = Math.abs(nx - x) + Math.abs(nz - z); if (L > 0) { segs.push({ x, z, nx, nz, horiz, acc, L }); acc += L; }
+            x = nx; z = nz; horiz = !horiz;
+          }
+          if (segs.length) routes.push({ segs, total: acc, ph: rnd() });
+        }
+        const H = [];
+        (function h(cx, cz, size, depth) { if (!depth) return; const hs = size / 2; H.push([cx - hs, cz, cx + hs, cz]); H.push([cx - hs, cz - hs, cx - hs, cz + hs]); H.push([cx + hs, cz - hs, cx + hs, cz + hs]); [[-hs, -hs], [-hs, hs], [hs, -hs], [hs, hs]].forEach(([dx, dz]) => h(cx + dx, cz + dz, hs, depth - 1)); })(0, 0, 10, 4);
+        this.L = { q, macros, inMacro, routes, H };
+        this.heroPos = [q(.5 + 11, .24) - 11, .15, .1];
+      },
+      gen(P, W, N) {
+        const { q, macros, inMacro, routes, H } = this.L;
+        for (let i = 0; i < N; i++) {
+          const u = rnd();
+          if (u < .16) { P.push(-10.98 + ((rnd() * 122) | 0) * .18, 0, -10.98 + ((rnd() * 122) | 0) * .18); W.push(.04); }               // substrate lattice
+          else if (u < .28) { const m = macros[(rnd() * macros.length) | 0], cx = Math.floor((m.x1 - m.x0) / .14), cz = Math.floor((m.z1 - m.z0) / .14);  // memory arrays
+            P.push(m.x0 + ((rnd() * cx) | 0) * .14, .12, m.z0 + ((rnd() * cz) | 0) * .14); W.push(8 + rnd() * .99); }
+          else if (u < .58) { // transistor rows: fins along x, gates across them
+            let x, k, zc; do { k = ((rnd() * 17) | 0) - 8; zc = k * 1.25; x = rnd() * 21.6 - 10.8; } while (inMacro(x, zc));
+            if (rnd() < .4) { P.push(q(x, .06), .05, zc - .35 + ((rnd() * 6) | 0) * .14); W.push(.45); }
+            else { const gx = q(x + 11, .24) - 11, hsh = fr(Math.sin(gx * 91.7 + k * 13.1) * 4375.5); P.push(gx, .13, zc - .42 + q(rnd() * .84, .06)); W.push(8 + Math.min(.99, hsh)); } }
+          else if (u < .9) { // two metal layers: horizontal wires on one, vertical on the other, vias where they turn
+            const r = routes[(rnd() * routes.length) | 0], sg = r.segs[(rnd() * r.segs.length) | 0];
+            if (rnd() < .06) { P.push(sg.x, .38 + rnd() * .24, sg.z); W.push(.9); }
+            else { const s = q(rnd() * sg.L, .05), f = sg.L ? s / sg.L : 0; P.push(sg.x + (sg.nx - sg.x) * f, sg.horiz ? .38 : .62, sg.z + (sg.nz - sg.z) * f); W.push(18 + fr(r.ph + (sg.acc + s) / 8) * .99); } }
+          else { const hseg = H[(rnd() * H.length) | 0], s = q(rnd(), .02), x = hseg[0] + (hseg[2] - hseg[0]) * s, z = hseg[1] + (hseg[3] - hseg[1]) * s; // clock tree
+            P.push(x, .9, z); W.push(19 + Math.min(.99, Math.hypot(x, z) / 14)); }
+        } } },
+    { slug: 'display', wdth: 80, wght: 640, act: 'Now', title: 'Display', micro: 'Even the glass in front of the pixels is mostly silica.', text: 'Silicon computes. Pixels turn its signals into light.',
+      clock: { u: 'live' }, hold: 1.4, lo: '#4f8286', hi: '#dff2f0', grain: .06,
+      hero: () => [0, 0, .03], cam: [6, 2, 9], look: [-6, -1, -2],
+      gen(P, W, N) { for (let i = 0; i < N; i++) {
+        if (rnd() < .55) { P.push(rnd() * 20 - 10, rnd() * 12 - 6, 0); W.push(tone(.3 + rnd() * .4, 0)); }
+        else { const ix = (rnd() * 66) | 0, iy = (rnd() * 40) | 0; P.push(-9.9 + ix * .3 + (rnd() - .5) * .08, -5.9 + iy * .3 + (rnd() - .5) * .14, -1.2); W.push(9 + (ix % 3) / 3 + .1); } } } },
+    { slug: 'now', wdth: 100, wght: 520, act: 'Now', title: 'You are looking at sand right now.', text: '', signature: true, final: true, micro: 'One plausible journey; real timescales vary widely.',
+      clock: { u: 'now' }, hold: 2.4, lo: '#6f5338', hi: '#f0dcb4', grain: .085,
+      hero: () => [0, 0, .62], cam: [0, 0, 17], look: [0, 0, -1],
+      derive(P0, W0, N) {
+        // each sub-pixel of the display is a cluster of grains; here the cluster spreads over exactly the area its sub-pixel lit
+        const P = new Float32Array(N * 3), W = new Float32Array(N), S = 1.36;
+        for (let i = 0; i < N; i++) {
+          const x = P0[i * 3], y = P0[i * 3 + 1], f = Math.floor(W0[i] + .001);
+          let fx, fy;
+          if (f === 9) { const cx = -9.9 + Math.round((x + 9.9) / .3) * .3, cy = -5.9 + Math.round((y + 5.9) / .3) * .3, g = () => (rnd() + rnd() + rnd() - 1.5) * .26; fx = (cx + (rnd() - .5) * .3 + g()) * S; fy = (cy + (rnd() - .5) * .3 + g()) * S; }
+          else { fx = x * S + (rnd() - .5) * .05; fy = y * S + (rnd() - .5) * .05; }
+          P[i * 3] = fx; P[i * 3 + 1] = fy; P[i * 3 + 2] = rnd() * .06;
+          const fam = f === 9 ? Math.min(2, Math.floor(fr(W0[i]) * 3)) : -1;
+          // sand, seen up close: mostly quartz tones, a few dark minerals, a few bright clear grains, faint wind ripples
+          const u = rnd(), ripple = .5 + .5 * Math.sin(fx * 2.1 + Math.sin(fy * .6) * 1.6);
+          W[i] = fam >= 0 ? 22 + fam + Math.min(.99, Math.max(0, .35 + .45 * ripple + (rnd() - .5) * .3)) : u < .05 ? .03 + rnd() * .05 : u < .09 ? .97 : tone(.42 + .32 * ripple, .22);
+        }
+        return { P, W }; } },
+  ];
+  const CH = worlds.length;
+
+  const UP = [0, 1, 0], Zp = [0, 0, 1];
+  const nz3 = v => { const l = Math.hypot(v[0], v[1], v[2]) || 1; return [v[0] / l, v[1] / l, v[2] / l]; };
+  const hN = (f, x, z) => { const e = .05; return nz3([-(f(x + e, z) - f(x - e, z)) / (2 * e), 1, -(f(x, z + e) - f(x, z - e)) / (2 * e)]); };
+  function surfaceNormal(slug, x, y, z, w) {
+    const fl = Math.floor(w + .001);
+    switch (slug) {
+      case 'magma': {
+        if (fl === 5) return UP;
+        let best = 1e9, out = UP;
+        for (const [c, axis, R0, L] of CRYSTALS) {
+          const a = nz3(axis), d = [x - c[0], y - c[1], z - c[2]], h = d[0] * a[0] + d[1] * a[1] + d[2] * a[2];
+          if (h < -.3 || h > L + R0 * 1.6) continue;
+          const rad = [d[0] - a[0] * h, d[1] - a[1] * h, d[2] - a[2] * h], rl = Math.hypot(...rad), tipR = h > L ? R0 * (1 - (h - L) / (R0 * 1.4)) : R0;
+          const err = Math.abs(rl - tipR * .93);
+          if (err < best) { best = err; const rn = nz3(rad); out = h > L ? nz3([rn[0] * 1.4 + a[0] * .866, rn[1] * 1.4 + a[1] * .866, rn[2] * 1.4 + a[2] * .866]) : rn; }
+        }
+        return out;
+      }
+      case 'granite': return hN(mountainH, x, z);
+      case 'river': return fl === 1 ? UP : hN(riverH, x, z);
+      case 'coast': return fl === 2 ? UP : hN(beachH, x, z);
+      case 'desert': return hN(desertH, x, z);
+      case 'again': if (fl === 4) return UP; if (Math.abs(z - 3) < .01) return Zp; if (Math.abs(y - 3) < .01) return UP; if (Math.abs(x) > 13.99) return [Math.sign(x), 0, 0]; return UP;
+      case 'quarry': {
+        if (fl === 12 || Math.abs(y / 1.2 - Math.round(y / 1.2)) < .002) return UP;
+        const j = Math.floor(-y / 1.2), hx = 14 - 2 * j;
+        return Math.abs(Math.abs(x) - hx) < .02 ? [-Math.sign(x), 0, 0] : [0, 0, -Math.sign(z)];
+      }
+      case 'furnace': {
+        if (fl === 13 || fl === 7) return UP;
+        for (const a of [0, 2.094, 4.189]) { const ex = Math.cos(a) * 2.8, ez = Math.sin(a) * 2.8; if (Math.hypot(x - ex, z - ez) < .9) return nz3([x - ex, 0, z - ez]); }
+        return nz3([-x, 0, -z]);
+      }
+      case 'purity': {
+        const cz = Math.round((z + 3.6) / 2.4) * 2.4 - 3.6;
+        if (y > 4.6) return nz3([0, y - 5, z - cz]);
+        const a1 = Math.round((x - 1.2) / 2.4) * 2.4 + 1.2, a2 = Math.round((x + 1.2) / 2.4) * 2.4 - 1.2, lx = Math.abs(x - a1) < Math.abs(x - a2) ? a1 : a2;
+        return nz3([x - lx, 0, z - cz]);
+      }
+      case 'crystal': {
+        if (fl === 13) return UP;
+        const r = Math.hypot(x, z) || 1;
+        if (y < -.5) return nz3([x, y + .6, z]);
+        if (y > 9) return nz3([x / r * 2.4, 1.6, z / r * 2.4]);
+        return [x / r, 0, z / r];
+      }
+      case 'display': return Zp;
+      case 'now': { const h1 = fr(Math.sin(x * 12.9898 + y * 78.233) * 43758.5453) - .5, h2 = fr(Math.sin(x * 39.346 + y * 11.135) * 24634.634) - .5; return nz3([h1 * .7, h2 * .7, 1]); }
+      default: return UP;   // wafer, light, chip: flat, upward-facing structures
+    }
+  }
+
+  // CONFINEMENT — 0 = natural, unbounded; 1 = fully controlled.
+  // Nature fills the frame; industry concentrates matter until the crystal stands alone;
+  // computation opens the space again; the end fills your screen.
+  // It drives the lens (wide → telephoto), camera distance (how much of the frame the subject owns),
+  // how restless resting matter is, and the width/weight of the type. Colour is left to material state.
+  const CONF = { magma: .1, granite: .3, river: 0, coast: .05, desert: .15, again: 0, quarry: .3, furnace: .5,
+                 purity: .75, crystal: 1, wafer: .85, light: .55, chip: .25, display: .4, now: 0 };
+  // framing relative to the blockout shots (>1 = the subject owns less of the frame)
+  const FRAME = { magma: 1, granite: .85, river: 1, coast: 1, desert: 1, again: 1, quarry: 1, furnace: 1.25,
+                  purity: 1.6, crystal: 1.55, wafer: 1.25, light: 1.2, chip: 1, display: 1.15, now: .85 };
+  const lens = c => 48 - 18 * c;
+  // light: key [dir, colour], sky/ground fill, rim, one point light [offset from hero, colour, range], specular, shadow frustum size
+  const RIG = {
+    magma:   { key: [[-.45, .85, .3], [1.05, 1.1, 1.25]], sky: [.05, .06, .08], ground: [.32, .1, .03], rim: [.3, .34, .45], pl: [[-.77, -5.9, -1.5], [2.4, .75, .18], 5], spec: 1, sh: 14, glow: .14, dof: .8 },
+    granite: { key: [[-.6, .42, .45], [1.45, 1.15, .9]],  sky: [.07, .09, .12],      ground: [.03, .025, .02], rim: [.32, .4, .55], pl: [[0, 0, 0], [0, 0, 0], 1], spec: .3, sh: 34, dof: .7 },
+    river:   { key: [[-.35, .55, .75], [1.15, 1.12, 1.05]], sky: [.07, .1, .13],  ground: [.03, .03, .025], rim: [.14, .18, .24], pl: [[0, 0, 0], [0, 0, 0], 1], spec: .35, sh: 18, water: 1 },
+    coast:   { key: [[.45, .62, .5], [1.15, 1.02, .86]], sky: [.06, .09, .12],    ground: [.04, .035, .03], rim: [.1, .12, .16],  pl: [[0, 0, 0], [0, 0, 0], 1], spec: .3,  sh: 18 },
+    desert:  { dof: .45, key: [[-.75, .32, .35], [1.6, 1.15, .75]], sky: [.07, .06, .05],   ground: [.06, .04, .025], rim: [.18, .12, .08], pl: [[0, 0, 0], [0, 0, 0], 1], spec: .12, sh: 30 },
+    again:   { key: [[.92, .3, .25], [1.35, 1.08, .82]], sky: [.05, .045, .04],   ground: [.03, .02, .015], rim: [.22, .16, .12], pl: [[0, 0, 0], [0, 0, 0], 1], spec: .2, sh: 24 },
+    quarry:  { key: [[-.2, .9, .35], [.85, .88, .92]],  sky: [.09, .095, .1],     ground: [.04, .04, .04],  rim: [.06, .06, .07], pl: [[0, 0, 0], [0, 0, 0], 1], spec: .15, sh: 30 },
+    furnace: { key: [[-.3, .9, .2], [.18, .2, .25]],    sky: [.02, .02, .025],    ground: [.05, .02, .008], rim: [.1, .06, .03],  pl: [[0, .6, -1], [4.5, 1.7, .45], 6.5], spec: .2, sh: 18 },
+    purity:  { key: [[-.3, .9, .25], [1.05, 1.1, 1.18]], sky: [.05, .055, .065],  ground: [.02, .02, .025], rim: [.2, .22, .26],  pl: [[0, 0, 0], [0, 0, 0], 1], spec: .8,  sh: 18 },
+    crystal: { key: [[-.6, .72, .38], [1.05, 1.1, 1.2]], sky: [.02, .024, .032],  ground: [.012, .01, .009], rim: [.3, .34, .4], pl: [[0, -1.25, -1.63], [3.6, 1.5, .45], 3.2], spec: .92, sh: 14 },
+    wafer:   { key: [[-.5, .75, .45], [1.15, 1.18, 1.25]], sky: [.04, .045, .055], ground: [.015, .015, .02], rim: [.3, .32, .36], pl: [[0, 0, 0], [0, 0, 0], 1], spec: .95, sh: 10 },
+    light:   { key: [[-.3, .9, .3], [.85, .76, 1.12]],  sky: [.03, .025, .05],    ground: [.01, .008, .02], rim: [.25, .2, .4],   pl: [[0, 2.5, 0], [.7, .52, 1.3], 3.5], spec: .7, sh: 8, rays: .5 },
+    chip:    { key: [[-.4, .85, .3], [.45, .5, .62]],   sky: [.02, .025, .035],   ground: [.01, .01, .012], rim: [.12, .14, .2],  pl: [[0, 0, 0], [0, 0, 0], 1], spec: .55, sh: 16 },
+    display: { key: [[.3, .6, .75], [.3, .32, .38]],    sky: [.02, .02, .03],     ground: [.01, .01, .01],  rim: [.05, .05, .06], pl: [[0, 0, 0], [0, 0, 0], 1], spec: .2,  sh: 16, pix: 1.8 },
+    now:     { key: [[-.85, .3, .42], [1.3, 1.14, .92]], sky: [.07, .065, .06],   ground: [.035, .03, .025], rim: [.12, .1, .08], pl: [[0, 0, 0], [0, 0, 0], 1], spec: .28, sh: 16, dof: .6 },
+  };   // 48° natural, 30° fully confined
+  worlds.forEach(w => {
+    const c = CONF[w.slug], f = FRAME[w.slug];
+    w.conf = c; w.fov = lens(c);
+    w.wdth = 125 - 63 * c; w.wght = 380 + 250 * c;   // width carries the story; weight only compensates, so titles keep a steady density
+    w.jitter = (1 - c) * .022;
+    // keep the blockout composition under the new lens, then apply the framing change
+    const k = (Math.tan(THREE.MathUtils.degToRad(20)) / Math.tan(THREE.MathUtils.degToRad(w.fov / 2))) * f;
+    w.cam = w.look.map((l, i) => l + (w.cam[i] - l) * k);
+  });
+  const actOf = i => worlds[i].final ? 'End' : worlds[i].act;
+
+  // ---------- choreography ----------
+  // one verb per transition: rise · crack · carry · drift · bury · (cut) · break · separate · grow · slice · expose · enter · emit · reveal
+  // grain styles: 0 rise · 1 fall · 2 flow · 4 bury · 5 cut · 9 slice · 11 dive · 12 beam · 13 raster · 15 crack · 16 expose · 17 drift · 18 break · 19 separate · 20 grow
+  const TR = [
+    { g: 0,  cam: 'crane',     len: 1.2, k: 1.2, hero: [[0, 3, 0], [0, 3, 0]] },
+    { g: 15, cam: 'crackdrop', len: 1.4, k: 1.2, hero: [[0, -1, 0], [0, 5, 0]] },
+    { g: 2,  cam: 'track',     len: 1.0, k: 1.2, dir: [1, 0, 0], hero: [[4, 0, 0], [-4, 0, 0]] },
+    { g: 17, cam: 'drift',     len: 1.8, dir: [.93, 0, -.37], hero: [[1, .5, 1], [-3, 3, 0]] },   // drift: water hands the grain to the wind
+    { g: 4,  cam: 'sink',      len: 1.4, k: 6, span: .5, hero: [[0, -2, 0], [0, 6, 0]] },
+    { g: 5,  cam: 'cut',       len: 1.1 },
+    { g: 18, cam: 'breakfall', len: 1.9, hero: [[0, 3, 1], [0, 7, 0]] },             // break: the rock cracks, falls and feeds the furnace
+    { g: 19, cam: 'rise',      len: 1.4, hero: [[0, 7, 0], [0, 6, 0]] },             // separate: heat, vapour, separation, deposition
+    { g: 20, cam: 'orbit',     len: 2.4, axis: [0, 0], hero: [[0, -2.5, 0], [0, -1.5, 0]] },   // grow: rods melt, a seed touches, order spreads
+    { g: 9,  cam: 'slide',     len: 1.0, dir: [0, -1, 0], spread: 9, span: .3 },
+    { g: 16, cam: 'top',       len: .9,  dir: [1, 0, 0], spread: 4, span: .35 },
+    { g: 11, cam: 'zoom',      len: 1.4, span: .7 },
+    { g: 12, cam: 'beam',      len: .9,  k: 1.2, hero: [[0, 6, 0], [0, -6, 0]] },
+    { g: 21, cam: 'macro',     len: 2.8 },   // become: the light goes out, sub-pixels come apart, the grains are sand
+  ];
+  const segs = []; let total = 0;
+  worlds.forEach((w, i) => {
+    segs.push({ type: 'hold', i, start: total, len: w.hold }); total += w.hold;
+    if (i < CH - 1) { segs.push({ type: 'tr', i, start: total, len: TR[i].len }); total += TR[i].len; }
+  });
+  document.getElementById('track').style.height = (total * 100 + 100) + 'vh';
+  const snapPoints = worlds.map((_, i) => { const h = segs.find(x => x.type === 'hold' && x.i === i); return (h.start + h.len / 2) / total; });
+  snapPoints[0] = 0; snapPoints[CH - 1] = 1;
+  { const cs = segs.find(x => x.type === 'tr' && TR[x.i].cam === 'cut'); snapPoints.push((cs.start + cs.len * .5) / total); snapPoints.sort((a, b) => a - b); }
+
+  // ---------- renderer ----------
+  const canvas = document.getElementById('scene');
+  let renderer;
+  try { renderer = new THREE.WebGLRenderer({ canvas, antialias: true }); } catch (e) { root.classList.add('nogl'); return; }
+  if (!renderer.capabilities.isWebGL2) { root.classList.add('nogl'); return; }
+  const small = innerWidth < 760;
+  const DPR = Math.min(devicePixelRatio || 1, small ? 1.25 : 1.4);
+  renderer.setPixelRatio(DPR);
+  const scene = new THREE.Scene(), shadowScene = new THREE.Scene();
+  const camera = new THREE.PerspectiveCamera(40, 1, .05, 200);
+  const N = small ? 36000 : 90000, TEXW = 1024, ROWS = Math.ceil(N / TEXW);
+
+  const U = {
+    uData: { value: null }, uRows: { value: ROWS }, uFrom: { value: 0 }, uTo: { value: 1 },
+    uTime: { value: 0 }, uT: { value: 0 }, uMotion: { value: 1 }, uScale: { value: 1 }, uGrain: { value: .1 },
+    uStyle: { value: 0 }, uK: { value: 1 }, uSpan: { value: .45 }, uSpread: { value: 30 }, uDir: { value: new THREE.Vector3(1, 0, 0) }, uAxis: { value: new THREE.Vector2() },
+    uHeroA: { value: new THREE.Vector3() }, uHeroB: { value: new THREE.Vector3() },
+    uGlowA: { value: 0 }, uGlowB: { value: 0 }, uRaysA: { value: 1 }, uRaysB: { value: 1 }, uPixA: { value: 1 }, uPixB: { value: 1 }, uWaterA: { value: 0 }, uWaterB: { value: 0 },
+    uLand: { value: 0 }, uLandPos: { value: new THREE.Vector3() },
+    uLast: { value: 0 }, uReveal: { value: 0 }, uNorm: { value: null }, uSpecA: { value: .3 }, uSpecB: { value: .3 }, uPx: { value: 1 }, uLightVP: { value: new THREE.Matrix4() },
+    uKeyDir: { value: new THREE.Vector3(0, 1, 0) }, uKeyCol: { value: new THREE.Vector3() }, uSky: { value: new THREE.Vector3() }, uGround: { value: new THREE.Vector3() }, uRim: { value: new THREE.Vector3() },
+    uPLPos: { value: new THREE.Vector3() }, uPLCol: { value: new THREE.Vector3() }, uPLRange: { value: 1 },
+    uCamPos: { value: new THREE.Vector3() }, uCamR: { value: new THREE.Vector3() }, uCamU: { value: new THREE.Vector3() }, uCamB: { value: new THREE.Vector3() }, uFogLin: { value: new THREE.Vector3() },
+    uUseShadow: { value: 1 }, uUseLight: { value: 1 }, uShadowTexel: { value: 1 / 1024 }, uShadow: { value: null },
+    uInteract: { value: 0 }, uMouseW: { value: new THREE.Vector3(0, -99, 0) }, uPress: { value: 0 },
+    uLoA: { value: new THREE.Color() }, uHiA: { value: new THREE.Color() }, uLoB: { value: new THREE.Color() }, uHiB: { value: new THREE.Color() },
+    uFog: { value: new THREE.Color() }, uFogD: { value: .02 }, uJitter: { value: 0 },
+  };
+  const mat = new THREE.ShaderMaterial({
+    uniforms: U,
+    vertexShader: `
+      precision highp sampler2D;
+      uniform sampler2D uData; uniform sampler2D uNorm; uniform int uRows, uFrom, uTo, uStyle, uInteract, uLast;
+      uniform float uReveal, uSpecA, uSpecB, uPx, uGlowA, uGlowB, uRaysA, uRaysB, uPixA, uPixB, uWaterA, uWaterB;
+      uniform mat4 uLightVP;
+      varying vec3 vN; varying vec3 vW; varying float vEmit; varying float vSpec; varying float vSeed; varying float vFog; varying float vPix; varying vec4 vLS;
+      uniform float uTime, uT, uMotion, uScale, uGrain, uFogD, uK, uSpan, uSpread, uPress, uJitter;
+      uniform vec3 uHeroA, uHeroB, uDir, uMouseW, uLoA, uHiA, uLoB, uHiB, uFog;
+      uniform vec2 uAxis; uniform float uLand; uniform vec3 uLandPos;
+      varying vec3 vCol;
+      float gSize;
+      float h1(float n){ return fract(sin(n * 12.9898 + 4.1) * 43758.5453); }
+      vec4 grab(int s, int id){ return texelFetch(uData, ivec2(id % 1024, id / 1024 + s * uRows), 0); }
+      vec4 grabN(int s, int id){ return texelFetch(uNorm, ivec2(id % 1024, id / 1024 + s * uRows), 0); }
+      // every world has its own physics while it rests
+      vec3 animate(vec4 P, vec3 R, out float sz){
+        float f = floor(P.w + .001), tn = fract(P.w); vec3 p = P.xyz; float t = uTime * uMotion; sz = 1.;
+        if (f > .5 && f < 1.5) { float x = mod(p.x + 13. + t * (.8 + .8 * R.x), 26.) - 13.; p = vec3(x, p.y + sin(t * 3. + R.y * 20.) * .05, 2.2 * sin(x * .22) + p.z); }
+        else if (f > 1.5 && f < 2.5) { p.y += .18 * sin(p.z * 1.3 - t * 1.6 + p.x * .15) + .05 * sin(p.x * .9 + t); }
+        else if (f > 2.5 && f < 3.5) { float ph = fract(t * (.5 + .5 * R.x) + R.y * 10.); p.x += ph * 1.4; p.y += 4. * ph * (1. - ph) * .4; }
+        else if (f > 3.5 && f < 4.5) { float ph = fract(t * (.25 + .3 * R.x) + R.y * 10.); p.y -= ph * ph * 9.; p.x += (R.z - .5) * ph * .8; }
+        else if (f > 4.5 && f < 5.5) { p += vec3(sin(t * .4 + R.x * 20.), sin(t * .3 + R.y * 15.) * .4, cos(t * .35 + R.z * 18.)) * .35; }
+        else if (f > 6.5 && f < 7.5) { float ph = fract(t * (.3 + .4 * R.x) + R.y * 10.); p.y += ph * 6.; p.x += sin(ph * 6. + R.z * 20.) * .3; }
+        else if (f > 9.5 && f < 10.5) { float ph = fract(t * (.3 + .4 * R.x) + R.y * 10.); p.x += ph * 3.; p.z -= ph * 1.2; p.y += sin(ph * 3.14159) * .45; sz = 1. - ph; }
+        else if (f > 10.5 && f < 11.5) { p.y -= (sin(t * .6 + p.x * .25) * .5 + .5) * .09; }
+        else if (f > 11.5 && f < 12.5) { p = mix(vec3(2., -7.2, 2.), vec3(20., 3., -4.), fract(tn + t * .05)) + (R - .5) * vec3(.3, .15, .3); }
+        else if (f > 12.5 && f < 13.5) { float rc = length(p.xz), an = atan(p.z, p.x), ph = t * .5 + R.x * 6.2832, r2 = rc + .5 * cos(ph); p = vec3(cos(an) * r2, p.y - .2 + .3 * sin(ph), sin(an) * r2); }
+        else if (f > 13.5 && f < 14.5) { float ph = fract(t * .15 + R.y), a = R.x * 6.2832; p += vec3(cos(a), (R.z - .5) * .6, sin(a)) * (1. - ph) * 1.6; sz = smoothstep(0., .15, ph); }
+        else if (f > 14.5 && f < 15.5) { float a = t * .15, c = cos(a), s = sin(a); p.xz = vec2(p.x * c - p.z * s, p.x * s + p.z * c); }
+        else if (f > 16.5 && f < 17.5) { float ph = fract(t * (.6 + .4 * R.x) + R.y * 10.); p.y -= ph * 2.8; sz = 1. - ph * .7; }
+        return p;
+      }
+      vec3 paint(vec4 P, vec3 lo, vec3 hi, vec3 R){
+        float f = floor(P.w + .001), tn = fract(P.w), t = uTime * uMotion;
+        vec3 c = mix(lo, hi, tn);
+        if (f > .5 && f < 2.5) { c = mix(vec3(.2, .43, .47), vec3(.5, .75, .78), tn); c = mix(c, vec3(dot(c, vec3(.299, .587, .114))), .12); }
+        else if (f > 4.5 && f < 5.5) c = mix(vec3(.75, .22, .08), vec3(1., .82, .45), tn) * (.85 + .25 * sin(t * 2. + R.x * 20.));
+        else if (f > 6.5 && f < 7.5) c = vec3(1., .8, .45) * (1.2 - fract(t * (.3 + .4 * R.x) + R.y * 10.));
+        else if (f > 7.5 && f < 8.5) { vec3 base = mix(vec3(.42, .47, .55), vec3(.7, .76, .84), R.y * .5); c = mix(base, vec3(.98, .74, .42), step(.6, tn) * step(.5, fract(t * .5 + floor(tn * 8.) / 8.)) * .75); }
+        else if (f > 17.5 && f < 18.5) { float pulse = smoothstep(.88, 1., fract(tn * 4. - t * .6)); c = mix(vec3(.62, .38, .2), vec3(1.2, 1.05, .8), pulse); }
+        else if (f > 21.5 && f < 24.5) {   // sand minerals, each family keeping a hint of the sub-pixel it came from
+          vec3 base = mix(vec3(.44, .33, .22), vec3(.9, .8, .64), tn);
+          vec3 tint = f < 22.5 ? vec3(1.08, .94, .88) : f < 23.5 ? vec3(.98, 1.02, .9) : vec3(.94, .97, 1.04);
+          c = base * tint;
+        }
+        else if (f > 18.5 && f < 19.5) { float ring = smoothstep(.82, 1., fract(t * .5 - tn * 1.5)); c = vec3(.82, .64, .32) + vec3(1., .88, .6) * ring * .9; }
+        else if (f > 8.5 && f < 9.5) c = tn < .33 ? vec3(.72, .34, .3) : tn < .66 ? vec3(.38, .63, .42) : vec3(.3, .44, .72);
+        else if (f > 11.5 && f < 12.5) c = hi * .9;
+        else if (f > 12.5 && f < 13.5) c = mix(vec3(.8, .3, .1), vec3(1., .78, .4), tn) * (.9 + .15 * sin(t * 1.5 + R.x * 20.));
+        else if (f > 13.5 && f < 14.5) c = hi * 1.1;
+        else if (f > 16.5 && f < 17.5) c = vec3(.92, .9, 1.);
+        return c;
+      }
+      void main(){
+        int id = int(position.x + .5);
+        vec3 R = vec3(h1(position.x), h1(position.x + 71.3), h1(position.x + 13.7));
+        vec4 A = grab(uFrom, id), B = grab(uTo, id);
+        float sa, sb;
+        vec3 pa = animate(A, R, sa), pb = animate(B, R, sb), p;
+        float e, arc = 0., szMul = 1., heat = 0., whiten = 0., darken = 0., rgbFade = 0.;
+        if (uStyle == 5) { e = step(.5, uT); p = mix(pa, pb, e); }
+        else {
+          float dd, w = .6;
+          if (uStyle == 1) dd = clamp(.5 - (pa.y - uHeroA.y) / 10., 0., 1.);
+          else if (uStyle == 2 || uStyle == 3 || uStyle == 9) { dd = clamp(dot(pa - uHeroA, uDir) / uSpread + .5, 0., 1.); if (uStyle == 9) w = .9; }
+          else if (uStyle == 16) { dd = clamp(dot(pb - uHeroB, uDir) / uSpread + .5, 0., 1.); w = .85; }
+          else if (uStyle == 4) dd = clamp((pb.y - uHeroB.y) / 12. + .5, 0., 1.);
+          else if (uStyle == 13) { dd = 1. - clamp((pb.y - uHeroB.y) / 12. + .5, 0., 1.); w = .94; }
+          else dd = clamp(length(A.xyz - uHeroA) / 25., 0., 1.);
+          float d = w * dd + (1. - w) * R.x;
+          if (uStyle == 11) d = R.x * .3;
+          float t = clamp((uT - d * (1. - uSpan)) / uSpan, 0., 1.);
+          e = t < .5 ? 4. * t * t * t : 1. - pow(-2. * t + 2., 3.) * .5;
+          arc = sin(3.14159265 * e) * uMotion;
+          float amt = clamp(length(pb - pa) / 12., .2, 1.);
+          p = mix(pa, pb, e);
+          if (uStyle == 0) { p.y += arc * (.6 + 2.4 * R.y) * amt * uK; p += arc * vec3(sin(e * 8. + R.x * 30.), cos(e * 6. + R.z * 20.), sin(e * 7. + R.y * 25.)) * .6 * amt; }
+          else if (uStyle == 1) { p.y -= arc * (1.5 + 4. * R.y) * uK; p.xz += (R.xz - .5) * arc * 1.2; }
+          else if (uStyle == 2) { p += uDir * arc * (2. + 4. * R.y) * uK; p.y += arc * .4 * R.z; }
+          else if (uStyle == 3) { p += uDir * arc * (4. + 8. * R.y) * uK; p.y += arc * (1. + 3. * R.z) * uK + sin(e * 10. + R.x * 30.) * arc * .5; }
+          else if (uStyle == 4) { p = mix(pa - vec3(0., uK * e * (.6 + R.y), 0.), pb + vec3(0., uK * (1. - e) * (.6 + R.y), 0.), e); }
+          else if (uStyle == 6) { vec3 c = (uHeroA + uHeroB) * .5 + vec3(0., 4., 0.); p = mix(p, c + (R - .5) * vec3(.8, 3., .8), arc * .85); }
+          else if (uStyle == 7) { p.y += arc * (1. + 4. * R.y) * uK; p.x += sin(e * 14. + R.x * 40.) * arc * .35; }
+          else if (uStyle == 8) { vec2 q = p.xz - uAxis; float an = arc * 3.14159 * (.5 + R.y); float c = cos(an), s = sin(an); p.xz = uAxis + vec2(q.x * c - q.y * s, q.x * s + q.y * c); p.y += arc * 1.5 * R.y; }
+          else if (uStyle == 9) { p.y += arc * .08; }
+          else if (uStyle == 11) { if (e < .5) { float k = e * 2.; p = uHeroA + (pa - uHeroA) * (1. + k * k * k * 25.); } else { float k = (e - .5) * 2.; p = uHeroB + (pb - uHeroB) * mix(.01, 1., k * k); } }
+          else if (uStyle == 12) { p.y += arc * (4. + 10. * R.y) * uK; p.xz = mix(p.xz, e < .5 ? pa.xz : pb.xz, arc); }
+          else if (uStyle == 13) { p.z += arc * 1.5; }
+          else if (uStyle == 21) {
+            float fa = floor(A.w + .001), sub = step(8.5, fa) * step(fa, 9.5);
+            rgbFade = smoothstep(.12, .3, uT);                              // the light goes out: saturation 100% → 30%
+            float rise = smoothstep(.18, .4, uT);                           // sub-pixels come up to the surface as the glass vanishes
+            float loose = smoothstep(.2, .36, uT);                          // the perfect grid loosens slightly
+            float part = smoothstep(.32, .7, uT - R.x * .05);               // neighbours separate and fill their own area
+            vec3 from = pa + vec3(0., 0., 1.2 * sub * rise) + vec3((R.xy - .5) * .045 * loose * (1. - part), 0.);
+            p = mix(from, pb, part);
+            e = smoothstep(.34, .72, uT); arc = 0.;
+            float glassGone = (1. - sub) * smoothstep(.06, .22, uT) * (1. - smoothstep(.6, .88, uT));
+            szMul = 1. - glassGone;                                          // the glass leaves no cloud: it vanishes, then returns as sand
+          }
+          else if (uStyle == 15) { p.x += sign(pa.x - uHeroA.x + .001) * arc * (1.5 + 2.5 * R.y) * uK; p.y -= arc * arc * (2. + 4. * R.z); }
+          else if (uStyle == 16) { p.y += arc * .6 * step(.01, length(pb - pa)); }
+          else if (uStyle == 17) { // drift: the water recedes, the wet sand dries, wind ripples appear and grow into dunes
+            float fa = floor(A.w + .001), water = step(1.5, fa) * step(fa, 2.5);
+            float rec = smoothstep(0., .3, uT), rip = smoothstep(.22, .45, uT) * (1. - smoothstep(.8, 1., uT));
+            float stag = .12 * clamp(dot(pb - uHeroB, uDir) / 30. + .5, 0., 1.);
+            float grow = smoothstep(.5, .88, uT - stag);
+            vec3 cp = pa;
+            cp.z += water * rec * 5.; cp.y -= water * rec * .4;
+            cp.y += (1. - water) * sin(dot(cp.xz, uDir.xz) * 7. - uT * 18. * uMotion) * .07 * rip;
+            vec3 tgt = vec3(pb.x, pb.y * smoothstep(.55, 1., uT) + sin(dot(pb.xz, uDir.xz) * 7. - uT * 18. * uMotion) * .07 * (1. - grow) * rip, pb.z);
+            p = mix(cp, tgt, grow) + uDir * sin(3.14159 * grow) * (1. + 2.5 * R.y) * uMotion;
+            e = grow; arc = sin(3.14159 * grow) * .5 * uMotion;
+            darken = (1. - water) * smoothstep(-3., 0., pa.z) * rec * (1. - smoothstep(.3, .55, uT)) * .45;   // wet sand, drying
+            szMul = mix(1. - water * rec * .85, 1., grow);
+          }
+        if (uStyle == 18) { // break: crack, fall grey into the dark hopper, glow only once fed; the furnace builds bottom-up from what falls in
+          vec2 cell = floor(pa.xz / 2.4);
+          float hb = fract(sin(dot(cell, vec2(12.9898, 78.233))) * 43758.5453);
+          vec3 bc = vec3((cell.x + .5) * 2.4, pa.y, (cell.y + .5) * 2.4);
+          float tb = clamp((uT - hb * .25) / .55, 0., 1.);
+          float crack = smoothstep(0., .2, tb), fall = smoothstep(.15, 1., tb);
+          float fy = clamp((pb.y - uHeroB.y + 1.) / 10., 0., 1.);
+          float feed = clamp((uT - .55 - hb * .2 - fy * .1) / .15, 0., 1.); feed = feed * feed * (3. - 2. * feed);
+          vec3 loc = (pa - bc) * (1. - .55 * fall) * (1. + .12 * crack);
+          float an = fall * 2.4 * (hb - .5) * uMotion, ca = cos(an), sa2 = sin(an); loc.xz = vec2(loc.x * ca - loc.z * sa2, loc.x * sa2 + loc.z * ca);
+          vec3 hop = uHeroB + vec3(0., 6., -.5), c1 = bc + vec3(0., 3., 0.), c2 = hop + vec3(0., 5., 0.);
+          float u = fall * fall, iu = 1. - u;   // gravity: a slow start, then an accelerating fall
+          vec3 ctr = iu * iu * iu * bc + 3. * iu * iu * u * c1 + 3. * iu * u * u * c2 + u * u * u * hop;
+          p = mix(ctr + loc, pb, feed);
+          e = feed; arc = sin(3.14159 * crack) * .4 * uMotion;
+          darken = smoothstep(.55, 1., fall) * .55 * (1. - feed);
+          heat = smoothstep(0., .45, feed) * (1. - smoothstep(.8, 1., feed));
+        }
+        else if (uStyle == 19) { // separate: rise as vapour into channels, impurities fall away, the rest whitens and deposits
+          float rise = smoothstep(0., .45, uT - R.x * .1), sep = smoothstep(.3, .65, uT), dep = smoothstep(.55, .92, uT - (1. - R.y) * .08);
+          float ch = floor(R.x * 6.); vec3 chan = vec3(-6. + ch * 2.4, 0., -1.);
+          vec3 up = vec3(mix(pa.x, chan.x, rise) + sin(uT * 12. + R.y * 20.) * .2 * rise * (1. - sep) * uMotion, pa.y + rise * 8.5 * (.6 + .4 * R.z), mix(pa.z, chan.z, rise));
+          float impure = step(R.z, .18);
+          up.x += impure * sign(chan.x + .01) * sep * 5.; up.y -= impure * sep * sep * 7.;
+          p = mix(up, pb, dep);
+          e = dep; arc = sin(3.14159 * uT) * uMotion;
+          whiten = sep * (1. - impure) * (1. - dep); darken = impure * sep * (1. - dep);
+          szMul = mix(1., .25, impure * sep * (1. - dep)); heat = .4 * sin(3.14159 * rise);
+        }
+        else if (uStyle == 20) { // grow: rods melt into the pool, the seed end appears, grains gather under their column and lock into the lattice
+          float melt = smoothstep(0., .3, uT - R.x * .06);
+          float rp = 3.6 * sqrt(R.x), ra = R.y * 6.2832;
+          vec3 pool = vec3(cos(ra) * rp, -.55 + sin(uTime * uMotion * .5 + R.z * 6.) * .05, sin(ra) * rp);
+          vec3 m = mix(pa, pool, melt); m.y -= sin(3.14159 * melt) * 1.2 * R.z;
+          float fb = floor(B.w + .001), inC = 0.;
+          if (fb > 14.5 && fb < 15.5) {
+            float grow = smoothstep(.36, 1., uT), off = 11.5 * (1. - grow), thr = mix(12., -.4, grow);
+            inC = smoothstep(thr - .6, thr + .1, pb.y);
+            vec3 slot = pb - vec3(0., off, 0.), under = vec3(pb.x, -.45, pb.z);
+            p = mix(mix(m, under, smoothstep(0., .5, inC)), slot, smoothstep(.35, 1., inC));
+            e = max(melt * .49, inC);
+            whiten = inC * (1. - inC) * 3.2;   // the crystallisation front glows as grains lock in
+          } else { float k = smoothstep(.3, .7, uT); p = mix(m, pb, k); e = max(melt * .49, k); inC = k; }
+          arc = sin(3.14159 * uT) * .4 * uMotion; heat = melt * (1. - inC) * .85;
+        }
+        }
+        vec4 Pc = e < .5 ? A : B;
+        float fl = floor(Pc.w + .001), sz = (e < .5 ? sa : sb) * szMul, tnc = fract(Pc.w), tt = uTime * uMotion;
+        if (uInteract == 1 && (fl < .5 || (fl > 2.5 && fl < 3.5) || (fl > 9.5 && fl < 10.5))) { vec2 dm = p.xz - uMouseW.xz; float md = length(dm), rr = 1.8 + uPress * 1.5; if (md < rr) { p.xz += dm / (md + .001) * (rr - md) * .7; p.y += (rr - md) * .6 * R.y; } }
+        vec3 c = e < .5 ? paint(A, uLoA, uHiA, R) : paint(B, uLoB, uHiB, R);
+        if (uStyle == 21) { vec3 ca = paint(A, uLoA, uHiA, R), cb = paint(B, uLoB, uHiB, R); float l = dot(ca, vec3(.299, .587, .114)); c = mix(mix(ca, vec3(l), rgbFade * .7), cb, smoothstep(.34, .72, uT)); }
+        float isPix = (uTo == uLast && e >= .5) ? 1. : 0.;
+        if (isPix > .5) { float n = .24 + .04 * R.y; c = mix(vec3(n * .9, n * .94, n), c, uReveal); }
+        // what glows: magma, sparks, melt, light rays, signal pulses, the clock tree, sub-pixels, switching gates
+        float em = 0.;
+        if (fl > 4.5 && fl < 5.5) em = 1.4;
+        else if (fl > 6.5 && fl < 7.5) em = 2.4;
+        else if (fl > 12.5 && fl < 13.5) em = 1.7;
+        else if (fl > 16.5 && fl < 17.5) em = 2. * mix(uRaysA, uRaysB, e);
+        else if (fl > 17.5 && fl < 18.5) em = .2 + 2.6 * smoothstep(.88, 1., fract(tnc * 4. - tt * .6));
+        else if (fl > 18.5 && fl < 19.5) em = .3 + 2. * smoothstep(.82, 1., fract(tt * .5 - tnc * 1.5));
+        else if (fl > 8.5 && fl < 9.5) em = 1.1 * mix(uPixA, uPixB, e);
+        else if (fl > 7.5 && fl < 8.5) em = 1.3 * step(.6, tnc) * step(.5, fract(tt * .5 + floor(tnc * 8.) / 8.));
+        if (uStyle == 21) em *= 1. - rgbFade;
+        if (uInteract == 2 && fl > 7.5) { float g = smoothstep(1.6 + uPress, .2, length(p.xz - uMouseW.xz)); c += vec3(1., .82, .5) * g * 1.1; em += g * 1.5; }
+        c = mix(c, vec3(1., .48, .16) * (1.1 + .3 * R.x), heat * .75);
+        c = mix(c, vec3(.95, .97, 1.), whiten * .8); c = mix(c, vec3(.18, .14, .12), darken * .85);
+        em += heat * 2.2 + whiten * .5;
+        c *= 1. + arc * .25;
+        p += vec3(sin(uTime * 1.3 + R.x * 40.), sin(uTime * 1.1 + R.y * 40.), sin(uTime * 1.7 + R.z * 40.)) * uJitter * uMotion;
+        if (uLand > 0.) { vec2 dl = p.xy - uLandPos.xy; float l = length(dl); if (l < .14) p.xy += dl / (l + 1e-4) * (.14 - l) * .45 * uLand; }
+        vec3 n = normalize(mix(grabN(uFrom, id).xyz, grabN(uTo, id).xyz, e) + vec3(0., 1e-4, 0.));
+        float spec = mix(uSpecA, uSpecB, e); if (fl > .5 && fl < 2.5) spec = .7 + .25 * mix(uWaterA, uWaterB, e);
+        if (fl < .5) em += mix(uGlowA, uGlowB, e);   // a world-level inner glow for its base material (magma's quartz)
+#ifdef SHADOW
+        gl_Position = uLightVP * vec4(p, 1.);
+        gl_PointSize = sz < .02 ? 0. : max(1., uGrain * uPx * (.8 + .4 * R.z) * sz);
+#else
+        vec4 mv = modelViewMatrix * vec4(p, 1.);
+        float depth = -mv.z;
+        vCol = pow(max(c, 0.), vec3(2.2)); vN = n; vW = p; vEmit = isPix > .5 ? 1. : em; vSpec = spec; vSeed = R.x; vPix = isPix;
+        vFog = clamp(1. - exp(-uFogD * depth), 0., .85); vLS = uLightVP * vec4(p, 1.);
+        gl_PointSize = sz < .02 ? 0. : clamp(uGrain * uScale / max(depth, .05), 1.2, 9.) * (.8 + .4 * R.z) * sz * (isPix > .5 ? mix(1., 1.42, uReveal) : 1.);
+        gl_Position = projectionMatrix * mv;
+#endif
+      }`,
+    fragmentShader: `
+      uniform vec3 uKeyDir, uKeyCol, uSky, uGround, uRim, uPLPos, uPLCol, uCamPos, uCamR, uCamU, uCamB, uFogLin;
+      uniform float uPLRange, uUseShadow, uUseLight, uShadowTexel, uReveal;
+      uniform sampler2D uShadow;
+      varying vec3 vCol; varying vec3 vN; varying vec3 vW; varying float vEmit; varying float vSpec; varying float vSeed; varying float vFog; varying float vPix; varying vec4 vLS;
+      float shadowAt(){
+        vec3 lc = vLS.xyz / vLS.w * .5 + .5;
+        if (lc.x <= 0. || lc.x >= 1. || lc.y <= 0. || lc.y >= 1. || lc.z >= 1.) return 1.;
+        float d = 0.;
+        for (int i = 0; i < 4; i++) { vec2 o = (vec2(float(i % 2), float(i / 2)) - .5) * uShadowTexel * 1.5; d += step(lc.z - .0016, texture2D(uShadow, lc.xy + o).r); }
+        return d * .25;
+      }
+      void main(){
+        vec2 q = gl_PointCoord * 2. - 1.;
+        if (vPix > .5) { // the screen: square pixels that round and swell into grains as the sand appears
+          float rr = mix(max(abs(q.x), abs(q.y)) / .965, length(q), uReveal);
+          if (rr > 1.) discard;
+          gl_FragColor = vec4(mix(vCol * 1.25, uFogLin, vFog * .3), 1.); return;
+        }
+        float r2 = dot(q, q); if (r2 > 1.) discard;
+        vec3 sn = vec3(q.x, -q.y, sqrt(1. - r2));
+        vec3 sw = normalize(uCamR * sn.x + uCamU * sn.y + uCamB * sn.z);
+        vec3 N = normalize(normalize(vN) * .62 + sw * .55);
+        vec3 V = normalize(uCamPos - vW);
+        vec3 col = vCol;
+        if (uUseLight > .5) {
+          float sh = uUseShadow > .5 ? shadowAt() : 1.;
+          float ndl = max(dot(N, uKeyDir), 0.);
+          vec3 hemi = mix(uGround, uSky, N.y * .5 + .5);
+          vec3 Lp = uPLPos - vW; float dist = max(length(Lp), .001), att = 1. / (1. + dist * dist / (uPLRange * uPLRange));
+          vec3 pl = uPLCol * max(dot(N, Lp / dist), 0.) * att;
+          float gloss = mix(10., 140., vSpec);
+          float spec = pow(max(dot(N, normalize(uKeyDir + V)), 0.), gloss) * vSpec * 1.8;
+          float specPl = pow(max(dot(N, normalize(Lp / dist + V)), 0.), gloss) * vSpec * 1.2 * att;
+          float rim = pow(1. - max(dot(N, V), 0.), 3.);
+          float ao = mix(.62, 1., sn.z);
+          col = vCol * (uKeyCol * ndl * sh + hemi * ao + pl) + uKeyCol * spec * sh + uPLCol * specPl + uRim * rim * .6;
+        }
+        col += vCol * vEmit * (.88 + .2 * sin(vSeed * 30. + vW.x));
+        col = mix(col, uFogLin, vFog);
+        gl_FragColor = vec4(col, 1.);
+      }`,
+  });
+  const shadowMat = new THREE.ShaderMaterial({ uniforms: U, defines: { SHADOW: '' }, vertexShader: mat.vertexShader,
+    fragmentShader: `void main(){ vec2 q = gl_PointCoord * 2. - 1.; if (dot(q, q) > 1.) discard; gl_FragColor = vec4(1.); }` });
+
+  // the grain itself: always drawn on top, with a halo that does not depend on the scene palette
+  const heroGeo = new THREE.BufferGeometry(); heroGeo.setAttribute('position', new THREE.BufferAttribute(new Float32Array(3), 3));
+  const HU = { uPR: { value: DPR }, uLight: { value: 1 }, uMatte: { value: new THREE.Vector3(.3, .22, .14) }, uMatteSize: { value: 4 } };
+  const haloMat = new THREE.ShaderMaterial({
+    transparent: true, depthTest: false, depthWrite: false, blending: THREE.AdditiveBlending, uniforms: HU,
+    vertexShader: `uniform float uPR; void main(){ gl_PointSize = 38. * uPR; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.); }`,
+    fragmentShader: `uniform float uLight; void main(){ vec2 q = gl_PointCoord * 2. - 1.; float r = length(q); if (r > 1.) discard; float a = exp(-r * r * 7.) * .32 * uLight * uLight; gl_FragColor = vec4(vec3(1., .96, .88) * a, a); }`,
+  });
+  // the grain we followed: bright white → warm quartz → matte mineral, at the size of any other grain
+  const heroMat = new THREE.ShaderMaterial({
+    depthTest: false, depthWrite: false, uniforms: HU,
+    vertexShader: `uniform float uPR, uLight, uMatteSize; void main(){ gl_PointSize = mix(uMatteSize, 7. * uPR, uLight); gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.); }`,
+    fragmentShader: `uniform float uLight; uniform vec3 uMatte; void main(){ vec2 q = gl_PointCoord * 2. - 1.; float r = dot(q, q); if (r > 1.) discard;
+      vec3 bright = mix(vec3(1.), vec3(1., .88, .62), r) * 2.4;
+      vec3 warm = vec3(1.25, .98, .68) * (.9 - .2 * r);
+      vec3 matte = uMatte * (.62 + .5 * clamp(-q.x * .7 + q.y * .3 + .5, 0., 1.)) * mix(.62, 1., sqrt(max(0., 1. - r)));
+      vec3 c = uLight > .5 ? mix(warm, bright, (uLight - .5) * 2.) : mix(matte, warm, uLight * 2.);
+      gl_FragColor = vec4(c, 1.); }`,
+  });
+  HU.uMatte.value.set(.36, .27, .17);
+  const halo = new THREE.Points(heroGeo, haloMat), heroPt = new THREE.Points(heroGeo, heroMat);
+  halo.frustumCulled = heroPt.frustumCulled = false; halo.renderOrder = 10; heroPt.renderOrder = 11;
+
+  const heroes = [];
+  function build() {
+    const data = new Float32Array(TEXW * ROWS * CH * 4), ndata = new Float32Array(TEXW * ROWS * CH * 4);
+    let prevP = null, prevW = null;
+    worlds.forEach((w, c) => {
+      let P, Wt;
+      if (w.derive) { ({ P, W: Wt } = w.derive(prevP, prevW, N)); }
+      else {
+        if (w.setup) w.setup();
+        const Pa = [], Wa = [];
+        w.gen(Pa, Wa, N);
+        const keys = new Float32Array(N), order = new Uint32Array(N);
+        for (let i = 0; i < N; i++) { keys[i] = Pa[i * 3] + (rnd() - .5) * 1.5; order[i] = i; }
+        order.sort((a, b) => keys[a] - keys[b]);
+        P = new Float32Array(N * 3); Wt = new Float32Array(N);
+        for (let r = 0; r < N; r++) { const j = order[r]; P[r * 3] = Pa[j * 3]; P[r * 3 + 1] = Pa[j * 3 + 1]; P[r * 3 + 2] = Pa[j * 3 + 2]; Wt[r] = Wa[j]; }
+      }
+      const base = c * ROWS * TEXW * 4;
+      for (let r = 0; r < N; r++) { const o = base + r * 4; data[o] = P[r * 3]; data[o + 1] = P[r * 3 + 1]; data[o + 2] = P[r * 3 + 2]; data[o + 3] = Wt[r];
+        const nn = surfaceNormal(w.slug, P[r * 3], P[r * 3 + 1], P[r * 3 + 2], Wt[r]); ndata[o] = nn[0]; ndata[o + 1] = nn[1]; ndata[o + 2] = nn[2]; }
+      prevP = P; prevW = Wt;
+      heroes.push(new THREE.Vector3(...(w.hero ? w.hero() : w.heroPos)));
+    });
+    const ntex = new THREE.DataTexture(ndata, TEXW, ROWS * CH, THREE.RGBAFormat, THREE.FloatType);
+    ntex.minFilter = ntex.magFilter = THREE.NearestFilter; ntex.needsUpdate = true; U.uNorm.value = ntex;
+    const tex = new THREE.DataTexture(data, TEXW, ROWS * CH, THREE.RGBAFormat, THREE.FloatType);
+    tex.minFilter = tex.magFilter = THREE.NearestFilter; tex.needsUpdate = true;
+    U.uData.value = tex;
+    const ids = new Float32Array(N * 3); for (let i = 0; i < N; i++) ids[i * 3] = i;
+    const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.BufferAttribute(ids, 3));
+    const cloud = new THREE.Points(g, mat); cloud.frustumCulled = false;
+    scene.add(cloud); scene.add(halo); scene.add(heroPt);
+    const sc = new THREE.Points(g, shadowMat); sc.frustumCulled = false; shadowScene.add(sc);
+  }
+
+  const STAGES = { Nature: ['#0d181c', '#d3d7d2'], Industry: ['#14171b', '#d8d9d6'], Now: ['#080b12', '#e1e3e7'], End: ['#17110b', '#e7ddcb'] };
+  const mqDark = matchMedia('(prefers-color-scheme: dark)');
+  const isDark = () => true;   // the experience is art-directed for a dark stage
+  const cA = new THREE.Color(), cB = new THREE.Color(), cS = new THREE.Color();
+  let lastStage = ''; const stageLin = new THREE.Color();
+  function setStage(a, b, eg, reveal) {
+    const k = isDark() ? 0 : 1;
+    cA.set(STAGES[actOf(a)][k]); cB.set(STAGES[b === CH - 1 ? 'Now' : actOf(b)][k]);
+    if (b === CH - 1) cB.lerp(cS.set(STAGES.End[k]), reveal);
+    cS.copy(cA).lerp(cB, eg);
+    const hex = '#' + cS.getHexString();
+    if (hex === lastStage) return;
+    lastStage = hex; stageLin.copy(cS).convertSRGBToLinear(); U.uFogLin.value.set(stageLin.r, stageLin.g, stageLin.b); root.style.setProperty('--stage', hex);
+  }
+  function readTheme() { lastStage = ''; }
+  let portrait = false, lensNow = 0;
+  function applyLens(f) {
+    lensNow = f; camera.fov = f + (portrait ? 9 : 0); camera.updateProjectionMatrix();
+    const b = renderer.getDrawingBufferSize(new THREE.Vector2());
+    U.uScale.value = b.y / (2 * Math.tan(THREE.MathUtils.degToRad(camera.fov / 2)));
+  }
+  // ---------- HDR post: bright pass → blur pyramid → depth of field, bloom, tone shoulder, grade ----------
+  const fsCam = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1), fsGeo = new THREE.PlaneGeometry(2, 2);
+  const FSV = `varying vec2 vUv; void main(){ vUv = uv; gl_Position = vec4(position.xy, 0., 1.); }`;
+  const mkPass = (fs, u) => { const m = new THREE.ShaderMaterial({ uniforms: u, vertexShader: FSV, fragmentShader: fs, depthTest: false, depthWrite: false }); const sc = new THREE.Scene(); sc.add(new THREE.Mesh(fsGeo, m)); return { sc, u }; };
+  const brightP = mkPass(`uniform sampler2D uTex; uniform float uTh; varying vec2 vUv;
+    void main(){ vec3 c = texture2D(uTex, vUv).rgb; float l = dot(c, vec3(.2126, .7152, .0722)); gl_FragColor = vec4(c * smoothstep(uTh, uTh + .8, l), 1.); }`, { uTex: { value: null }, uTh: { value: .95 } });
+  const blurP = mkPass(`uniform sampler2D uTex; uniform vec2 uDir; varying vec2 vUv;
+    void main(){ vec3 c = texture2D(uTex, vUv).rgb * .2270;
+      c += (texture2D(uTex, vUv + uDir * 1.385).rgb + texture2D(uTex, vUv - uDir * 1.385).rgb) * .3162;
+      c += (texture2D(uTex, vUv + uDir * 3.231).rgb + texture2D(uTex, vUv - uDir * 3.231).rgb) * .0703;
+      gl_FragColor = vec4(c, 1.); }`, { uTex: { value: null }, uDir: { value: new THREE.Vector2() } });
+  const dofP = mkPass(`
+    uniform sampler2D uColor, uDepth; uniform float uNear, uFar, uFocus, uRange, uMaxBlur; uniform vec2 uTexel; varying vec2 vUv;
+    float linZ(float d){ float z = d * 2. - 1.; return 2. * uNear * uFar / (uFar + uNear - z * (uFar - uNear)); }
+    float cocAt(vec2 uv){ float d = texture2D(uDepth, uv).r; if (d >= 1.) return 1.; return clamp(abs(linZ(d) - uFocus) / uRange, 0., 1.); }
+    void main(){
+      float coc = cocAt(vUv), r0 = coc * uMaxBlur; vec3 acc = texture2D(uColor, vUv).rgb; float ws = 1.;
+      for (int i = 0; i < 12; i++) { float fi = float(i), r = sqrt((fi + .5) / 12.) * r0, a = fi * 2.39996;
+        vec2 uv = vUv + vec2(cos(a), sin(a)) * r * uTexel; float w = clamp(cocAt(uv) * uMaxBlur - r + 1.5, 0., 1.) + .12;
+        acc += texture2D(uColor, uv).rgb * w; ws += w; }
+      gl_FragColor = vec4(acc / ws, coc);
+    }`, { uColor: { value: null }, uDepth: { value: null }, uNear: { value: .05 }, uFar: { value: 200 }, uFocus: { value: 10 }, uRange: { value: 4 }, uMaxBlur: { value: 3 }, uTexel: { value: new THREE.Vector2() } });
+  const compP = mkPass(`
+    uniform sampler2D uColor, uDepth, uBloomA, uBloomB, uDof;
+    uniform float uNear, uFar, uFocus, uRange, uMaxBlur, uBloom, uUseDof, uUseBloom, uUseGrade, uTime, uGrainOn;
+    uniform vec2 uTexel; varying vec2 vUv;
+    float linZ(float d){ float z = d * 2. - 1.; return 2. * uNear * uFar / (uFar + uNear - z * (uFar - uNear)); }
+    float cocAt(vec2 uv){ float d = texture2D(uDepth, uv).r; if (d >= 1.) return 1.; return clamp(abs(linZ(d) - uFocus) / uRange, 0., 1.); }
+    // a shoulder only: darks stay exactly as art-directed, highlights roll off softly
+    vec3 shoulder(vec3 x){ vec3 a = vec3(.62); return mix(x, a + (1. - a) * (1. - exp(-(x - a) / (1. - a))), step(a, x)); }
+    float ign(vec2 p){ return fract(52.9829189 * fract(dot(p, vec2(.06711056, .00583715)))); }   // interleaved gradient noise
+    void main(){
+      vec3 c = texture2D(uColor, vUv).rgb;
+      if (uUseDof > .5) { vec4 bl = texture2D(uDof, vUv); c = mix(c, bl.rgb, smoothstep(.04, .35, cocAt(vUv))); }
+      if (uUseBloom > .5) c += (texture2D(uBloomA, vUv).rgb * .6 + texture2D(uBloomB, vUv).rgb * .9) * uBloom;
+      c = shoulder(c * 1.3);
+      if (uUseGrade > .5) {
+        vec2 d = vUv - .5; c *= 1. - dot(d, d) * .45;
+        c += (ign(gl_FragCoord.xy + floor(fract(uTime * 7.) * 64.) * vec2(5.588, 7.123) * uGrainOn) - .5) * .02;
+      }
+      gl_FragColor = vec4(pow(clamp(c, 0., 1.), vec3(1. / 2.2)), 1.);
+    }`, { uColor: { value: null }, uDepth: { value: null }, uBloomA: { value: null }, uBloomB: { value: null }, uDof: { value: null }, uNear: { value: .05 }, uFar: { value: 200 },
+    uFocus: { value: 10 }, uRange: { value: 4 }, uMaxBlur: { value: 5 }, uBloom: { value: .75 }, uUseDof: { value: 1 }, uUseBloom: { value: 1 }, uUseGrade: { value: 1 },
+    uTime: { value: 0 }, uGrainOn: { value: 1 }, uTexel: { value: new THREE.Vector2() } });
+  let mainRT, bA, bA2, bB, bB2, dofRT, shadowTick = 0, shadowFresh = false;
+  const SH = 1024;
+  const shadowRT = new THREE.WebGLRenderTarget(SH, SH, { depthBuffer: true }); shadowRT.depthTexture = new THREE.DepthTexture(SH, SH);
+  U.uShadow.value = shadowRT.depthTexture; U.uShadowTexel.value = 1 / SH;
+  const lightCam = new THREE.OrthographicCamera(-10, 10, 10, -10, .1, 90);
+  function makeTargets() {
+    const b = renderer.getDrawingBufferSize(new THREE.Vector2()), w = b.x, h = b.y;
+    [mainRT, bA, bA2, bB, bB2].forEach(t => t && t.dispose());
+    mainRT = new THREE.WebGLRenderTarget(w, h, { type: THREE.HalfFloatType, depthBuffer: true }); mainRT.depthTexture = new THREE.DepthTexture(w, h);
+    const q = { type: THREE.HalfFloatType, depthBuffer: false, minFilter: THREE.LinearFilter, magFilter: THREE.LinearFilter };
+    bA = new THREE.WebGLRenderTarget(Math.max(1, w >> 2), Math.max(1, h >> 2), q); bA2 = bA.clone();
+    bB = new THREE.WebGLRenderTarget(Math.max(1, w >> 3), Math.max(1, h >> 3), q); bB2 = bB.clone();
+    if (dofRT) dofRT.dispose(); dofRT = new THREE.WebGLRenderTarget(Math.max(1, w >> 1), Math.max(1, h >> 1), q); dofP.u.uTexel.value.set(2 / w, 2 / h);
+    compP.u.uTexel.value.set(1 / w, 1 / h);
+  }
+  const runPass = (p, target) => { renderer.setRenderTarget(target); renderer.render(p.sc, fsCam); };
+  const FX = { light: true, shadows: !small, dof: !small, bloom: true, grade: true };
+  const kA = new THREE.Vector3(), kB = new THREE.Vector3(), plA = new THREE.Vector3(), plB = new THREE.Vector3(), lc = new THREE.Vector3();
+  const L3 = (u, a, b, t) => u.set(a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t, a[2] + (b[2] - a[2]) * t);
+  let dofScale = 1;
+  function renderFrame(a, b, eg, hero) {
+    if (FX.direct) { renderer.setRenderTarget(null); renderer.setClearColor(stageLin, 1); renderer.clear(); U.uUseLight.value = 0; U.uUseShadow.value = 0; renderer.render(scene, camera); return; }
+    const ra = RIG[worlds[a].slug], rb = RIG[worlds[b].slug];
+    kA.set(...ra.key[0]).normalize(); kB.set(...rb.key[0]).normalize(); U.uKeyDir.value.copy(kA).lerp(kB, eg).normalize();
+    L3(U.uKeyCol.value, ra.key[1], rb.key[1], eg); L3(U.uSky.value, ra.sky, rb.sky, eg); L3(U.uGround.value, ra.ground, rb.ground, eg); L3(U.uRim.value, ra.rim, rb.rim, eg);
+    plA.copy(heroes[a]).add(lc.set(...ra.pl[0])); plB.copy(heroes[b]).add(lc.set(...rb.pl[0])); U.uPLPos.value.copy(plA).lerp(plB, eg);
+    L3(U.uPLCol.value, ra.pl[1], rb.pl[1], eg); U.uPLRange.value = ra.pl[2] + (rb.pl[2] - ra.pl[2]) * eg;
+    U.uSpecA.value = ra.spec; U.uSpecB.value = rb.spec;
+    U.uGlowA.value = ra.glow || 0; U.uGlowB.value = rb.glow || 0; U.uRaysA.value = ra.rays ?? 1; U.uRaysB.value = rb.rays ?? 1;
+    U.uPixA.value = ra.pix ?? 1; U.uPixB.value = rb.pix ?? 1; U.uWaterA.value = ra.water || 0; U.uWaterB.value = rb.water || 0;
+    dofScale = (ra.dof ?? 1) + ((rb.dof ?? 1) - (ra.dof ?? 1)) * eg;
+    camera.updateMatrixWorld(); const m = camera.matrixWorld.elements;
+    U.uCamR.value.set(m[0], m[1], m[2]); U.uCamU.value.set(m[4], m[5], m[6]); U.uCamB.value.set(m[8], m[9], m[10]); U.uCamPos.value.copy(camera.position);
+    U.uUseLight.value = FX.light ? 1 : 0; U.uUseShadow.value = FX.light && FX.shadows ? 1 : 0;
+    // shadow map from the key light, framed around what the camera looks at
+    const shs = ra.sh + (rb.sh - ra.sh) * eg;
+    lightCam.left = -shs; lightCam.right = shs; lightCam.top = shs; lightCam.bottom = -shs; lightCam.updateProjectionMatrix();
+    lightCam.position.copy(camLookNow).addScaledVector(U.uKeyDir.value, 40); lightCam.lookAt(camLookNow); lightCam.updateMatrixWorld();
+    U.uLightVP.value.multiplyMatrices(lightCam.projectionMatrix, lightCam.matrixWorldInverse); U.uPx.value = SH / (2 * shs);
+    // matter moves slowly at rest, so the shadow map can refresh every other frame
+    if (U.uUseShadow.value > .5 && (shadowTick++ % 2 === 0 || !shadowFresh)) { renderer.setRenderTarget(shadowRT); renderer.setClearColor(0xffffff, 1); renderer.clear(); renderer.render(shadowScene, lightCam); shadowFresh = true; }
+    renderer.setRenderTarget(mainRT); renderer.setClearColor(stageLin, 1); renderer.clear(); renderer.render(scene, camera);
+    if (FX.bloom) {
+      brightP.u.uTex.value = mainRT.texture; runPass(brightP, bA);
+      blurP.u.uTex.value = bA.texture; blurP.u.uDir.value.set(1 / bA.width, 0); runPass(blurP, bA2);
+      blurP.u.uTex.value = bA2.texture; blurP.u.uDir.value.set(0, 1 / bA.height); runPass(blurP, bA);
+      blurP.u.uTex.value = bA.texture; blurP.u.uDir.value.set(0, 0); runPass(blurP, bB);
+      blurP.u.uTex.value = bB.texture; blurP.u.uDir.value.set(1 / bB.width, 0); runPass(blurP, bB2);
+      blurP.u.uTex.value = bB2.texture; blurP.u.uDir.value.set(0, 1 / bB.height); runPass(blurP, bB);
+    }
+    const u = compP.u, focus = camera.position.distanceTo(hero);
+    u.uColor.value = mainRT.texture; u.uDepth.value = mainRT.depthTexture; u.uBloomA.value = bA.texture; u.uBloomB.value = bB.texture;
+    u.uNear.value = camera.near; u.uFar.value = camera.far; u.uFocus.value = focus; u.uRange.value = Math.max(1.5, focus * .35) / Math.max(.2, dofScale);
+    if (FX.dof) { const d = dofP.u; d.uColor.value = mainRT.texture; d.uDepth.value = mainRT.depthTexture; d.uNear.value = camera.near; d.uFar.value = camera.far; d.uFocus.value = u.uFocus.value; d.uRange.value = u.uRange.value; runPass(dofP, dofRT); u.uDof.value = dofRT.texture; }
+    u.uUseDof.value = FX.dof ? 1 : 0; u.uUseBloom.value = FX.bloom ? 1 : 0; u.uUseGrade.value = FX.grade ? 1 : 0;
+    u.uTime.value = time; u.uGrainOn.value = reduced ? 0 : 1;
+    runPass(compP, null);
+  }
+  let camLookNow = new THREE.Vector3();
+  function resize() {
+    const w = canvas.clientWidth, h = canvas.clientHeight;
+    renderer.setSize(w, h, false);
+    camera.aspect = w / h; portrait = camera.aspect < .85; applyLens(lensNow || 40);
+    makeTargets();
+    const b = renderer.getDrawingBufferSize(new THREE.Vector2());
+    U.uScale.value = b.y / (2 * Math.tan(THREE.MathUtils.degToRad(camera.fov / 2)));
+  }
+
+  // ---------- DOM ----------
+  const $ = id => document.getElementById(id);
+  const chapterEl = $('chapter'), h2 = chapterEl.querySelector('h2'), pEl = chapterEl.querySelector('p'), hintEl = $('hint'), microEl = $('micro');
+  const actEl = $('act'), timeEl = $('time'), clockEl = $('clock'), unitEl = $('clockUnit');
+  const introEl = $('intro'), marker = $('marker'), markerLabel = $('markerLabel'), cutEl = $('cut'), nav = $('timeline'), navBtns = [];
+  ['Nature', 'Industry', 'Now'].forEach(act => {
+    const g = document.createElement('div'); g.className = 'group';
+    const l = document.createElement('div'); l.className = 'label'; l.textContent = act; g.appendChild(l);
+    worlds.forEach((w, i) => { if (w.act !== act) return;
+      const b = document.createElement('button'); b.type = 'button'; b.innerHTML = `<span>${w.final ? 'You' : w.title}</span><i></i>`;
+      b.setAttribute('aria-label', `Go to ${w.final ? 'the end' : w.title}`);
+      b.addEventListener('click', () => goTo(i));
+      g.appendChild(b); navBtns[i] = b; });
+    nav.appendChild(g);
+  });
+  function goTo(i, instant) { const max = root.scrollHeight - innerHeight; scrollTo({ top: max * snapPoints[i], behavior: instant || reduced ? 'auto' : 'smooth' }); }
+
+  let shown = -1;
+  function setChapter(i) {
+    if (shown === i) return; shown = i;
+    const w = worlds[i];
+
+    h2.textContent = w.title; pEl.textContent = w.text;
+    chapterEl.classList.toggle('final', !!w.final);
+    chapterEl.classList.remove('in', 'sig');
+    if (w.signature) pEl.innerHTML = 'Made by <a href="https://yucelemrah.com">Emrah Yücel</a>.';
+    const hint = touchOnly ? w.hintTouch : w.hint;
+    hintEl.textContent = hint || ''; hintEl.style.display = hint ? '' : 'none';
+    microEl.textContent = w.micro || ''; microEl.style.display = w.micro ? '' : 'none';
+    navBtns.forEach((b, k) => k === i ? b.setAttribute('aria-current', 'step') : b.removeAttribute('aria-current'));
+  }
+
+  // the clock is the idea: deep time, production days, a clock tick, a frame, now
+  const fmtYears = y => { if (y < 1) return '0'; if (y >= 1e6) { const m = y / 1e6; return Math.round(m) + ' million'; } const k = Math.pow(10, Math.floor(Math.log10(y))); return (Math.round(y / k) * k).toLocaleString('en-US'); };
+  let unitNow = 'years';
+  let liveSince = -1;
+  function setClock(a, b, eg, t, tr) {
+    if ((eg < .5 ? worlds[a] : worlds[b]).clock.u !== 'live') liveSince = -1;
+    timeEl.classList.toggle('hide', tr.cam === 'cut' && t > .1 && t < .9);   // the interlude has no clock
+    const A = worlds[a].clock, B = worlds[b].clock;
+    const C = eg < .5 ? A : B, u = C.u, resting = t === 0 || t === 1;
+    if (u !== unitNow) { timeEl.className = 'time u-' + u; void timeEl.offsetWidth; timeEl.classList.add('punch'); unitNow = u; }
+    if (u === 'years') {
+      let v = C.v;
+      if (A.u === 'years' && B.u === 'years') v = Math.pow(10, Math.log10(A.v + 1) + (Math.log10(B.v + 1) - Math.log10(A.v + 1)) * eg) - 1;
+      const label = (A.label && eg < .15 && C === A) || (B.label && eg > .85 && C === B) ? C.label : null;
+      timeEl.classList.toggle('is-label', !!label);
+      clockEl.textContent = label ? '≈ ' + label : v < 1 ? '0' : '≈ ' + fmtYears(v);
+      unitEl.textContent = 'years';
+    } else if (u === 'prod') { timeEl.classList.remove('is-label'); clockEl.textContent = C.label; unitEl.textContent = C.sub || ''; }
+    else if (u === 'live') {   // the present: the screen you are looking at, counted live
+      if (liveSince < 0) liveSince = performance.now();
+      timeEl.classList.remove('is-label'); clockEl.textContent = Math.round(performance.now() - liveSince).toLocaleString('en-US') + ' ms'; unitEl.textContent = 'on your screen';
+    }
+    else { timeEl.classList.remove('is-label'); clockEl.textContent = 'Now'; unitEl.textContent = ''; }
+  }
+
+  // ---------- sound: a quiet, melancholic accompaniment for one grain's journey ----------
+  // It accompanies, never leads. No noise beds, no drones: soft breathing chords and a few sparse notes in a long room.
+  // Harmony follows the story chapter by chapter; "One day," and the ending are complete silence.
+  // Everything is synthesised in Web Audio — no files.
+  const midi = m => 440 * Math.pow(2, (m - 69) / 12);
+  // one chord per chapter (MIDI notes, already voiced for its register): Nature in D minor, low and warm;
+  // Industry cooler and a little higher; Now high and glassy; the end returns to the opening chord.
+  const CHORDS = [
+    [38, 45, 53, 57, 64],   // magma     Dm9      — D A F A E
+    [34, 46, 50, 53, 57],   // granite   B♭maj7
+    [41, 48, 53, 55, 57],   // river     Fadd9
+    [36, 43, 50, 55, 62],   // coast     Csus2
+    [43, 50, 53, 57, 58],   // desert    Gm9
+    [38, 45, 50, 53, 64],   // again     Dm(add9) — home again, before the cycle breaks
+    [45, 52, 55, 60, 64],   // quarry    Am7
+    [41, 48, 52, 57, 59],   // furnace   Fmaj7♯11
+    [48, 55, 59, 64, 67],   // purity    Cmaj7
+    [52, 55, 59, 62, 67],   // crystal   Em7
+    [45, 52, 59, 60, 64],   // wafer     Am(add9)
+    [48, 55, 59, 62, 64],   // light     Cmaj9
+    [53, 60, 64, 67, 69],   // chip      Fmaj7, high
+    [57, 64, 67, 71, 72],   // display   Am9, high
+    [50, 57, 62, 65, 69],   // now       Dm(add9) — the opening chord, an octave higher
+  ];
+  const ACT = i => i <= 5 ? 0 : i <= 11 ? 1 : 2;      // 0 Nature · 1 Industry · 2 Now
+  // per act: note timbre (FM ratio, brightness), filter, note spacing (s), pad brightness
+  const ACTS = [
+    { ratio: 1,   index: 1.1, lp: 2000, gap: [2.6, 5.2], padLP: 650,  reg: [50, 69] },
+    { ratio: 2,   index: 1.4, lp: 3200, gap: [2.0, 4.2], padLP: 950,  reg: [57, 76] },
+    { ratio: 3.5, index: 1.7, lp: 5200, gap: [2.8, 5.6], padLP: 1500, reg: [64, 84] },
+  ];
+  // AMBIENCE per world — events per second (or per ~10 s for slow swells), frequency bands and levels.
+  // It tells where we are; it never competes: ~10 dB under the music, mostly above or below its register, and it ducks when a note plays.
+  const AMB = {
+    magma:   { thump: .22, crack: 1.1,  crackF: [1800, 4000], gust: 0,   wave: 0,   bubble: 0,  metal: 0,   tick: 0,  tickF: 7000 },
+    granite: { thump: 0,   crack: .35, crackF: [2200, 4500], gust: .06, gustF: 4500, wave: 0, bubble: 0, metal: 0, tick: 0, tickF: 7000 },
+    river:   { thump: 0,   crack: 0,   crackF: [2500, 4500], gust: 0,   wave: 0,   bubble: 0,  bubF: [2400, 5200], metal: 0, tick: 0, tickF: 7000, brook: 75, bed: .55 },
+    coast:   { thump: 0,   crack: 0,   crackF: [2500, 4500], gust: .03, gustF: 5000, wave: .24, bubble: 3, bubF: [3000, 6500], metal: 0, tick: 0, tickF: 7000, brook: 8, bed: .16 },
+    desert:  { thump: 0,   crack: 0,   crackF: [3000, 6000], gust: .14, gustF: 6200, wave: 0, bubble: 0, metal: 0, tick: 3, tickF: 6500 },
+    again:   { thump: .06, crack: .12, crackF: [2000, 4000], gust: .05, gustF: 4000, wave: 0, bubble: 0, metal: 0, tick: 0, tickF: 7000 },
+    quarry:  { thump: .05, crack: .15, crackF: [2000, 4000], gust: .05, gustF: 3500, wave: 0, bubble: 0, metal: .1, tick: 0, tickF: 7000 },
+    furnace: { thump: .16, crack: 2.6, crackF: [2500, 6000], gust: 0, wave: 0, bubble: 0, metal: .04, tick: 0, tickF: 7000 },
+    purity:  { thump: 0,   crack: 0,   crackF: [3000, 6000], gust: .1, gustF: 8200, wave: 0, bubble: 0, metal: 0, tick: .5, tickF: 8500 },
+    crystal: { thump: 0,   crack: 0,   crackF: [3000, 6000], gust: .09, gustF: 9000, wave: 0, bubble: 0, metal: 0, tick: .25, tickF: 9500 },
+    wafer:   { thump: 0,   crack: 0,   crackF: [3000, 6000], gust: .08, gustF: 8500, wave: 0, bubble: 0, metal: 0, tick: 1.2, tickF: 8000 },
+    light:   { thump: 0,   crack: 0,   crackF: [3000, 6000], gust: .08, gustF: 7500, wave: 0, bubble: 0, metal: 0, tick: .6, tickF: 9000 },
+    chip:    { thump: 0,   crack: 0,   crackF: [3000, 6000], gust: 0, wave: 0, bubble: 0, metal: 0, tick: 4, tickF: 7500 },
+    display: { thump: 0,   crack: 0,   crackF: [3000, 6000], gust: 0, wave: 0, bubble: 0, metal: 0, tick: 2.5, tickF: 6500 },
+    now:     { thump: 0,   crack: 0,   crackF: [3000, 6000], gust: .1, gustF: 5500, wave: 0, bubble: 0, metal: 0, tick: 1, tickF: 6000 },
+  };
+  const MASTER = .7;
+  const soundBtn = $('sound');
+  soundBtn.textContent = 'Listen';
+  const A = { ctx: null, on: false, banks: [], gate: 1, nextNote: 0, nextPulse: 0, lastHold: -1, act: 0, chord: CHORDS[0], silent: false };
+  let soundPref = false; try { soundPref = localStorage.getItem('og-sound') === 'on'; } catch (e) {}
+
+  function makeRoom(ctx, sec) { // a long, soft, dark room
+    const n = Math.floor(ctx.sampleRate * sec), b = ctx.createBuffer(2, n, ctx.sampleRate);
+    for (let c = 0; c < 2; c++) { const d = b.getChannelData(c); let lp = 0; const k = Math.exp(-2 * Math.PI * 4200 / ctx.sampleRate);
+      for (let i = 0; i < n; i++) { const t = i / n; lp = lp * k + (Math.random() * 2 - 1) * (1 - k); d[i] = lp * Math.pow(1 - t, 2.4) * (t < .01 ? t / .01 : 1); } }
+    return b;
+  }
+  function initSound() {
+    const AC = window.AudioContext || window.webkitAudioContext; if (!AC) return false;
+    const ctx = new AC(); A.ctx = ctx;
+    const G = v => { const g = ctx.createGain(); g.gain.value = v; return g; };
+    A.master = G(0); const lim = ctx.createDynamicsCompressor();
+    lim.threshold.value = -10; lim.knee.value = 6; lim.ratio.value = 10; lim.attack.value = .004; lim.release.value = .3;   // safety only
+    A.master.connect(lim).connect(ctx.destination);
+    A.room = ctx.createConvolver(); A.room.buffer = makeRoom(ctx, 6);
+    A.wet = G(.55); A.dry = G(.75); A.room.connect(A.wet).connect(A.master);
+    A.mix = G(.42); A.mix.connect(A.dry).connect(A.master); A.mix.connect(A.room);   // the music sits beneath the ambience
+    // two pad banks, crossfaded chapter to chapter; each voice = a soft triangle with a quieter detuned saw
+    A.padLP = ctx.createBiquadFilter(); A.padLP.type = 'lowpass'; A.padLP.frequency.value = 650; A.padLP.Q.value = .3;
+    A.padG = G(0); A.padLP.connect(A.padG).connect(A.mix);
+    A.padLfo = ctx.createOscillator(); A.padLfo.frequency.value = .05; A.padLfoG = G(90); A.padLfo.connect(A.padLfoG).connect(A.padLP.frequency); A.padLfo.start();
+    for (let k = 0; k < 2; k++) {
+      const bank = { ch: -1, g: G(0), voices: [] }; bank.g.connect(A.padLP);
+      for (let v = 0; v < 5; v++) {
+        const o1 = ctx.createOscillator(); o1.type = 'triangle';
+        const o2 = ctx.createOscillator(); o2.type = 'sawtooth'; o2.detune.value = (v % 2 ? 5 : -5);
+        const g1 = G(.5), g2 = G(.09); o1.connect(g1).connect(bank.g); o2.connect(g2).connect(bank.g); o1.start(); o2.start();
+        bank.voices.push({ o1, o2 });
+      }
+      A.banks.push(bank);
+    }
+    // ambience bus: high-passed (except its deliberate low thumps), ducked whenever the music speaks
+    A.noiseBuf = (() => { const b = ctx.createBuffer(1, ctx.sampleRate * 4, ctx.sampleRate), d = b.getChannelData(0); for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1; return b; })();
+    A.amb = G(2.2); A.duck = G(1); A.amb.connect(A.duck); A.duck.connect(A.dry); A.ambRoom = G(.35); A.duck.connect(A.ambRoom).connect(A.room);
+    // a soft water rush, only ever heard where there is water (its level follows the world)
+    A.bedSrc = ctx.createBufferSource(); A.bedSrc.buffer = A.noiseBuf; A.bedSrc.loop = true;
+    A.bedBP = ctx.createBiquadFilter(); A.bedBP.type = 'bandpass'; A.bedBP.frequency.value = 750; A.bedBP.Q.value = .6;
+    A.bedLP = ctx.createBiquadFilter(); A.bedLP.type = 'lowpass'; A.bedLP.frequency.value = 2400;
+    A.bedG = G(0); A.bedSrc.connect(A.bedBP).connect(A.bedLP).connect(A.bedG).connect(A.amb); A.bedSrc.start();
+    A.bedLfo = ctx.createOscillator(); A.bedLfo.frequency.value = .17; A.bedLfoG = G(0); A.bedLfo.connect(A.bedLfoG).connect(A.bedG.gain); A.bedLfo.start();
+    A.bedLfo2 = ctx.createOscillator(); A.bedLfo2.frequency.value = .43; A.bedLfo2G = G(160); A.bedLfo2.connect(A.bedLfo2G).connect(A.bedBP.frequency); A.bedLfo2.start();
+    A.timer = setInterval(scheduleNotes, 50);
+    return true;
+  }
+  function setBank(bank, ch, now) {
+    bank.ch = ch;
+    CHORDS[ch].forEach((m, v) => { const f = midi(m); bank.voices[v].o1.frequency.setValueAtTime(f, now); bank.voices[v].o2.frequency.setValueAtTime(f, now); });
+  }
+  // a soft electric-piano / celesta note: FM with a quickly mellowing brightness and a long, gentle decay
+  function note(m, vel, act, when) {
+    const ctx = A.ctx, t = when || ctx.currentTime + .02, f = midi(m), S = ACTS[act];
+    const car = ctx.createOscillator(), mod = ctx.createOscillator(), mg = ctx.createGain(), env = ctx.createGain(), lp = ctx.createBiquadFilter();
+    car.frequency.value = f; mod.frequency.value = f * S.ratio;
+    mg.gain.setValueAtTime(f * S.index * vel, t); mg.gain.exponentialRampToValueAtTime(f * .05, t + 1.2);
+    const len = 3.5 + (84 - m) * .05;
+    env.gain.setValueAtTime(0, t); env.gain.linearRampToValueAtTime(vel * .1, t + .008); env.gain.exponentialRampToValueAtTime(vel * .035, t + .5); env.gain.exponentialRampToValueAtTime(.0001, t + len);
+    lp.type = 'lowpass'; lp.frequency.value = S.lp;
+    mod.connect(mg).connect(car.frequency); car.connect(env).connect(lp);
+    let out = lp; if (ctx.createStereoPanner) { const p = ctx.createStereoPanner(); p.pan.value = (Math.random() - .5) * .6; lp.connect(p); out = p; }
+    out.connect(A.mix);
+    car.start(t); mod.start(t); car.stop(t + len + .1); mod.stop(t + len + .1);
+  }
+  // ambience primitives: a short band of noise, a slow swelling breath of noise, a low far thump, a distant metal ring
+  function aBurst(t, f, q, len, level, pan) {
+    const ctx = A.ctx, src = ctx.createBufferSource(); src.buffer = A.noiseBuf;
+    const bp = ctx.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = f; bp.Q.value = q;
+    const g = ctx.createGain(); g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(level, t + .002); g.gain.exponentialRampToValueAtTime(.0001, t + len);
+    let out = g; if (ctx.createStereoPanner) { const p = ctx.createStereoPanner(); p.pan.value = pan; g.connect(p); out = p; }
+    src.connect(bp).connect(g); out.connect(A.amb); src.start(t, Math.random() * 3.5, len + .05);
+  }
+  function aSwell(t, f, q, up, down, level, pan, type) {
+    const ctx = A.ctx, src = ctx.createBufferSource(); src.buffer = A.noiseBuf; src.loop = true;
+    const flt = ctx.createBiquadFilter(); flt.type = type || 'bandpass'; flt.frequency.value = f; flt.Q.value = q;
+    const g = ctx.createGain(); g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(level, t + up); g.gain.linearRampToValueAtTime(0, t + up + down);
+    let out = g; if (ctx.createStereoPanner) { const p = ctx.createStereoPanner(); p.pan.setValueAtTime(pan, t); p.pan.linearRampToValueAtTime(-pan * .6, t + up + down); g.connect(p); out = p; }
+    src.connect(flt).connect(g); out.connect(A.amb); src.start(t, Math.random() * 3); src.stop(t + up + down + .1);
+  }
+  // one bubble on the water's surface: a tiny sine whose pitch rises as it closes (how running water really sounds)
+  function aBubble(t, level, pan) {
+    const ctx = A.ctx, o = ctx.createOscillator(), g = ctx.createGain();
+    const f0 = 380 * Math.pow(2, Math.random() * 2.6), dur = .018 + Math.random() * .045;
+    o.type = 'sine'; o.frequency.setValueAtTime(f0, t); o.frequency.exponentialRampToValueAtTime(f0 * (1.4 + Math.random() * .5), t + dur);
+    g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(level, t + .002); g.gain.exponentialRampToValueAtTime(.0001, t + dur);
+    let out = g; if (ctx.createStereoPanner) { const p = ctx.createStereoPanner(); p.pan.value = pan; g.connect(p); out = p; }
+    o.connect(g); out.connect(A.amb); o.start(t); o.stop(t + dur + .02);
+  }
+  function aThump(t, level) {
+    const ctx = A.ctx, o = ctx.createOscillator(), g = ctx.createGain(), lp = ctx.createBiquadFilter();
+    o.type = 'sine'; o.frequency.setValueAtTime(58 + Math.random() * 14, t); o.frequency.exponentialRampToValueAtTime(34, t + 1.6);
+    lp.type = 'lowpass'; lp.frequency.value = 160;
+    g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(level, t + .35); g.gain.exponentialRampToValueAtTime(.0001, t + 2.4);
+    o.connect(lp).connect(g).connect(A.amb); o.start(t); o.stop(t + 2.5);
+  }
+  function aMetal(t, level) {
+    const ctx = A.ctx, base = 300 + Math.random() * 300;
+    [1, 2.76, 5.4, 8.93].forEach((r, k) => { const o = ctx.createOscillator(), g = ctx.createGain(); o.frequency.value = base * r;
+      g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(level / (k + 1), t + .005); g.gain.exponentialRampToValueAtTime(.0001, t + 2.5 - k * .4);
+      o.connect(g).connect(A.ambRoom); o.start(t); o.stop(t + 2.6); });
+  }
+  // all event times due inside the look-ahead window; after a long stall, missed events are skipped rather than bunched
+  const dueAll = (key, rate, now, ahead) => {
+    const out = []; if (rate <= 0) { A[key] = 0; return out; }
+    if (!A[key]) A[key] = now + Math.random() / rate; else if (A[key] < now - .5) A[key] = now + Math.random() * .1;
+    while (A[key] < ahead && out.length < 6) { out.push(Math.max(A[key], now + .005)); A[key] += -Math.log(1 - Math.random()) / rate; }
+    return out;
+  };
+  function scheduleAmbience() {
+    if (!A.on || A.silent || !A.ambW) return;
+    const now = A.ctx.currentTime, ahead = now + .3, w = A.ambW, R = Math.random;
+    dueAll('nThump', w.thump, now, ahead).forEach(t => aThump(t, .04));
+    dueAll('nCrack', w.crack, now, ahead).forEach(t => aBurst(t, w.crackF[0] + R() * (w.crackF[1] - w.crackF[0]), 12, .015 + R() * .04, .3 + R() * .3, (R() - .5) * 1.4));
+    dueAll('nBubble', w.bubble, now, ahead).forEach(t => aBurst(t, w.bubF[0] + R() * (w.bubF[1] - w.bubF[0]), 18, .02 + R() * .05, .34 + R() * .3, (R() - .5) * 1.6));
+    dueAll('nTick', w.tick, now, ahead).forEach(t => aBurst(t, w.tickF * (.8 + R() * .4), 6, .008, .28 + R() * .16, (R() - .5) * 1.4));
+    dueAll('nGust', w.gust, now, ahead).forEach(t => aSwell(t, w.gustF * (.85 + R() * .3), 1.2, 1.8 + R() * 2, 2.5 + R() * 3, .09, (R() - .5) * 1.4));
+    dueAll('nWave', w.wave, now, ahead).forEach(t => aSwell(t, 900 + R() * 400, .6, 2.6 + R(), 3.6 + R() * 1.5, .07, (R() - .5) * .8, 'lowpass'));
+    dueAll('nMetal', w.metal, now, ahead).forEach(t => aMetal(t, .05));
+    dueAll('nBrook', w.brook || 0, now, ahead).forEach(t => aBubble(t, .012 + R() * .022, (R() - .5) * 1.5));
+  }
+  const chordTones = (chord, lo, hi) => { const out = []; chord.forEach(m => { for (let o = -24; o <= 36; o += 12) { const x = m + o; if (x >= lo && x <= hi && !out.includes(x)) out.push(x); } }); return out.sort((a, b) => a - b); };
+  function scheduleNotes() {
+    scheduleAmbience();
+    if (!A.on || A.silent || A.gate < .3) return;
+    const ctx = A.ctx, now = ctx.currentTime, S = ACTS[A.act];
+    if (A.nextNote < now) {
+      const tones = chordTones(A.chord, S.reg[0], S.reg[1]), pick = tones[Math.floor(Math.pow(Math.random(), .7) * tones.length)];
+      note(pick, .25 + Math.random() * .3, A.act);
+      if (Math.random() < .18) { const lower = tones.filter(x => x < pick - 2); if (lower.length) note(lower[lower.length - 1], .18 + Math.random() * .15, A.act, now + .06); }
+      A.nextNote = now + S.gap[0] + Math.random() * (S.gap[1] - S.gap[0]);
+    }
+    // industry: production time passing, a soft repeated note like a distant clock
+    if (A.act === 1 && A.pulseOn) {
+      if (A.nextPulse < now) { const tones = chordTones(A.chord, 69, 79); note(tones[tones.length - 1], .1, 1); A.nextPulse = now + .95 + Math.random() * .12; }
+    }
+  }
+  // the grain's motif: three falling notes from the chord, played softly when a chapter is reached
+  function motif(chord, act, last) {
+    const S = ACTS[act], tones = chordTones(chord, S.reg[0] + 5, S.reg[1]), top = tones.length - 1, now = A.ctx.currentTime + .05;
+    [top, top - 1, top - 3].forEach((k, j) => { if (tones[k] !== undefined) note(tones[Math.max(0, k)], .32 - j * .04, act, now + j * .42); });
+  }
+  const setT = (param, v, tc = .2) => param.setTargetAtTime(v, A.ctx.currentTime, tc);
+
+  function soundFrame(a, b, t, tr, eg, holding, holdSec, heroLight, landed) {
+    if (!A.on) return;
+    const ctx = A.ctx, now = ctx.currentTime;
+    // keep one bank on chapter a and the other on b; crossfade with the camera's easing
+    let ba = A.banks.find(k => k.ch === a), bb = A.banks.find(k => k.ch === b);
+    if (!ba && !bb) { setBank(A.banks[0], a, now); setBank(A.banks[1], b, now); ba = A.banks[0]; bb = A.banks[1]; }
+    else if (!ba) { ba = A.banks.find(k => k !== bb); setBank(ba, a, now); }
+    else if (!bb) { bb = A.banks.find(k => k !== ba); setBank(bb, b, now); }
+    setT(ba.g.gain, (1 - eg) * .055, .25); setT(bb.g.gain, eg * .055, .25);
+    const cur = eg < .5 ? a : b; A.act = ACT(cur); A.chord = CHORDS[cur];
+    const ambIdx = eg < .35 ? a : b, ambSlug = worlds[ambIdx].slug;
+    if (ambSlug !== A.ambSlug) {                                     // arriving somewhere: its first sounds now, not seconds later
+      A.ambSlug = ambSlug; A.ambW = AMB[ambSlug];
+      ['nThump', 'nCrack', 'nBubble', 'nTick', 'nGust', 'nMetal', 'nBrook'].forEach(k => { A[k] = 0; });
+      A.nWave = A.ambW.wave > 0 ? now + .05 : 0;
+    }
+    const bed = AMB[worlds[a].slug].bed || 0, bedB = AMB[worlds[b].slug].bed || 0, bedNow = bed + (bedB - bed) * ss(.2, .8, eg);
+    setT(A.bedG.gain, bedNow * .06, .5); setT(A.bedLfoG.gain, bedNow * .018, .5);
+    setT(A.padLP.frequency, ACTS[ACT(a)].padLP + (ACTS[ACT(b)].padLP - ACTS[ACT(a)].padLP) * eg, .6);
+    // the pad breathes: full when a chapter arrives or the story moves, settling lower while you rest
+    const breathe = holding >= 0 ? .55 + .45 * (1 - ss(1, 7, holdSec)) : 1;
+    // silence: the cut ("One day,") and the ending
+    let gate = 1;
+    if (tr.cam === 'cut') gate = t < .5 ? 1 - ss(.02, .2, t) : ss(.84, 1, t);
+    const fin = holding === CH - 1;
+    if (fin) gate = 1 - ss(3, 6.2, holdSec);                        // it withdraws with the grain's light; silence when it lands
+    A.gate = gate; A.silent = gate < .02;
+    A.pulseOn = holding >= 0 && ACT(holding) === 1 && holding <= 10;
+    setT(A.padG.gain, breathe, .8);
+    if (gate < .02) { if (!A.zeroed) { A.master.gain.cancelScheduledValues(now); A.master.gain.setValueAtTime(A.master.gain.value, now); A.master.gain.linearRampToValueAtTime(0, now + .5); A.zeroed = true; } }
+    else { if (A.zeroed) { A.master.gain.cancelScheduledValues(now); A.master.gain.setValueAtTime(0, now); A.zeroed = false; } setT(A.master.gain, MASTER * gate, gate < A.lastGate ? .3 : .6); }
+    A.lastGate = gate;
+    // the motif, once per chapter arrival (never during silence)
+    if (holding >= 0 && holding !== A.lastHold) { A.lastHold = holding; if (gate > .5) { motif(CHORDS[holding], ACT(holding), fin); A.nextNote = now + 3.2; } }
+    if (holding < 0) A.lastHold = -1;
+  }
+
+  function setSound(on) {
+    if (on && !A.ctx && !initSound()) { soundBtn.textContent = 'Sound unavailable'; return; }
+    A.on = on; if (!A.ctx) return;
+    if (on) { A.ctx.resume(); A.lastGate = 0; } else setT(A.master.gain, 0, .2);
+    soundBtn.setAttribute('aria-pressed', on); soundBtn.textContent = on ? 'Sound on' : 'Sound off';
+    try { localStorage.setItem('og-sound', on ? 'on' : 'off'); } catch (e) {}
+  }
+  soundBtn.addEventListener('click', () => setSound(!A.on));
+  document.addEventListener('visibilitychange', () => { if (!A.ctx) return; if (document.hidden) A.ctx.suspend(); else if (A.on) A.ctx.resume(); });
+  if (soundPref) { const arm = () => { setSound(true); removeEventListener('pointerdown', arm); removeEventListener('keydown', arm); }; addEventListener('pointerdown', arm); addEventListener('keydown', arm); }
+
+  // ---------- scroll ----------
+  const state = { v: 0 };
+  if (hasGsap) gsap.to(state, { v: 1, ease: 'none', scrollTrigger: { trigger: '#track', start: 'top top', end: 'bottom bottom', scrub: 1.6, snap: { snapTo: snapPoints, duration: { min: .9, max: 2 }, delay: .15, ease: 'power2.inOut' } } });
+  else addEventListener('scroll', () => { const m = root.scrollHeight - innerHeight; state.v = m > 0 ? scrollY / m : 0; }, { passive: true });
+  function locate(v) {
+    const s = Math.min(total - 1e-6, Math.max(0, v * total));
+    const seg = segs.find(x => s >= x.start && s < x.start + x.len) || segs[segs.length - 1];
+    if (seg.type === 'tr') return { a: seg.i, b: seg.i + 1, t: (s - seg.start) / seg.len, tr: TR[seg.i], lean: 1 };
+    if (seg.i === CH - 1) return { a: CH - 2, b: CH - 1, t: 1, tr: TR[CH - 2], hold: CH - 1 };
+    return { a: seg.i, b: seg.i + 1, t: 0, tr: TR[seg.i], hold: seg.i, lean: ss(0, 1, (s - seg.start) / seg.len) };
+  }
+
+  // ---------- camera ----------
+  const v = (x, y, z) => new THREE.Vector3(x, y, z);
+  const off = (base, a) => base.clone().add(v(...a));
+  const bez = (p0, p1, p2, p3, t) => { const u = 1 - t; return p0.clone().multiplyScalar(u * u * u).add(p1.clone().multiplyScalar(3 * u * u * t)).add(p2.clone().multiplyScalar(3 * u * t * t)).add(p3.clone().multiplyScalar(t * t * t)); };
+  const easeQuint = t => t < .5 ? 16 * t ** 5 : 1 - Math.pow(-2 * t + 2, 5) / 2;
+  let leanW = 0;
+  function shot(tr, a, b, t) {
+    const hA = heroes[a], hB = heroes[b], wa = worlds[a], wb = worlds[b];
+    const camA = off(hA, wa.cam), camB = off(hB, wb.cam), lookA = off(hA, wa.look), lookB = off(hB, wb.look);
+    let eg = ease(t);
+    if (tr.cam === 'cut') eg = t < .5 ? 0 : 1; else if (tr.cam === 'slide') eg = ss(0, 1, t); else if (tr.cam === 'zoom' || tr.cam === 'dive') eg = easeQuint(t);
+    const arc = Math.sin(Math.PI * eg), hc = tr.hero || [[0, 0, 0], [0, 0, 0]];
+    const hero = tr.cam === 'cut' ? (eg < .5 ? hA.clone() : hB.clone()) : bez(hA, off(hA, hc[0]), off(hB, hc[1]), hB, eg);
+    const d = tr.dir ? v(...tr.dir) : v(1, 0, 0);
+    let c1, c2, pos;
+    switch (tr.cam) {
+      case 'crane': c1 = off(camA, [0, 6, 6]); c2 = off(camB, [0, 10, 8]); break;
+      case 'crackdrop': c1 = camA.clone().lerp(hA, .82); c2 = off(hB, [1, 4, 2.5]); break;
+      case 'track': c1 = camA.clone().addScaledVector(d, 4); c2 = camB.clone().addScaledVector(d, -4); break;
+      case 'fly': c1 = off(hA, [-3, 2.5, 3]); c2 = off(hB, [-5, 6, 6]); break;
+      case 'sink': c1 = off(camA, [0, -1, -2]); c2 = off(camB, [0, -8, 0]); break;
+      case 'pour': c1 = off(hA, [0, 8, 5]); c2 = off(hB, [0, 11, 6]); break;
+      case 'heat': c1 = off(camA, [0, 7, 0]); c2 = off(camB, [0, 7, 2]); break;
+      case 'top': c1 = off(camA, [0, 3, 0]); c2 = off(hB, [0, 6, .5]); break;
+      case 'zoom': c1 = camA.clone().lerp(hA, .97); c2 = camB.clone().lerp(hB, .97); break;
+      case 'beam': c1 = off(camA, [0, 5, 0]); c2 = off(camB, [0, -5, 0]); break;
+      case 'pullback': c1 = off(hB, [0, 0, 1.2]); c2 = off(hB, [0, 0, 3]); break;
+      case 'drift': c1 = off(camA, [2, 1, 3]); c2 = off(camB, [-4, 4, 8]); break;
+      case 'breakfall': c1 = off(hA, [0, 6, 8]); c2 = off(hB, [0, 12, 7]); break;
+      case 'rise': c1 = off(camA, [0, 9, 2]); c2 = off(camB, [0, 8, 4]); break;
+      default: c1 = camA.clone().lerp(camB, 1 / 3); c2 = camA.clone().lerp(camB, 2 / 3);
+    }
+    if (tr.cam === 'macro') {
+      const M = hB.clone().add(v(0, 0, 2.4)), Ml = hB.clone();
+      const k1 = ease(ss(0, .3, t)), k3 = ease(ss(.55, 1, t));
+      pos = camA.clone().lerp(M, k1).lerp(camB, k3);
+      const look = lookA.clone().lerp(Ml, k1).lerp(lookB, k3);
+      return { pos, look, hero, eg, arc };
+    }
+    if (tr.cam === 'orbit') {
+      const ax = v(tr.axis[0], 0, tr.axis[1]);
+      const ra = Math.hypot(camA.x - ax.x, camA.z - ax.z), rb = Math.hypot(camB.x - ax.x, camB.z - ax.z);
+      const ta = Math.atan2(camA.z - ax.z, camA.x - ax.x); let tb = Math.atan2(camB.z - ax.z, camB.x - ax.x);
+      while (tb < ta + Math.PI) tb += Math.PI * 2;
+      const th = ta + (tb - ta) * eg, r = ra + (rb - ra) * eg;
+      pos = v(ax.x + Math.cos(th) * r, camA.y + (camB.y - camA.y) * eg + arc * 3, ax.z + Math.sin(th) * r);
+    } else if (tr.cam === 'cut') pos = eg < .5 ? camA : camB;
+    else pos = bez(camA, c1, c2, camB, eg);
+    const look = lookA.clone().lerp(lookB, eg);
+    if (['crackdrop', 'zoom', 'pour', 'pullback', 'beam', 'breakfall'].includes(tr.cam)) look.lerp(hero, arc * .9);
+    if (tr.cam !== 'cut' && !reduced) { const lean = camB.clone().sub(camA); if (lean.lengthSq() > 1e-4) pos.addScaledVector(lean.normalize(), .6 * (1 - eg) * leanW); }
+    return { pos, look, hero, eg, arc };
+  }
+
+  // ---------- input ----------
+  const mouse = { x: 0, y: 0, sx: 0, sy: 0, nx: 0, ny: 0, on: false, press: 0, until: 0 };
+  addEventListener('pointermove', e => { if (e.pointerType !== 'mouse') return; mouse.on = true; mouse.x = e.clientX / innerWidth - .5; mouse.y = e.clientY / innerHeight - .5; mouse.nx = e.clientX / innerWidth * 2 - 1; mouse.ny = -(e.clientY / innerHeight) * 2 + 1; }, { passive: true });
+  addEventListener('pointerdown', e => { if (e.pointerType === 'mouse') return; mouse.nx = e.clientX / innerWidth * 2 - 1; mouse.ny = -(e.clientY / innerHeight) * 2 + 1; mouse.until = performance.now() + 1400; mouse.press = 1; }, { passive: true });
+  const ray = new THREE.Raycaster(), plane = new THREE.Plane(), hitW = new THREE.Vector3(), proj = new THREE.Vector3();
+
+  // ---------- loop ----------
+  let lastOp = -1, lastHash = '', finalSince = -1, typeW = 0, typeG = 0, holdSince = -1, holdAt = -1;
+  document.querySelectorAll('[data-fx]').forEach(b => { const k = b.dataset.fx; b.setAttribute('aria-pressed', FX[k]); b.addEventListener('click', () => { FX[k] = !FX[k]; b.setAttribute('aria-pressed', FX[k]); }); });
+  const fxms = document.getElementById('fxms'); let fxEma = 16, fxLast = performance.now(), fxN = 0;
+  function fxTick() {
+    const n = performance.now(), d = n - fxLast; fxEma += (d - fxEma) * .05; fxLast = n; if (++fxN % 15 === 0) fxms.textContent = fxEma.toFixed(1) + ' ms';
+    if (bench) { const el = n - bench.t0; if (el > 1000) bench.samples.push(d); if (el > 3500) { const sm = bench.samples.sort((a, b) => a - b); bench.res.push([BENCH[bench.i][0], sm[sm.length >> 1] || 0]); nextBench(); } }
+  }
+  const BENCH = [['All layers on', {}], ['Without shadows', { shadows: false }], ['Without depth of field', { dof: false }], ['Without bloom', { bloom: false }],
+    ['Without grade', { grade: false }], ['Without light', { light: false }], ['All layers off', { light: false, shadows: false, dof: false, bloom: false, grade: false }],
+    ['Unlit, no HDR, no post (v8-like)', { direct: true, light: false, shadows: false, dof: false, bloom: false, grade: false }]];
+  let bench = null;
+  const syncFx = () => document.querySelectorAll('[data-fx]').forEach(b => b.setAttribute('aria-pressed', !!FX[b.dataset.fx]));
+  function nextBench() {
+    bench.i++;
+    if (bench.i >= BENCH.length) {
+      Object.assign(FX, bench.saved); FX.direct = false; syncFx();
+      const t = document.getElementById('benchT'), base = bench.res[0][1];
+      t.innerHTML = bench.res.map(([k, v]) => `<tr><td>${k}</td><td>${v.toFixed(1)} ms${k !== bench.res[0][0] ? ` <span style="color:var(--muted)">(${(v - base >= 0 ? '+' : '') + (v - base).toFixed(1)})</span>` : ''}</td></tr>`).join('')
+        + `<tr><td>Screen</td><td>${innerWidth}×${innerHeight} @ ${DPR.toFixed(2)}×</td></tr>`;
+      document.getElementById('bench').hidden = false; bench = null; return;
+    }
+    Object.assign(FX, { light: true, shadows: !small, dof: !small, bloom: true, grade: true, direct: false }, BENCH[bench.i][1]); syncFx();
+    bench.t0 = performance.now(); bench.samples = [];
+  }
+  document.getElementById('benchBtn').addEventListener('click', () => { if (bench) return; document.getElementById('bench').hidden = true; bench = { i: -1, saved: { ...FX }, res: [], t0: 0, samples: [] }; nextBench(); });
+  document.getElementById('benchClose').addEventListener('click', () => { document.getElementById('bench').hidden = true; });
+  const clock = new THREE.Clock(); let time = 0;
+  function frame() {
+    requestAnimationFrame(frame);
+    const dt = Math.min(clock.getDelta(), .05);
+    if (!reduced) time += dt;
+    const L = locate(state.v), a = L.a, b = L.b, tr = L.tr;
+    const rawT = L.t;
+    // reduced motion: worlds swap behind a quick fade instead of morphing
+    const t = reduced ? (rawT < .5 ? 0 : 1) : rawT;
+    canvas.style.opacity = reduced ? (1 - Math.sin(Math.PI * rawT)).toFixed(3) : 1;
+    leanW = L.lean || 0;
+    if (L.hold === CH - 1) { if (finalSince < 0) finalSince = performance.now(); } else finalSince = -1;
+    const reveal = 1;   // the transition itself turns the screen into sand
+    const S = shot(tr, a, b, t), wa = worlds[a], wb = worlds[b];
+
+    U.uFrom.value = a; U.uTo.value = b; U.uT.value = t; U.uTime.value = time; U.uMotion.value = reduced ? 0 : 1;
+    U.uStyle.value = tr.g; U.uK.value = tr.k || 1; U.uSpan.value = tr.span || .45; U.uSpread.value = tr.spread || 30; U.uDir.value.set(...(tr.dir || [1, 0, 0]));
+    if (tr.axis) U.uAxis.value.set(tr.axis[0], tr.axis[1]);
+    U.uHeroA.value.copy(heroes[a]); U.uHeroB.value.copy(heroes[b]);
+    U.uLoA.value.set(wa.lo); U.uHiA.value.set(wa.hi); U.uLoB.value.set(wb.lo); U.uHiB.value.set(wb.hi);
+    U.uGrain.value = wa.grain + (wb.grain - wa.grain) * S.eg;
+    U.uLast.value = -1; U.uReveal.value = reveal;   // no square-pixel stage any more
+    setStage(a, b, S.eg, reveal);
+    const fv = wa.fov + (wb.fov - wa.fov) * S.eg; if (Math.abs(fv - lensNow) > .01) applyLens(fv);
+    U.uJitter.value = wa.jitter + (wb.jitter - wa.jitter) * S.eg;
+    const wd = wa.wdth + (wb.wdth - wa.wdth) * S.eg, wg = wa.wght + (wb.wght - wa.wght) * S.eg;
+    if (Math.abs(wd - typeW) > .2 || Math.abs(wg - typeG) > 1) { typeW = wd; typeG = wg; root.style.setProperty('--wdth', wd.toFixed(1)); root.style.setProperty('--wght', Math.round(wg)); }
+
+    const hero = S.hero;
+    let heroLight = 1, landed = 0;
+    if (L.hold === CH - 1 && finalSince >= 0) {
+      const el = (performance.now() - finalSince) / 1000;
+      heroLight = 1 - ss(3, 5.6, el);
+      landed = reduced ? (heroLight < .05 ? 1 : 0) : ss(5, 6.4, el);
+      const fall = 1 - Math.pow(1 - landed, 3);                        // a soft landing
+      hero.z = hero.z - .6 * fall;
+    }
+    HU.uLight.value = heroLight;
+    HU.uMatteSize.value = U.uGrain.value * U.uScale.value / Math.max(.1, camera.position.distanceTo(hero));
+    U.uLandPos.value.copy(hero); U.uLand.value = L.hold === CH - 1 ? landed : 0;
+    heroGeo.attributes.position.setXYZ(0, hero.x, hero.y, hero.z); heroGeo.attributes.position.needsUpdate = true;
+    halo.visible = heroPt.visible = !(tr.cam === 'cut' && t > .2 && t < .8);
+    mouse.sx += (mouse.x - mouse.sx) * .05; mouse.sy += (mouse.y - mouse.sy) * .05;
+    camera.position.copy(S.pos);
+    if (!reduced) { camera.position.x += mouse.sx * 1.2; camera.position.y -= mouse.sy * .6; }
+    camera.lookAt(S.look); camLookNow.copy(S.look);
+
+    // hands-on holds: brush the dunes, light the switches (mouse hover or a tap)
+    const holding = L.hold !== undefined ? L.hold : -1;
+    const tapping = performance.now() < mouse.until;
+    let mode = 0;
+    if (!reduced && (mouse.on || tapping) && holding === 4) mode = 1;
+    if (!reduced && (mouse.on || tapping) && holding === 12) mode = 2;
+    mouse.press += ((tapping ? 1 : 0) - mouse.press) * .1;
+    U.uInteract.value = mode; U.uPress.value = mouse.press;
+    if (mode) { plane.set(v(0, 1, 0), -heroes[holding].y); ray.setFromCamera({ x: mouse.nx, y: mouse.ny }, camera); if (ray.ray.intersectPlane(plane, hitW)) U.uMouseW.value.copy(hitW); }
+
+    // words, clock, the hard cut, the ending
+    setChapter(t < .5 ? a : b);
+    const op = tr.cam === 'cut' ? (t < .5 ? 1 - ss(0, .3, t) : ss(.7, 1, t)) : (t < .5 ? 1 - ss(0, .2, t) : ss(.8, 1, t));
+    if (Math.abs(op - lastOp) > .01) { chapterEl.style.opacity = op.toFixed(2); lastOp = op; }
+    setClock(a, b, tr.g === 21 ? (t < .74 ? 0 : 1) : S.eg, t, tr);
+    cutEl.style.opacity = tr.cam === 'cut' ? (ss(.12, .3, t) * (1 - ss(.7, .88, t))).toFixed(3) : 0;
+    introEl.style.opacity = (1 - ss(0, .02, state.v)).toFixed(2);
+    if (holding === CH - 1) { const el = (performance.now() - finalSince) / 1000; chapterEl.classList.toggle('in', el > .4); chapterEl.classList.toggle('sig', el > 8); }
+
+    proj.copy(hero).project(camera);
+    const vis = proj.z < 1 && Math.abs(proj.x) < 1.1 && Math.abs(proj.y) < 1.1 && halo.visible;
+    marker.style.transform = `translate(${((proj.x + 1) / 2 * innerWidth).toFixed(1)}px, ${((1 - proj.y) / 2 * innerHeight).toFixed(1)}px)`;
+    if (holding >= 0) { if (holdSince < 0 || holdAt !== holding) { holdSince = performance.now(); holdAt = holding; } } else holdSince = -1;
+    const ringFade = holding >= 0 ? 1 - ss(2.2, 3.4, (performance.now() - holdSince) / 1000) * .78 : 1;
+    marker.style.opacity = vis ? (.95 * ringFade * heroLight * heroLight).toFixed(2) : 0;
+    markerLabel.style.opacity = state.v < .02 ? 1 : 0;
+
+    // shareable chapter links
+    if (holding >= 0) { const h = '#' + worlds[holding].slug; if (h !== lastHash) { lastHash = h; history.replaceState(null, '', h); } }
+    soundFrame(a, b, t, tr, S.eg, holding, holding >= 0 && holdSince >= 0 ? (performance.now() - holdSince) / 1000 : 0, heroLight, landed);
+    // falling quarry rock must stay grey and unlit by the furnace until it is actually fed
+    renderFrame(a, b, tr.g === 18 ? ss(.55, 1, t) : S.eg, hero);
+    fxTick();
+  }
+
+  readTheme();
+  new MutationObserver(readTheme).observe(root, { attributes: true, attributeFilter: ['data-theme'] });
+  matchMedia('(prefers-color-scheme: dark)').addEventListener?.('change', readTheme);
+  matchMedia('(prefers-reduced-motion: reduce)').addEventListener?.('change', e => { reduced = e.matches; });
+  resize();
+  let rt; addEventListener('resize', () => { clearTimeout(rt); rt = setTimeout(resize, 150); });
+  setChapter(0);
+  setTimeout(() => {
+    build();
+    $('introHint').textContent = 'Scroll to follow it.';
+    const start = worlds.findIndex(w => '#' + w.slug === location.hash);
+    if (start > 0) requestAnimationFrame(() => { if (hasGsap) ScrollTrigger.refresh(); goTo(start, true); });
+    requestAnimationFrame(frame);
+  }, 40);
+})();
+</script>
+</body>
+</html>

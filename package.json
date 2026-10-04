@@ -21,7 +21,8 @@
     "check:reverse": "node scripts/reverse-scrub.mjs",
     "check:seams": "node scripts/seams.mjs",
     "check:fonts": "vite build && node scripts/fonts-check.mjs",
-    "check:tiers": "node scripts/tier-check.mjs"
+    "check:tiers": "node scripts/tier-check.mjs",
+    "check:audio": "node scripts/audio-check.mjs"
   },
   "engines": {
     "node": ">=20"

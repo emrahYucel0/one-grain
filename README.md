@@ -33,6 +33,7 @@ npm run lint
 | `npm run check:tiers` | The downgrade is queued mid-transition, applied only while resting, in order (depth of field, shadows, grains); the low tier's layers; the debug panel's toggles |
 | `npm run check:console` | Zero console warnings or errors in dev and build, Chromium and Firefox |
 | `npm run check:a11y` | axe WCAG 2.1 AA, keyboard chapter steps, status line, focus ring, reduced motion, no-WebGL2 and no-JS fallbacks |
+| `npm run check:audio` | Sound: nothing before the visitor asks; the button clickable at 900×560 and 1440×700; exact silence in the "One day," cut and after the final landing (and sound again after scrolling back); ambience above the music where it should be; peaks below −6 dBFS; off within 0.5 s; hidden tab suspends; the remembered choice; no console noise both ways |
 | `npm run perf` | Frame times at every position and while scrubbing through the whole story, headed, on this machine's GPU |
 
 **Pre-commit hook.** `npm install` runs the `prepare` script, which points git at the
@@ -78,7 +79,7 @@ One responsibility per module:
 | `src/timeline` | Uneven scroll segments, `locate()`, ScrollTrigger scrub and snap to holds, `#slug` routing, keyboard chapter steps |
 | `src/ui` | Clock, chapter card, act label, timeline nav, hero marker, cut card, intro, timed ending, accessibility glue |
 | `src/input` | Mouse hover and touch tap state; projecting the pointer onto the scene for the desert and chip holds |
-| `src/audio` | The rough three-act sound bed. Off by default; starts only from the visitor's click |
+| `src/audio` | The sound (v23): `engine` (context, buses, limiter, room, noise), `score` (pads, notes, motif, pulse), `ambience` (primitives, the water rush, the event scheduler), `frame` (the story → the sound, per frame), `toggle` (the button). Its data is `story/sound.ts`. Off by default; nothing is created before the visitor asks |
 | `src/debug` | URL switches for testing (below) |
 
 **Layering is enforced by ESLint** (`no-restricted-imports` in `eslint.config.js`):
@@ -239,6 +240,26 @@ slower across the board. Measured back to back, v6, v8 and the port all landed a
 hold, where v6 ran at about 7 ms during the Phase 1 run. So the port costs the same as the
 reference, and a lens change costs 0.18 µs. Re-measure on a quiet machine before comparing with
 the Phase 1 numbers.
+
+## Sound
+
+Everything is synthesised with Web Audio (no files), ported from `reference/v23-sound.html`.
+
+- **Music, beneath:** one chord per chapter, crossfaded between two pad banks with the camera's
+  easing; sparse FM notes from the chord, with a timbre and register per act; a three-note falling
+  motif when a chapter is reached; a soft repeated note in the production chapters (quarry →
+  wafer). Music bus .42.
+- **Ambience, in front:** per-world events (far thumps, cracks, ticks, gusts, waves, distant metal
+  rings, the river's babbling bubbles) and one continuous sound, a soft water rush where there is
+  water. Ambience bus 2.2. A world's ambience starts as the camera approaches it (eg ≥ .35), with its
+  first sounds at once.
+- **Silence:** the "One day," cut and the end (with the grain's light, 3–6.2 s). The master goes to
+  exactly 0; scrolling back reopens it.
+- **Output:** master .7 into a safety limiter (−10 dB), a long generated room. Events are scheduled
+  0.3 s ahead by a 50 ms timer; after a stall, missed events are skipped, never bunched.
+- **The button:** "Listen" until first enabled, then "Sound on" / "Sound off" (aria-pressed). Off by
+  default; the choice is remembered (`localStorage`), and a returning visitor who chose sound gets
+  it at their first gesture. Suspended while the tab is hidden.
 
 ## Accessibility
 

@@ -29,6 +29,36 @@ was verified and how, and what was not.
 The reference is never edited. The harness serves a patched copy with three hooks: progress
 override, time override, and exposing the built texture (`scripts/lib/reference.mjs`).
 
+## Phase 5: the sound (reference v23)
+
+`reference/v23-sound.html` is v15 plus the sound engine, the sound button's behaviour and two CSS
+rules (the HUD above the rail, a tighter rail on short screens, so the rail no longer swallows the
+sound button's clicks). The port takes exactly those; the rough Phase 1 bed is gone.
+
+Measured against v23 with analysers on its music and ambience buses (the harness exposes its sound
+state), 20 s windows at the holds where the ambience should lead:
+
+| Hold | Port: ambience over music | v23: ambience over music |
+|---|---|---|
+| magma | 3.1 dB | 3.2 dB |
+| river | 5.1 dB | 5.1 dB |
+| desert | 8.2 dB | 9.0 dB |
+| furnace | 2.9 dB | 4.3 dB |
+| coast (three 15 s windows) | 2.4 / 8.1 / 6.4 dB | 4.3 / 4.9 / 6.2 dB |
+
+The coast is slow random swells, so short windows spread widely in both; the music matches within
+0.3 dB everywhere.
+
+Where the port does not copy the file:
+
+- **Off is silent within 0.3 s.** v23 glides the master towards 0 (time constant .2 s, so 8 % is left
+  after half a second). The port ramps linearly to exactly 0 in 0.3 s and stops scheduling.
+- **The remembered choice and the button.** v23 switches sound on at a returning visitor's first
+  pointerdown, and if that gesture is a click on the sound button, its click handler switches it
+  straight back off. The port leaves a gesture on the button to the button.
+- **No scheduler timer while off.** v23's 50 ms timer runs from the first enable on; the port's runs
+  only while sound is on.
+
 ## Phase 4b: reference v15, and where the port differs from the file
 
 Since Phase 4b, `reference/v15-lit.html` is the reference for everything: look, text and clock,
@@ -242,8 +272,9 @@ uniform, which only spiral read. They live in git history.
 - **Empty inline favicon.** It avoids a 404 console error that the reference also produces.
 
 ### Not deterministic in either version
-- **Audio** uses `Math.random` for its noise buffer and tick timing, so no two runs sound the
-  same. The bed was smoke-tested (toggle on/off, no console output) but not compared by ear.
+- **Sound** uses `Math.random` for its noise, its event times and its note choices, as v23 does,
+  so no two runs sound the same. Levels are compared statistically (`check:audio`; against v23
+  with long windows, below), not sample by sample.
 - **Pointer smoothing** advances a fixed fraction per frame, so it is frame-rate dependent
   in both versions. In Phase 1 the two hover shots differed slightly (0.073 % and 0.028 %) for
   that reason; with each page in its own window they now match too.

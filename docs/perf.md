@@ -604,3 +604,25 @@ the cadence and the pacing lock).
 A first run of the same measurement, straight after the parity run, showed 28–48 ms frame intervals
 at the same GPU times, plus one corrupted shadow sample (5031 ms in the smoothed column). Repeated
 runs (`perf:frame`, then this one) show 20.8 ms, so that run was disturbed and is not reported.
+
+## Phase 5: the sound's main-thread cost
+
+The sound runs on the audio thread, except for the per-frame mapping (story → buses, chords,
+gates) and the 50 ms event scheduler, which create the event nodes. `check:audio` counts both
+during a scroll through the whole story and back with sound on (32 s):
+
+- per-frame mapping 3.2 ms per second;
+- event scheduling 2.5 ms per second;
+- about 43 audio nodes created per second on average (the river's 75 bubbles a second, three nodes
+  each, are the busiest).
+
+That is about 0.1 ms per frame at 48 fps. `npm run perf:frame` with `SOUND=1` (the sound switched on
+first) against without, same build:
+
+| | Sound off | Sound on |
+|---|---|---|
+| river hold, main thread median / p95 | 0.84 / 1.34 ms | 1.11 / 1.91 ms |
+| coast hold | 0.77 / 1.15 ms | 1.00 / 1.71 ms |
+| furnace hold | 0.84 / 1.30 ms | 0.94 / 1.51 ms |
+| scroll-through, main thread median / p95 | 1.15 / 3.18 ms | 1.34 / 3.81 ms |
+| GPU frame and cadence | unchanged | unchanged |

@@ -8,7 +8,7 @@ import globals from 'globals';
 const pattern = (group, message) => ({ group, message });
 
 export default tseslint.config(
-  { ignores: ['dist/', 'reference/', 'parity/', 'node_modules/'] },
+  { ignores: ['dist/', 'reference/', 'parity/', 'node_modules/', 'scripts/_*'] }, // scripts/_* are git-ignored scratch tools
   js.configs.recommended,
   ...tseslint.configs.recommended,
   {

@@ -28,6 +28,8 @@ declare global {
     __LIVE?: number | null;
     __FT?: number | null;
     __renderT?: number[];
+    /** ?parity: the sound, once created (the audio check reads its taps and counters) */
+    __audio?: unknown;
     /** ?perf: the pacer's lock at each rendered frame (0 = none) */
     __renderLock?: number[];
   }
@@ -69,6 +71,9 @@ export function reportProgress(v: number): void {
 }
 
 /** With ?perf or ?debug, publish the per-pass GPU timings (for scripts/perf.mjs). */
+/** ?parity: expose the sound for the audio check. */
+export function exposeAudio(sound: unknown): void { if (flags.parity) window.__audio = sound; }
+
 /** ?perf: the rAF timestamp of every rendered frame (the pacer may skip refreshes), for the cadence. */
 export function reportRender(t: number, lock: number): void {
   if (!flags.perf) return;

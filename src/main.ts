@@ -1,5 +1,4 @@
 import './styles/main.css';
-import { mixBed } from './audio/mix';
 import { SoundToggle } from './audio/toggle';
 import { env, probeGpu } from './core/env';
 import { Loop } from './core/loop';
@@ -105,7 +104,7 @@ function boot(): void {
     intro.update(v);
     marker.update(heroPos, stage.camera, heroVisible, v, hold, now, heroLight);
     a11y.rest(hold);
-    mixBed(sound.bed, a, b, t, tr);
+    if (sound.on) sound.sound!.frame({ a, b, t, eg, tr, hold });
   });
 
   // quality: step down (queued, applied only while resting) if frames stay over budget
