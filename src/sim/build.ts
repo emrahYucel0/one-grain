@@ -11,7 +11,7 @@ import { PACK_VERSION, TEX_WIDTH, rowsFor, type GrainPack } from './pack';
  * a jittered sort along x so that neighbouring grain ids sit close together in every world
  * (that is what lets a transition sweep across the scene instead of shuffling it).
  */
-export function buildPack(n: number): GrainPack {
+export function buildPack(n: number, onWorld?: (done: number, total: number) => void): GrainPack {
   const ctx = createContext();
   const CH = WORLDS.length, rows = rowsFor(n);
   const pos = new Float32Array(TEX_WIDTH * rows * CH * 4), surface = new Uint16Array(TEX_WIDTH * rows * CH * 4);
@@ -39,6 +39,7 @@ export function buildPack(n: number): GrainPack {
     const h = gen.hero(ctx);
     heroes[c * 3] = h[0]; heroes[c * 3 + 1] = h[1]; heroes[c * 3 + 2] = h[2];
     prev = cur;
+    onWorld?.(c + 1, CH);
   });
 
   return { version: PACK_VERSION, n, texWidth: TEX_WIDTH, rows, worlds: CH, heroes, layers: [{ name: 'pos', format: 'rgba32f', data: pos }, { name: 'surface', format: 'rgba16f', data: surface }] };

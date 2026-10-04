@@ -1,4 +1,5 @@
-// Builds grain packs off the main thread and hands the buffers over without copying.
+// Builds grain packs off the main thread and hands the buffers over without copying; reports
+// progress after each world (the loading line, ui/loader.ts).
 import { buildPack } from './build';
 import { transferables } from './pack';
 
@@ -15,7 +16,7 @@ const scope = self as unknown as WorkerScope;
 scope.onmessage = (e: MessageEvent<SimRequest>) => {
   const { id, n } = e.data;
   try {
-    const pack = buildPack(n);
+    const pack = buildPack(n, (done, total) => scope.postMessage({ id, progress: done / total }));
     scope.postMessage({ id, pack }, transferables(pack));
   } catch (err) {
     scope.postMessage({ id, error: String(err) });

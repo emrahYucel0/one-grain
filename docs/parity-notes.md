@@ -278,6 +278,11 @@ uniform, which only spiral read. They live in git history.
   becomes the `?debug` panel's toggles.
 
 ### Behaviour added on purpose
+- **First load.** The reference shows its HUD and "Gathering sand…" over an empty stage while the
+  worlds build. The port's first paint is the stage (critical styles inline in `index.html`), then a
+  loader: the brand where the HUD puts it and a thin line the worker's per-world progress fills; on
+  the first rendered frame it fades away (0.6 s; at once under reduced motion), so the scene and its
+  words arrive together. `npm run check:load`.
 - **Readable fallback.** Without WebGL2, the reference showed an empty HUD. The port shows the
   semantic article from `index.html`, which is also what you get without JavaScript.
 - **Accessibility model.** In the reference (v5 and v6), the chapter card itself was the `aria-live`

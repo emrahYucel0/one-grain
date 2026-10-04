@@ -28,6 +28,7 @@ import { ChapterView } from './ui/chapter';
 import { ClockView, clockProgress } from './ui/clock';
 import { readCopy, type Copy } from './ui/copy';
 import { revealWhenFontsReady } from './ui/fonts';
+import { Loader } from './ui/loader';
 import { HeroMarker } from './ui/marker';
 import { TimelineNav } from './ui/nav';
 import { TypeAxes } from './ui/type-axes';
@@ -135,13 +136,16 @@ function boot(): void {
   exposeTiers(tiers);
   let firstFrame = true;
   loop.onFrame(({ L, now }) => {
-    if (firstFrame) { firstFrame = false; tiers.monitor.start(now); requestAnimationFrame(() => root.classList.add('ready')); }
+    if (firstFrame) { firstFrame = false; tiers.monitor.start(now); loader.done(); }
     tiers.frame(now, L.hold, stage.renderer.info.programs?.length ?? 0);
     loop.fade = tiers.fade;
   });
   if (flags.debug) debugOverlay(tiers, layers, () => stage.renderer.getPixelRatio(), timer, pacer);
 
-  sim.build(tier.n).then((pack) => {
+  // the loading line: the worlds' generation fills 90 %, the first rendered frame the rest
+  const loader = new Loader($('loaderFill'), flags.parity);
+  loader.progress(.04);
+  sim.build(tier.n, (p) => loader.progress(.04 + .86 * p)).then((pack) => {
     exposePack(pack);
     loop.setPack(pack);
     intro.ready();

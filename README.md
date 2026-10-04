@@ -181,6 +181,17 @@ final hold the sentence comes in at 0.4 s; the grain we followed hovers, loses i
 signature and footnote come in at 8 s. Under reduced motion the grain becomes matte in place.
 Focusing the signature link from the keyboard jumps straight to the end state.
 
+## First load
+
+The first paint is the stage: the critical styles are inline in `index.html` (stage background,
+no native scrollbar, the article visually hidden, HUD and words hidden), so neither the article nor
+a scrollbar can flash before the stylesheet, which the dev server injects through the script. Then
+the loader (`ui/loader.ts`): the brand where the HUD will show it and a thin line that the worker's
+progress fills, one step per generated world. The first rendered frame sets `html.ready` and the
+loader fades away in 0.6 s, so the scene and its words fade in together; under reduced motion the
+line fills without animation and the loader goes at once. Without JavaScript or WebGL2 there is no
+loader: the article is the page.
+
 ## Content
 
 All words live in `index.html`:
