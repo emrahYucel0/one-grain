@@ -112,6 +112,9 @@ export class Loop {
     requestAnimationFrame(tick);
   }
 
+  /** Capture mode: render one frame now, outside the rAF loop (src/capture/). */
+  step(): void { this.frame(); }
+
   private frame(): void {
     const { stage, grains, hero, timeline, hash, projection, typeAxes, stageColour, pipeline, timer, layers } = this.d;
     const reduced = env.reduced;

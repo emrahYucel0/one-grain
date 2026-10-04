@@ -1,5 +1,6 @@
 import { AMB, type Ambience } from '../story/sound';
 import type { Engine } from './engine';
+import { rand } from './random';
 
 type Kind = 'thump' | 'crack' | 'bubble' | 'tick' | 'gust' | 'wave' | 'metal' | 'brook';
 const KINDS: readonly Kind[] = ['thump', 'crack', 'bubble', 'tick', 'gust', 'wave', 'metal', 'brook'];
@@ -45,7 +46,7 @@ export class AmbienceLayer {
   schedule(now: number): void {
     const w = this.w;
     if (!w) return;
-    const R = Math.random, ahead = now + AHEAD;
+    const R = rand, ahead = now + AHEAD;
     for (const t of this.due('thump', w.thump, now, ahead)) this.thump(t, .04);
     for (const t of this.due('crack', w.crack, now, ahead)) this.burst(t, w.crackF[0] + R() * (w.crackF[1] - w.crackF[0]), 12, .015 + R() * .04, .3 + R() * .3, (R() - .5) * 1.4);
     const bf = w.bubF ?? [3000, 6000];
@@ -62,9 +63,9 @@ export class AmbienceLayer {
     const out: number[] = [];
     if (rate <= 0) { this.next.set(k, 0); return out; }
     let n = this.next.get(k) ?? 0;
-    if (!n) n = now + Math.random() / rate;
-    else if (n < now - .5) n = now + Math.random() * .1; // after a stall: skip what was missed
-    while (n < ahead && out.length < 6) { out.push(Math.max(n, now + .005)); n += -Math.log(1 - Math.random()) / rate; }
+    if (!n) n = now + rand() / rate;
+    else if (n < now - .5) n = now + rand() * .1; // after a stall: skip what was missed
+    while (n < ahead && out.length < 6) { out.push(Math.max(n, now + .005)); n += -Math.log(1 - rand()) / rate; }
     this.next.set(k, n);
     return out;
   }
@@ -74,7 +75,7 @@ export class AmbienceLayer {
     const e = this.e, ctx = e.ctx, src = ctx.createBufferSource(); src.buffer = e.noiseBuf;
     const bp = ctx.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = f; bp.Q.value = q;
     const g = ctx.createGain(); g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(level, t + .002); g.gain.exponentialRampToValueAtTime(.0001, t + len);
-    src.connect(bp).connect(g); e.pan(g, pan).connect(e.ambience); src.start(t, Math.random() * 3.5, len + .05);
+    src.connect(bp).connect(g); e.pan(g, pan).connect(e.ambience); src.start(t, rand() * 3.5, len + .05);
     e.count(4);
   }
 
@@ -85,15 +86,15 @@ export class AmbienceLayer {
     const g = ctx.createGain(); g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(level, t + up); g.gain.linearRampToValueAtTime(0, t + up + down);
     let out: AudioNode = g;
     if (ctx.createStereoPanner) { const p = ctx.createStereoPanner(); p.pan.setValueAtTime(pan, t); p.pan.linearRampToValueAtTime(-pan * .6, t + up + down); g.connect(p); out = p; }
-    src.connect(flt).connect(g); out.connect(e.ambience); src.start(t, Math.random() * 3); src.stop(t + up + down + .1);
+    src.connect(flt).connect(g); out.connect(e.ambience); src.start(t, rand() * 3); src.stop(t + up + down + .1);
     e.count(4);
   }
 
   /** One bubble on the water's surface: a tiny sine whose pitch rises as it closes. */
   private bubble(t: number, level: number, pan: number): void {
     const e = this.e, ctx = e.ctx, o = ctx.createOscillator(), g = ctx.createGain();
-    const f0 = 380 * Math.pow(2, Math.random() * 2.6), dur = .018 + Math.random() * .045;
-    o.type = 'sine'; o.frequency.setValueAtTime(f0, t); o.frequency.exponentialRampToValueAtTime(f0 * (1.4 + Math.random() * .5), t + dur);
+    const f0 = 380 * Math.pow(2, rand() * 2.6), dur = .018 + rand() * .045;
+    o.type = 'sine'; o.frequency.setValueAtTime(f0, t); o.frequency.exponentialRampToValueAtTime(f0 * (1.4 + rand() * .5), t + dur);
     g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(level, t + .002); g.gain.exponentialRampToValueAtTime(.0001, t + dur);
     o.connect(g); e.pan(g, pan).connect(e.ambience); o.start(t); o.stop(t + dur + .02);
     e.count(3);
@@ -102,7 +103,7 @@ export class AmbienceLayer {
   /** A low far thump. */
   private thump(t: number, level: number): void {
     const e = this.e, ctx = e.ctx, o = ctx.createOscillator(), g = ctx.createGain(), lp = ctx.createBiquadFilter();
-    o.type = 'sine'; o.frequency.setValueAtTime(58 + Math.random() * 14, t); o.frequency.exponentialRampToValueAtTime(34, t + 1.6);
+    o.type = 'sine'; o.frequency.setValueAtTime(58 + rand() * 14, t); o.frequency.exponentialRampToValueAtTime(34, t + 1.6);
     lp.type = 'lowpass'; lp.frequency.value = 160;
     g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(level, t + .35); g.gain.exponentialRampToValueAtTime(.0001, t + 2.4);
     o.connect(lp).connect(g).connect(e.ambience); o.start(t); o.stop(t + 2.5);
@@ -111,7 +112,7 @@ export class AmbienceLayer {
 
   /** A distant metal ring (into the room only). */
   private metal(t: number, level: number): void {
-    const e = this.e, ctx = e.ctx, base = 300 + Math.random() * 300;
+    const e = this.e, ctx = e.ctx, base = 300 + rand() * 300;
     [1, 2.76, 5.4, 8.93].forEach((r, k) => {
       const o = ctx.createOscillator(), g = ctx.createGain(); o.frequency.value = base * r;
       g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(level / (k + 1), t + .005); g.gain.exponentialRampToValueAtTime(.0001, t + 2.5 - k * .4);

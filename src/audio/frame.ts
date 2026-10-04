@@ -55,6 +55,16 @@ export class Sound {
     return e ? new Sound(e) : null;
   }
 
+  /**
+   * Capture mode: the sound on an offline engine, driven from outside (frame() at the video's frame
+   * times, schedule() every 50 ms of audio time) instead of by a timer.
+   */
+  static driven(engine: Engine): Sound {
+    const s = new Sound(engine);
+    s.on = true; s.lastGate = 0;
+    return s;
+  }
+
   setOn(on: boolean): void {
     const e = this.engine;
     this.on = on;
@@ -112,7 +122,9 @@ export class Sound {
     e.stats.frameMs += performance.now() - t0;
   }
 
-  /** The look-ahead scheduler (every 50 ms while on). */
+  /** The look-ahead scheduler (every 50 ms while on; capture mode calls it itself). */
+  schedule(): void { this.tick(); }
+
   private tick(): void {
     if (!this.on || this.gate < .02) return;
     const t0 = performance.now(), now = this.engine.now;

@@ -1,6 +1,7 @@
 import { ACTS, CHORDS } from '../story/sound';
 import { WORLDS } from '../story/worlds';
 import type { Engine } from './engine';
+import { rand } from './random';
 
 const midi = (m: number): number => 440 * Math.pow(2, (m - 69) / 12);
 const chordOf = (i: number): readonly number[] => CHORDS[WORLDS[i]!.slug]!;
@@ -69,15 +70,15 @@ export class Score {
   schedule(now: number): void {
     const S = ACTS[this.act]!;
     if (this.nextNote < now) {
-      const tones = chordTones(this.chord, S.reg[0], S.reg[1]), pick = tones[Math.floor(Math.pow(Math.random(), .7) * tones.length)]!;
-      this.note(pick, .25 + Math.random() * .3, this.act);
-      if (Math.random() < .18) { const lower = tones.filter((x) => x < pick - 2); if (lower.length) this.note(lower[lower.length - 1]!, .18 + Math.random() * .15, this.act, now + .06); }
-      this.nextNote = now + S.gap[0] + Math.random() * (S.gap[1] - S.gap[0]);
+      const tones = chordTones(this.chord, S.reg[0], S.reg[1]), pick = tones[Math.floor(Math.pow(rand(), .7) * tones.length)]!;
+      this.note(pick, .25 + rand() * .3, this.act);
+      if (rand() < .18) { const lower = tones.filter((x) => x < pick - 2); if (lower.length) this.note(lower[lower.length - 1]!, .18 + rand() * .15, this.act, now + .06); }
+      this.nextNote = now + S.gap[0] + rand() * (S.gap[1] - S.gap[0]);
     }
     if (this.act === 1 && this.pulse && this.nextPulse < now) {
       const tones = chordTones(this.chord, 69, 79);
       this.note(tones[tones.length - 1]!, .1, 1);
-      this.nextPulse = now + .95 + Math.random() * .12;
+      this.nextPulse = now + .95 + rand() * .12;
     }
   }
 
@@ -105,7 +106,7 @@ export class Score {
     env.gain.setValueAtTime(0, t); env.gain.linearRampToValueAtTime(vel * .1, t + .008); env.gain.exponentialRampToValueAtTime(vel * .035, t + .5); env.gain.exponentialRampToValueAtTime(.0001, t + len);
     lp.type = 'lowpass'; lp.frequency.value = S.lp;
     mod.connect(mg).connect(car.frequency); car.connect(env).connect(lp);
-    e.pan(lp, (Math.random() - .5) * .6).connect(e.music);
+    e.pan(lp, (rand() - .5) * .6).connect(e.music);
     car.start(t); mod.start(t); car.stop(t + len + .1); mod.stop(t + len + .1);
     e.count(5);
   }

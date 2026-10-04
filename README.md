@@ -193,6 +193,31 @@ loader fades away in 0.6 s, so the scene and its words fade in together; under r
 line fills without animation and the loader goes at once. Without JavaScript or WebGL2 there is no
 loader: the article is the page.
 
+## Capture (the submission video)
+
+`npm run capture -- [1920x1080|2560x1440] [--path capture/path.json] [--seconds a-b]` renders the
+video offline, one frame at a time, from the built site in capture mode (`?capture`, `src/capture/`):
+
+- **The path** (`capture/path.json`, editable): seconds on each chapter (`hold`, `holds`), the pace
+  of each move (`scroll` seconds per screen height of the story's track, `moves` per chapter), the
+  intro and the final hold. Moves ease like the scroll snap. The final hold's timeline (the light
+  going out, the landing, the silence) runs at real-time pace.
+- **Deterministic.** The page runs on a virtual clock that the script advances 1/60 s per frame
+  (`performance.now()`, the shader clock and film grain, the live clock, the ring, the ending); CSS
+  transitions and the clock's punch are moved to the same clock. High tier, every effect on, no
+  downgrade, no pacing. Two renders of the same frames decode to identical pictures.
+- **Read back** from the compositor (`Page.captureScreenshot`), so the HUD and the words are in the
+  picture, and piped to ffmpeg: H.264 (CRF 14, yuv420p), 60 fps.
+- **Sound**, rendered offline on an `OfflineAudioContext` (48 kHz) from the story state of every
+  frame, the scheduler at its realtime 50 ms period, every random choice seeded (`seed`), then muxed
+  in as AAC 320 kb/s; the WAV is kept too. Two renders agree to within one least significant bit on a
+  few hundred samples (the reverb's own rounding).
+- **Output:** `capture/out/one-grain-<W>x<H>.mp4` (ignored by git). `--seconds a-b` renders an
+  excerpt to check a passage.
+- **ffmpeg:** `$FFMPEG`, else the `ffmpeg-static` dev dependency (its install script downloads the
+  binary; npm may ask to approve it: `npm install-scripts approve ffmpeg-static`), else `ffmpeg` on
+  the PATH.
+
 ## Content
 
 All words live in `index.html`:
@@ -321,6 +346,7 @@ Everything is synthesised with Web Audio (no files), ported from `reference/v23-
 |---|---|
 | `?tier=low\|mid\|high` | Force a tier (also turns off the automatic drop) |
 | `?debug` | Corner panel: tier, effects, grains, DPR, fps, the quality monitor's last window and every step with its reason and numbers, GPU time per pass and per frame (live), and a toggle per render layer (overrides tier and downgrade until Reset) |
+| `?capture` | Capture mode for `npm run capture`: implies `?parity` and the high tier; the page runs on a virtual clock, one frame per `window.__capture.step()` |
 | `?notimer` | No GPU timer: the quality monitor judges frame intervals only (three windows) |
 | `?debug&forceDrop` | Act as if the frame budget stayed blown, to watch the downgrade walk its steps |
 | `?perf` | Time every render pass on the GPU (`window.__gpu`, with the last 240 raw frames) |

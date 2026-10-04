@@ -1,0 +1,78 @@
+import { Engine } from '../audio/engine';
+import { Sound, type SoundFrame } from '../audio/frame';
+import { seedRandom } from '../audio/random';
+
+declare global {
+  interface Window {
+    /** ?capture: driven by scripts/capture.mjs */
+    __capture?: CaptureApi;
+  }
+}
+
+export interface CaptureApi {
+  /** Render the frame at `nowMs` on the capture's clock, at story progress v; `holdSec`: seconds resting on the current chapter (null while moving). */
+  step(nowMs: number, v: number, holdSec: number | null): void;
+  /** Render the sound for every stepped frame offline; resolves to a 16-bit stereo WAV, base64. */
+  sound(fps: number, seed: number): Promise<string>;
+}
+
+const RATE = 48000;
+/** audio after the last frame (the room's tail; the video's length decides what is kept) */
+const TAIL_S = 4;
+/** the realtime scheduler's period (audio/frame.ts): every third frame at 60 fps */
+const SCHEDULE_EVERY_S = .05;
+
+/**
+ * Capture mode (?capture): the submission video, rendered offline one frame at a time by
+ * scripts/capture.mjs. Each step sets the page's virtual clock (debug/parity.ts), the progress and
+ * the seconds in the hold, renders one frame, and moves CSS transitions and Web Animations (the
+ * clock's punch) to the same clock, so a frame shows the same whatever the render takes. The
+ * sound's view of each frame is recorded; afterwards the whole score is rendered on an
+ * OfflineAudioContext with a seeded random source, frame by frame at the same times.
+ * Returns the recorder the frame listener feeds.
+ */
+export function exposeCapture(loop: { step(): void }): (f: SoundFrame) => void {
+  const frames: SoundFrame[] = [];
+  const born = new WeakMap<Animation, number>();
+  // the video has its sound: the button shows it on (without starting the visitor's realtime sound)
+  const button = document.getElementById('sound');
+  if (button) { button.textContent = button.dataset.on ?? button.textContent; button.setAttribute('aria-pressed', 'true'); }
+  window.__capture = {
+    step(nowMs, v, holdSec) {
+      window.__VNOW = nowMs; window.__V = v; window.__FT = holdSec;
+      loop.step();
+      for (const a of document.getAnimations()) {
+        if (!born.has(a)) born.set(a, nowMs);
+        a.pause();
+        a.currentTime = nowMs - born.get(a)!;
+      }
+    },
+    async sound(fps, seed) {
+      seedRandom(seed);
+      window.__FT = null; // the sound times its holds from the frame times below
+      const ctx = new OfflineAudioContext(2, Math.ceil((frames.length / fps + TAIL_S) * RATE), RATE);
+      const sound = Sound.driven(Engine.offline(ctx));
+      const every = Math.max(1, Math.round(SCHEDULE_EVERY_S * fps));
+      const at = (i: number): void => { sound.frame(frames[i]!, i * 1000 / fps); if (i % every === 0) sound.schedule(); };
+      at(0);
+      for (let i = 1; i < frames.length; i++) void ctx.suspend(i / fps).then(() => { at(i); void ctx.resume(); });
+      return wavBase64(await ctx.startRendering());
+    },
+  };
+  return (f) => frames.push({ ...f });
+}
+
+/** 16-bit PCM WAV, base64 (chunked: the string is tens of megabytes). */
+function wavBase64(buf: AudioBuffer): string {
+  const ch = buf.numberOfChannels, n = buf.length, bytes = new Uint8Array(44 + n * ch * 2), dv = new DataView(bytes.buffer);
+  const str = (o: number, s: string): void => { for (let i = 0; i < s.length; i++) bytes[o + i] = s.charCodeAt(i); };
+  str(0, 'RIFF'); dv.setUint32(4, 36 + n * ch * 2, true); str(8, 'WAVE'); str(12, 'fmt ');
+  dv.setUint32(16, 16, true); dv.setUint16(20, 1, true); dv.setUint16(22, ch, true); dv.setUint32(24, buf.sampleRate, true);
+  dv.setUint32(28, buf.sampleRate * ch * 2, true); dv.setUint16(32, ch * 2, true); dv.setUint16(34, 16, true);
+  str(36, 'data'); dv.setUint32(40, n * ch * 2, true);
+  const data = Array.from({ length: ch }, (_, c) => buf.getChannelData(c));
+  for (let i = 0, o = 44; i < n; i++) for (let c = 0; c < ch; c++, o += 2) dv.setInt16(o, Math.max(-1, Math.min(1, data[c]![i]!)) * 32767, true);
+  let out = '';
+  for (let i = 0; i < bytes.length; i += 0x8000) out += String.fromCharCode(...bytes.subarray(i, i + 0x8000));
+  return btoa(out);
+}

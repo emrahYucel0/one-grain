@@ -1,4 +1,5 @@
 import { LEVELS } from '../story/sound';
+import { rand } from './random';
 
 /**
  * The sound's plumbing (v23): one AudioContext, created on the visitor's first request, never
@@ -11,7 +12,8 @@ import { LEVELS } from '../story/sound';
  * ambience. Nothing is loaded: everything is synthesised.
  */
 export class Engine {
-  readonly ctx: AudioContext;
+  /** the visitor's AudioContext, or capture mode's OfflineAudioContext (src/capture/) */
+  readonly ctx: AudioContext | OfflineAudioContext;
   readonly master: GainNode;
   readonly music: GainNode;
   readonly ambience: GainNode;
@@ -22,7 +24,7 @@ export class Engine {
   /** with ?parity: taps for the audio check (output after the limiter, the music and ambience buses) */
   readonly taps: { out: AnalyserNode; music: AnalyserNode; ambience: AnalyserNode } | null;
 
-  private constructor(ctx: AudioContext, withTaps: boolean) {
+  private constructor(ctx: AudioContext | OfflineAudioContext, withTaps: boolean) {
     this.ctx = ctx;
     const G = (v: number): GainNode => { const g = ctx.createGain(); g.gain.value = v; return g; };
     this.master = G(0);
@@ -51,6 +53,9 @@ export class Engine {
     return AC ? new Engine(new AC(), withTaps) : null;
   }
 
+  /** Capture mode: the same plumbing on an OfflineAudioContext. */
+  static offline(ctx: OfflineAudioContext): Engine { return new Engine(ctx, false); }
+
   get now(): number { return this.ctx.currentTime; }
 
   /** Count audio nodes created for an event. */
@@ -70,18 +75,18 @@ export class Engine {
 }
 
 /** A long, soft, dark room: low-passed noise with a slow fall. */
-function makeRoom(ctx: AudioContext, sec: number): AudioBuffer {
+function makeRoom(ctx: BaseAudioContext, sec: number): AudioBuffer {
   const n = Math.floor(ctx.sampleRate * sec), b = ctx.createBuffer(2, n, ctx.sampleRate);
   const k = Math.exp(-2 * Math.PI * 4200 / ctx.sampleRate);
   for (let c = 0; c < 2; c++) {
     const d = b.getChannelData(c); let lp = 0;
-    for (let i = 0; i < n; i++) { const t = i / n; lp = lp * k + (Math.random() * 2 - 1) * (1 - k); d[i] = lp * Math.pow(1 - t, 2.4) * (t < .01 ? t / .01 : 1); }
+    for (let i = 0; i < n; i++) { const t = i / n; lp = lp * k + (rand() * 2 - 1) * (1 - k); d[i] = lp * Math.pow(1 - t, 2.4) * (t < .01 ? t / .01 : 1); }
   }
   return b;
 }
 
-function noise(ctx: AudioContext, sec: number): AudioBuffer {
+function noise(ctx: BaseAudioContext, sec: number): AudioBuffer {
   const b = ctx.createBuffer(1, ctx.sampleRate * sec, ctx.sampleRate), d = b.getChannelData(0);
-  for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+  for (let i = 0; i < d.length; i++) d[i] = rand() * 2 - 1;
   return b;
 }

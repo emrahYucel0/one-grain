@@ -1,4 +1,5 @@
 import './styles/main.css';
+import type { SoundFrame } from './audio/frame';
 import { SoundToggle } from './audio/toggle';
 import { env, probeGpu } from './core/env';
 import { Loop } from './core/loop';
@@ -97,6 +98,9 @@ function boot(): void {
     go,
     onSignatureFocus: (focused) => { ending.forced = focused; chapter.setSignatureFocus(focused); },
   });
+  // ?capture: the frames are stepped by scripts/capture.mjs (src/capture/), and their sound recorded
+  let record: ((f: SoundFrame) => void) | null = null;
+  if (flags.capture) void import('./capture/capture').then((m) => { record = m.exposeCapture(loop); });
   const pointer = new Pointer();
   chapter.show(0); nav.setCurrent(0);
 
@@ -117,6 +121,7 @@ function boot(): void {
     marker.update(heroPos, stage.camera, heroVisible, v, hold, now, heroLight);
     a11y.rest(hold);
     if (sound.on) sound.sound!.frame({ a, b, t, eg, tr, hold });
+    record?.({ a, b, t, eg, tr, hold });
   });
 
   // quality: step down if our frames stay over budget, back up once they have headroom (queued, applied only while resting)
@@ -150,7 +155,7 @@ function boot(): void {
     loop.setPack(pack);
     intro.ready();
     hash.restore();
-    loop.start();
+    if (!flags.capture) loop.start();
   }, fallBack);
 }
 

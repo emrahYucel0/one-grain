@@ -25,7 +25,8 @@ export class SoundToggle {
     document.addEventListener('visibilitychange', () => {
       const s = this.sound;
       if (!s) return;
-      if (document.hidden) void s.engine.ctx.suspend(); else if (s.on) void s.engine.ctx.resume();
+      const ctx = s.engine.ctx as AudioContext; // the visitor's sound is always a realtime context
+      if (document.hidden) void ctx.suspend(); else if (s.on) void ctx.resume();
     });
     if (readPref()) {
       const arm = (e: Event): void => { if (!button.contains(e.target as Node)) this.set(true); };

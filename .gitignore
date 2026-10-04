@@ -17,3 +17,6 @@ parity/port/
 parity/diff/
 parity/index.html
 parity/checklist.md
+
+# the capture's renders (npm run capture)
+capture/out/

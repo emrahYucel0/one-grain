@@ -1,0 +1,11 @@
+{
+  "_doc": "The scroll path of the submission video (npm run capture). Seconds. 'hold' rests on each chapter and 'holds' overrides it per chapter; a move between two chapters takes 'scroll' seconds per screen height of the story's scroll track, and 'moves' overrides it per chapter left. The first chapter rests 'intro' seconds; the last 'final' seconds, its timeline (the light going out, the landing, the silence) at real-time pace. 'seed' fixes the sound's random choices.",
+  "fps": 60,
+  "seed": 1,
+  "intro": 4,
+  "hold": 3.2,
+  "holds": { "display": 4.2 },
+  "scroll": 1.5,
+  "moves": { "again": 3.6, "display": 5.2 },
+  "final": 16
+}
