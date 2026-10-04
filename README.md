@@ -7,8 +7,9 @@ grains from one world to the next.
 The behavioural spec is `reference/blockout-v8.html` (Phase 3: typography, art direction through
 confinement, stage colour per act, reworked drift, break and grow, the final dramaturgy). Earlier
 phases ported `blockout-v5.html` and `v6`, which are kept alongside. The port keeps its exact
-transition endpoints (a transition reproduces its two worlds exactly at t = 0 and 1). Phase 1 ported `blockout-v5.html`, which is kept alongside. The parity
-evidence is in `parity/`, and `docs/parity-notes.md` lists everything that is not identical,
+transition endpoints (a transition reproduces its two worlds exactly at t = 0 and 1). Phase 1 ported `blockout-v5.html`, which is kept alongside. `npm run parity`
+writes the evidence to `parity/` (only the reference captures in `parity/ref/` are tracked; the
+port's captures, the diff masks, `index.html` and `checklist.md` are per-run output), and `docs/parity-notes.md` lists everything that is not identical,
 with the reason, including the one intentional change beyond v6.
 
 ## Quick start

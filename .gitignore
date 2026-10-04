@@ -10,5 +10,9 @@ Thumbs.db
 # scratch tools (never committed)
 scripts/_*
 
-# per-run outputs of the checks (the parity baselines from `npm run parity` stay tracked)
+# per-run outputs of the checks; only the parity baselines (the reference captures, parity/ref/) stay tracked
 parity/fonts/
+parity/port/
+parity/diff/
+parity/index.html
+parity/checklist.md
