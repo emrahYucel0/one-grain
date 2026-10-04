@@ -9,6 +9,8 @@ export interface PipelineFrame {
   overlay: Scene;
   camera: Camera;
   shadows: boolean;
+  /** refresh the shadow map every n-th frame (2; ?shadowevery measures 3 at rest) */
+  shadowEvery?: number;
   /** the stage colour, linear: the HDR target is cleared to it */
   clear: Vector3;
   /** debug: grains straight to the screen on black, no post (the overdraw view counts brightness) */
@@ -35,7 +37,7 @@ export class Pipeline {
   render(f: PipelineFrame): void {
     const { renderer, timer, shadow, post } = this;
     if (!f.shadows) shadow.invalidate();
-    else if (shadow.due()) {
+    else if (shadow.due(f.shadowEvery)) {
       timer.begin('shadow');
       shadow.render(renderer);
       timer.end();

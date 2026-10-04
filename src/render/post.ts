@@ -1,3 +1,4 @@
+import { flags } from '../debug/parity';
 import {
   DepthTexture, GLSL3, HalfFloatType, LinearFilter, Mesh, OrthographicCamera, PlaneGeometry, Scene, ShaderMaterial, Vector2, WebGLRenderTarget,
   type IUniform, type Texture, type WebGLRenderer,
@@ -46,6 +47,8 @@ const half = { type: HalfFloatType, depthBuffer: false, minFilter: LinearFilter,
  * Each step is timed on the GPU as its own pass.
  */
 export class PostChain {
+  /** depth of field at 1/dofRes of the drawing buffer (2 = half; ?dofres measures others) */
+  private readonly dofRes = flags.dofRes;
   /** the scene is drawn here (linear HDR) */
   readonly scene: WebGLRenderTarget;
   private readonly bloomA: WebGLRenderTarget;
@@ -88,8 +91,9 @@ export class PostChain {
     this.scene.setSize(w, h);
     this.bloomA.setSize(q(w >> 2), q(h >> 2)); this.bloomA2.setSize(q(w >> 2), q(h >> 2));
     this.bloomB.setSize(q(w >> 3), q(h >> 3)); this.bloomB2.setSize(q(w >> 3), q(h >> 3));
-    this.dofTarget.setSize(q(w >> 1), q(h >> 1));
-    (this.dof.u.uTexel!.value as Vector2).set(2 / w, 2 / h);
+    const d = this.dofRes;
+    this.dofTarget.setSize(q(Math.floor(w / d)), q(Math.floor(h / d))); // d = 2: w >> 1, as before
+    (this.dof.u.uTexel!.value as Vector2).set(2 / w, 2 / h); // the taps' spacing stays the half-resolution one: the same blur radius at any ?dofres
   }
 
   render(renderer: WebGLRenderer, timer: GpuTimer, f: PostFrame): void {

@@ -639,3 +639,48 @@ The drawing buffer is capped by total pixels per tier (low 1.5 MP, mid 2.2 MP, h
 | high | 2632×1709, 32.6 ms | 2828×1590, 32.0 ms |
 
 Details and the design questions: docs/responsive/README.md.
+
+## Phase 6a: mid-tier headroom (measured, not adopted)
+
+`?debug` on this laptop showed GPU frames of 13.7–19.3 ms at mid. Two options, behind measurement
+switches only (`?dofres=4`, `?shadowevery=3`; the defaults are unchanged): depth of field at
+quarter resolution instead of half (the taps keep their half-resolution spacing, so the blur radius
+is the same), and the shadow map refreshed every 3rd frame while resting (every 2nd during
+transitions, as now). Mid tier, 1920×909, built site, the four configurations interleaved per
+position over two rounds, 3 s of raw GPU frames each (`EXT_disjoint_timer_query_webgl2`):
+
+| Position | Config | GPU mean / frame | Shadow-refresh frames | Other frames | DOF pass |
+|---|---|---|---|---|---|
+| magma | base | 13.51 ms | 14.50 ms | 12.48 ms | 2.78 ms |
+| magma | DOF ¼ | 13.00 ms | 14.01 ms | 11.95 ms | 2.29 ms |
+| magma | shadows every 3rd | 13.11 ms | 14.51 ms | 12.46 ms | 2.80 ms |
+| magma | both | 12.68 ms | 14.03 ms | 11.98 ms | 2.31 ms |
+| desert | base | 13.28 ms | 14.21 ms | 12.11 ms | 2.93 ms |
+| desert | DOF ¼ | 12.90 ms | 13.73 ms | 11.75 ms | 2.49 ms |
+| desert | shadows every 3rd | 12.95 ms | 14.20 ms | 12.14 ms | 2.94 ms |
+| desert | both | 12.51 ms | 13.74 ms | 11.68 ms | 2.50 ms |
+| chip | base | 13.30 ms | 14.29 ms | 12.30 ms | 2.92 ms |
+| chip | DOF ¼ | 12.84 ms | 13.85 ms | 11.85 ms | 2.47 ms |
+| chip | shadows every 3rd | 12.99 ms | 14.33 ms | 12.32 ms | 2.92 ms |
+| chip | both | 12.53 ms | 13.83 ms | 11.85 ms | 2.48 ms |
+| final (15 s) | base | 13.44 ms | 13.97 ms | 12.04 ms | 2.95 ms |
+| final (15 s) | DOF ¼ | 12.87 ms | 13.52 ms | 11.53 ms | 2.50 ms |
+| final (15 s) | shadows every 3rd | 13.07 ms | 14.01 ms | 12.03 ms | 2.95 ms |
+| final (15 s) | both | 12.55 ms | 13.53 ms | 11.58 ms | 2.51 ms |
+
+- **DOF at quarter resolution** saves about 0.45 ms on every frame (the pass goes from 2.8–2.95 to
+  2.3–2.5 ms: it is not bound by its output size; most of its cost is reading the full-resolution
+  colour and depth). The worst frames (shadow refresh) drop by the same 0.45 ms.
+- **Shadows every 3rd frame at rest** save about 0.35 ms per frame on average (a third of the frames
+  instead of half carry the ~2 ms refresh) but not on the worst frames, which still refresh.
+- **Both:** about 0.85 ms on average (6 %), 0.45 ms on the worst frames.
+- **Looks** (100 % crops, docs/perf/headroom/: [magma](perf/headroom/magma.jpg),
+  [desert](perf/headroom/desert.jpg), [chip](perf/headroom/chip.jpg), [final](perf/headroom/final.jpg)):
+  quarter-resolution DOF makes the out-of-focus areas a little softer and blockier (most visible in
+  magma's background and desert's far dunes); in-focus grains are unchanged. Shadows every 3rd frame
+  show no difference in a still; any difference would be a shadow lagging matter by one more frame
+  while it moves. The crops differ slightly in position (pointer parallax per page). Pixel-diff
+  percentages are not given: the film grain changes every frame, so two pages differ by 8–40 %
+  whatever the setting.
+- The 13.7–19.3 ms seen in `?debug` includes transitions and the light and furnace holds; at these
+  four holds the GPU frame is 12–14.5 ms here.

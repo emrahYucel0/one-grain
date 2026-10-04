@@ -33,8 +33,8 @@ export class ShadowMap {
     this.pxPerUnit = SHADOW_SIZE / (2 * size);
   }
 
-  /** Whether this frame refreshes the map; call once per frame while shadows are on. */
-  due(): boolean { return this.tick++ % 2 === 0 || !this.fresh; }
+  /** Whether this frame refreshes the map (every `every`-th frame); call once per frame while shadows are on. */
+  due(every = 2): boolean { return this.tick++ % every === 0 || !this.fresh; }
 
   /** Shadows were off: the next frame that has them refreshes the map first. */
   invalidate(): void { this.fresh = false; }

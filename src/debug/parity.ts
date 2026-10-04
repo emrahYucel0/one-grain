@@ -7,6 +7,8 @@
 //   ?pointcap=N      largest grain in pixels (performance experiments)
 //   ?grains=N        grains per world instead of the tier's count (performance experiments)
 //   ?shadowstride=N  every N-th grain casts shadows (default 1 = all); &shadowgrow=F scales its disc
+//   ?dofres=N        depth of field at 1/N resolution (default 2 = half; 4 = quarter), measurements only
+//   ?shadowevery=N   at rest the shadow map refreshes every N-th frame (default 2; every 2nd in transitions), measurements only
 //   ?pacing=off|on|auto  frame pacing (core/pacing.ts; default off)
 //   ?notimer         no GPU timer: the quality monitor falls back to frame intervals (core/quality.ts)
 //   ?off=a,b         switch render layers off (light, shadows, dof, bloom, grade), for measurements
@@ -58,6 +60,8 @@ export const flags = {
   pointCap: params.has('pointcap') ? Number(params.get('pointcap')) : null,
   grains: params.has('grains') ? Number(params.get('grains')) : null,
   shadowStride: Number(params.get('shadowstride') ?? 1),
+  dofRes: Math.max(1, Number(params.get('dofres') ?? 2) | 0),
+  shadowEvery: Math.max(1, Number(params.get('shadowevery') ?? 2) | 0),
   shadowGrow: Number(params.get('shadowgrow') ?? 1),
   noTimer: params.has('notimer'),
   pacing: ((m) => (m === 'on' || m === 'auto' ? m : 'off'))(params.get('pacing')) as 'off' | 'on' | 'auto',
