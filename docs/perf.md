@@ -626,3 +626,16 @@ first) against without, same build:
 | furnace hold | 0.84 / 1.30 ms | 0.94 / 1.51 ms |
 | scroll-through, main thread median / p95 | 1.15 / 3.18 ms | 1.34 / 3.81 ms |
 | GPU frame and cadence | unchanged | unchanged |
+
+## Phase 6a: pixel budget, timings at DPR 2
+
+The drawing buffer is capped by total pixels per tier (low 1.5 MP, mid 2.2 MP, high 4.5 MP). At
+1512×982 and 1920×1080, both at DPR 2:
+
+| Tier | 1512×982 @2 | 1920×1080 @2 |
+|---|---|---|
+| low | 1519×987, GPU 5.5 ms | 1632×918, 5.7 ms |
+| mid | 1840×1195, 16.7 ms (refresh 16.9) | 1977×1112, 16.2 ms (refresh 16.4) |
+| high | 2632×1709, 32.6 ms | 2828×1590, 32.0 ms |
+
+Details and the design questions: docs/responsive/README.md.

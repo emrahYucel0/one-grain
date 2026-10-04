@@ -68,5 +68,6 @@ const scrub = await page.evaluate(() => new Promise((res) => {
     res({ frame: d[d.length >> 1], frameP95: d[Math.floor(d.length * .95)], gpu: g[g.length >> 1], gpuP95: g[Math.floor(g.length * .95)], refresh: h[h.length >> 1], refreshP95: h[Math.floor(h.length * .95)] }); } };
   requestAnimationFrame(f);
 }));
-console.log(`scrub through the story: GPU frame median ${scrub.gpu.toFixed(2)} ms (p95 ${scrub.gpuP95.toFixed(2)}), refresh frames median ${scrub.refresh.toFixed(2)} ms (p95 ${scrub.refreshP95.toFixed(2)}), frame interval median ${scrub.frame.toFixed(1)} ms (p95 ${scrub.frameP95.toFixed(1)})`);
+const ms = (x) => (x === undefined || Number.isNaN(x) ? '— (no shadows)' : `${x.toFixed(2)} ms`);
+console.log(`scrub through the story: GPU frame median ${scrub.gpu.toFixed(2)} ms (p95 ${scrub.gpuP95.toFixed(2)}), refresh frames median ${ms(scrub.refresh)} (p95 ${ms(scrub.refreshP95)}), frame interval median ${scrub.frame.toFixed(1)} ms (p95 ${scrub.frameP95.toFixed(1)})`);
 await browser.close(); await server.close();

@@ -33,6 +33,8 @@ npm run lint
 | `npm run check:tiers` | The downgrade is queued mid-transition, applied only while resting, in order (depth of field, shadows, grains); the low tier's layers; the debug panel's toggles |
 | `npm run check:console` | Zero console warnings or errors in dev and build, Chromium and Firefox |
 | `npm run check:a11y` | axe WCAG 2.1 AA, keyboard chapter steps, status line, focus ring, reduced motion, no-WebGL2 and no-JS fallbacks |
+| `npm run check:responsive` | Across 13 viewports: the hero ring on the grain at every hold (≤ 2 px), 44 px touch targets, the pixel budget, a mobile browser bar changing nothing, and the tier picked per device class |
+| `npm run responsive [label]` | Contact sheets of the built site at every hold across phones, tablets and desktops → `docs/responsive/<label>/` |
 | `npm run check:audio` | Sound: nothing before the visitor asks; the button clickable at 900×560 and 1440×700; exact silence in the "One day," cut and after the final landing (and sound again after scrolling back); ambience above the music where it should be; peaks below −6 dBFS; off within 0.5 s; hidden tab suspends; the remembered choice; no console noise both ways |
 | `npm run perf` | Frame times at every position and while scrubbing through the whole story, headed, on this machine's GPU |
 
@@ -201,11 +203,17 @@ Without WebGL2 or without JavaScript, the article is the page.
 
 ## Quality tiers
 
-| Tier | Grains per world | DPR cap | Layers | Chosen when |
-|---|---|---|---|---|
-| low | 36 000 | 1.25 | no shadows, no depth of field | window narrower than 760 px, a software or "major performance caveat" GPU, or the texture would not fit |
-| mid | 90 000 | 1.4 | all | default (v10's desktop setting; the parity baseline) |
-| high | 160 000 | 1.75 | all | discrete GPU (from the renderer string), at least 8 cores and enough memory |
+| Tier | Grains per world | DPR cap | Pixel budget | Layers | Chosen when |
+|---|---|---|---|---|---|
+| low | 36 000 | 1.25 | 1.5 MP | no shadows, no depth of field | window narrower than 760 px, a software or "major performance caveat" GPU, or the texture would not fit |
+| mid | 90 000 | 1.4 | 2.2 MP | all | default (v10's desktop setting; the parity baseline) |
+| high | 160 000 | 1.75 | 4.5 MP | all | a discrete GPU with at least 8 cores and enough memory, or Apple Silicon on a Mac (not an iPad) with at least 8 cores |
+
+The drawing buffer is the window × the screen's DPR, capped by the tier's DPR cap and by its pixel
+budget, so 4K and Retina screens cannot multiply the cost. It follows the window on every real
+resize; height-only changes under 120 px (mobile browser bars) change nothing, and the canvas is
+sized to the largest viewport. Wider than 2:1, the horizontal field of view stays at its 2:1 value
+(wider screens crop top and bottom).
 
 The layers and pixel-ratio caps follow v10: post costs per pixel. Layers are light, shadows,
 depth of field, bloom and grade (vignette and film grain); `core/layers.ts` combines the tier,

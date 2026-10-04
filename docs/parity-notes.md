@@ -29,6 +29,21 @@ was verified and how, and what was not.
 The reference is never edited. The harness serves a patched copy with three hooks: progress
 override, time override, and exposing the built texture (`scripts/lib/reference.mjs`).
 
+## Phase 6a: responsive changes beyond the reference
+
+- **Top scrim.** A subtle gradient in the stage colour behind the HUD on every chapter (70 %, fading
+  over 20vh), for the clock on bright scenes. The reference has none, so  judges
+  positions below the top 20 % of the frame and reports the full-frame diff alongside (42/42 within
+  2 % below the band; 0.57 % at most, crystal hold).
+- **Framing past 2:1.** Wider screens keep the 2:1 horizontal field of view and crop top and bottom.
+  The reference shows more of the sides (and the worlds' edges). It does not apply at the parity size.
+- **Pixel budget.** The drawing buffer is capped by total pixels per tier (low 1.5 MP, mid 2.2 MP, high
+  4.5 MP). It does not apply at the parity size (1440×900 = 1.3 MP).
+- **Narrow and short screens.** Under 480 px wide the clock is smaller; below 560 px high the rail is a
+  progress line. The reference keeps its desktop sizes there.
+- **Mobile browser bars.** No ScrollTrigger refresh and no canvas resize for height-only changes under
+  120 px (the reference refreshes on every resize).
+
 ## Phase 5: the sound (reference v23)
 
 `reference/v23-sound.html` is v15 plus the sound engine, the sound button's behaviour and two CSS

@@ -22,6 +22,9 @@ const SETTLE_MS = 1600;      // CSS: clock font-size .5 s, punch .7 s
 const FINAL_EARLY_MS = 1500; // final chapter: the sentence is in (.4 s), the grain hovers in full light (it fades from 3 s)
 const FINAL_LATE_MS = 15000; // final chapter: the grain has landed (6.4 s), signature and footnote in (8 s)
 const REVIEW_PCT = 2;
+// Since Phase 6a the port has a top scrim behind the HUD (fading over 20vh) that the reference lacks:
+// positions are judged below that band; the full-frame diff is reported alongside.
+const TOP_BAND = .2;
 
 // Positions where the port differs from the reference on purpose (docs/parity-notes.md).
 // Transitions with a camera subject (the purity → crystal reframe) are added automatically.
@@ -121,12 +124,15 @@ try {
     const A = PNG.sync.read(a), B = PNG.sync.read(b), D = new PNG({ width: A.width, height: A.height });
     const px = pixelmatch(A.data, B.data, D.data, A.width, A.height, { threshold: .1, diffMask: true });
     await writeFile(new URL(`diff/${s.id}.png`, OUT), PNG.sync.write(D));
-    const pct = px / (A.width * A.height) * 100;
+    const top = Math.round(A.height * TOP_BAND);
+    let below = 0;
+    for (let i = top * A.width * 4 + 3; i < D.data.length; i += 4) if (D.data[i]) below++;
+    const pct = below / (A.width * (A.height - top)) * 100, pctFull = px / (A.width * A.height) * 100;
     let strictPx = 0;
     for (let k = 0; k < A.data.length; k += 4) if (A.data[k] !== B.data[k] || A.data[k + 1] !== B.data[k + 1] || A.data[k + 2] !== B.data[k + 2]) strictPx++;
     const strict = strictPx / (A.width * A.height) * 100;
-    results.push({ ...s, pct, strict });
-    console.log(`${pct.toFixed(3).padStart(7)} %  (strict ${strict.toFixed(3)} %)  ${s.id}`);
+    results.push({ ...s, pct, pctFull, strict });
+    console.log(`${pct.toFixed(3).padStart(7)} %  (full frame ${pctFull.toFixed(3)} %, strict ${strict.toFixed(3)} %)  ${s.id}`);
   }
 } finally {
   await browser.close();
@@ -148,9 +154,9 @@ const md = [
   '',
   '"Strict" counts every pixel whose colour differs at all, however little; it catches uniform colour shifts the perceptual threshold absorbs.',
   '',
-  '| # | Position | Progress | Diff | Strict | Status |',
-  '|---|---|---|---|---|---|',
-  ...results.map((r, i) => `| ${i + 1} | ${r.label} | ${r.v.toFixed(4)} | ${r.pct.toFixed(3)} % | ${r.strict.toFixed(3)} % | ${status(r)} |`),
+  '| # | Position | Progress | Diff (below the top 20 %) | Diff (full frame) | Strict | Status |',
+  '|---|---|---|---|---|---|---|',
+  ...results.map((r, i) => `| ${i + 1} | ${r.label} | ${r.v.toFixed(4)} | ${r.pct.toFixed(3)} % | ${r.pctFull.toFixed(3)} % | ${r.strict.toFixed(3)} % | ${status(r)} |`),
   '',
   `Console during the run: ${consoleLog.filter((c) => !c.harness).length} warnings/errors from the pages` +
     (consoleLog.some((c) => c.harness) ? `, plus ${consoleLog.filter((c) => c.harness).length} GPU driver notices caused by the screenshot read-backs themselves.` : '.'),
