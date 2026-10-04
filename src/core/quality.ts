@@ -35,13 +35,20 @@ const APPLE_SILICON = /apple (m\d|gpu)/i;
 /** A Mac, not an iPad (iPadOS reports a Mac user agent but has touch points). */
 const isMac = (): boolean => /Macintosh|Mac OS X/.test(navigator.userAgent) && (navigator.maxTouchPoints || 0) <= 1;
 
+/** Phones and small tablets start on low: by the screen's shorter side, so a device gets the same tier either way up. */
+const SMALL_SCREEN_PX = 760;
+const shortSide = (): number => Math.min(screen.width, screen.height) || Math.min(innerWidth, innerHeight);
+
 const fits = (t: Tier, caps: GpuCaps): boolean => Math.ceil(t.n / TEX_WIDTH) * WORLDS <= caps.maxTextureSize;
 
-/** Picks the starting tier from screen size and GPU capabilities (or a forced name). */
+/**
+ * Picks the starting tier from the device's screen and GPU capabilities (or a forced name). Picked once
+ * per visit: turning a phone or resizing the window never changes it (only the frame-time watchdog does).
+ */
 export function pickTier(caps: GpuCaps, forced: string | null): Tier {
   if (forced && forced in TIERS) return TIERS[forced as TierName];
   let name: TierName = 'mid';
-  if (innerWidth < 760 || !caps.performant) name = 'low';
+  if (shortSide() < SMALL_SCREEN_PX || !caps.performant) name = 'low';
   else {
     const nav = navigator as Navigator & { deviceMemory?: number };
     const cores = navigator.hardwareConcurrency || 0;

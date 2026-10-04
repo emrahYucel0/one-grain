@@ -8,8 +8,10 @@
 //  3. the drawing buffer stays within its tier's pixel budget (core/quality.ts), whatever the DPR
 //  4. phones: a mobile browser bar coming in (height −100 px) rebuilds nothing: same drawing buffer,
 //     same scroll position, same story progress (no ScrollTrigger refresh, no jump)
+//     and turning the phone (width and height swapped) keeps the tier
 //  5. device classes: the tier picked for an Apple Silicon Mac (Chromium and Safari), an iPad, a
-//     4-core Mac, an Intel PC and an RTX PC (core/quality.ts with a stubbed navigator)
+//     4-core Mac, an Intel PC and an RTX PC, a phone either way up, a small tablet and a narrow
+//     desktop window (core/quality.ts with a stubbed navigator and screen)
 import { readFileSync } from 'node:fs';
 import { createServer } from 'vite';
 import { launch, watchConsole } from './lib/browser.mjs';
@@ -24,6 +26,7 @@ await vite.close();
 const dev = await startDev(5176);
 const browser = await launch();
 const logs = [], results = [];
+const IPHONE = 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) Version/17.0 Mobile/15E148 Safari/604.1';
 const check = (name, ok, detail) => { results.push(ok); console.log(`${ok ? 'PASS' : 'FAIL'}  ${name}  (${detail})`); };
 try {
   for (const vp of VIEWPORTS) {
@@ -61,6 +64,10 @@ try {
       await page.setViewportSize({ width: vp.width, height: vp.height - 100 }); await page.waitForTimeout(1200);
       const b = await read();
       await page.setViewportSize({ width: vp.width, height: vp.height }); await page.waitForTimeout(800);
+      await page.setViewportSize({ width: vp.height, height: vp.width }); await page.waitForTimeout(1500);
+      const turned = await page.evaluate(() => window.__PACK.n);
+      await page.setViewportSize({ width: vp.width, height: vp.height }); await page.waitForTimeout(800);
+      check(`${vp.name}: turning the phone keeps the tier`, turned === buf.n, `${buf.n} grains → ${turned}`);
       check(`${vp.name}: a browser bar (height −100 px) rebuilds nothing and nothing jumps`, a.w === b.w && a.h === b.h && a.y === b.y && Math.abs(a.v - b.v) < 1e-4, `buffer ${a.w}×${a.h} → ${b.w}×${b.h}, scroll ${a.y} → ${b.y}, progress ${a.v.toFixed(6)} → ${b.v.toFixed(6)}`);
     }
     // 2: touch targets
@@ -100,14 +107,19 @@ try {
       ['Mac, Apple GPU, 4 cores', 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)', 0, 4, 'Apple GPU', 'mid'],
       ['Windows, Intel UHD, 12 cores', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)', 0, 12, 'ANGLE (Intel, Intel(R) UHD Graphics Direct3D11)', 'mid'],
       ['Windows, RTX 4070, 16 cores', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)', 0, 16, 'ANGLE (NVIDIA, NVIDIA GeForce RTX 4070 Direct3D11)', 'high'],
+      ['iPhone, landscape (screen 844×390)', IPHONE, 5, 6, 'Apple GPU', 'low', [844, 390]],
+      ['iPhone, portrait (screen 390×844)', IPHONE, 5, 6, 'Apple GPU', 'low', [390, 844]],
+      ['iPad mini, landscape (screen 1133×744)', 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) Version/17.0 Safari/605.1.15', 5, 8, 'Apple GPU', 'low', [1133, 744]],
+      ['Windows, Intel UHD, 700 px window on a 1920×1080 screen', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)', 0, 12, 'ANGLE (Intel, Intel(R) UHD Graphics Direct3D11)', 'mid', [1920, 1080], 700],
     ];
-    for (const [name, ua, touch, cores, renderer, want] of cases) {
-      const got = await page.evaluate(async ([u, tp, c, r]) => {
-        const def = (k, v) => Object.defineProperty(Navigator.prototype, k, { configurable: true, get: () => v });
-        def('userAgent', u); def('maxTouchPoints', tp); def('hardwareConcurrency', c); def('deviceMemory', 8);
+    for (const [name, ua, touch, cores, renderer, want, scr = [1512, 982], win = 1512] of cases) {
+      const got = await page.evaluate(async ([u, tp, c, r, [sw, sh], iw]) => {
+        const def = (proto, k, v) => Object.defineProperty(proto, k, { configurable: true, get: () => v });
+        def(Navigator.prototype, 'userAgent', u); def(Navigator.prototype, 'maxTouchPoints', tp); def(Navigator.prototype, 'hardwareConcurrency', c); def(Navigator.prototype, 'deviceMemory', 8);
+        def(Screen.prototype, 'width', sw); def(Screen.prototype, 'height', sh); Object.defineProperty(window, 'innerWidth', { configurable: true, get: () => iw });
         const q = await import('/src/core/quality.ts');
         return q.pickTier({ webgl2: true, performant: true, maxTextureSize: 16384, renderer: r }, null).name;
-      }, [ua, touch, cores, renderer]);
+      }, [ua, touch, cores, renderer, scr, win]);
       check(`device class: ${name} → ${want}`, got === want, got);
     }
     await page.context().close();

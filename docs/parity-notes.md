@@ -254,7 +254,8 @@ uniform, which only spiral read. They live in git history.
   Until Phase 4a the caps were v5–v8's 1.5 and 1.75; v10 lowered them because post costs per
   pixel. **High** (160 000, 1.75) is new, so it has no reference to match. Its cap came down
   from 2.0 for the same reason. The reference chose between small and desktop only
-  by `innerWidth < 760`. The port also drops to low on a software or "major performance
+  by `innerWidth < 760`. The port chooses by the screen's shorter side instead (Phase 6a): a phone
+  gets the same tier either way up, and the tier never changes when it turns. The port also drops to low on a software or "major performance
   caveat" GPU, and starts on high only with a discrete GPU, at least 8 cores and enough
   memory.
 - **A tier drop changes the grain layout.** The single random stream depends on the grain

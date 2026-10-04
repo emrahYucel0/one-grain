@@ -205,11 +205,12 @@ Without WebGL2 or without JavaScript, the article is the page.
 
 | Tier | Grains per world | DPR cap | Pixel budget | Layers | Chosen when |
 |---|---|---|---|---|---|
-| low | 36 000 | 1.25 | 1.5 MP | no shadows, no depth of field | window narrower than 760 px, a software or "major performance caveat" GPU, or the texture would not fit |
+| low | 36 000 | 1.25 | 1.5 MP | no shadows, no depth of field | a screen whose shorter side is under 760 px (phones and small tablets, either way up), a software or "major performance caveat" GPU, or the texture would not fit |
 | mid | 90 000 | 1.4 | 2.2 MP | all | default (v10's desktop setting; the parity baseline) |
 | high | 160 000 | 1.75 | 4.5 MP | all | a discrete GPU with at least 8 cores and enough memory, or Apple Silicon on a Mac (not an iPad) with at least 8 cores |
 
-The drawing buffer is the window × the screen's DPR, capped by the tier's DPR cap and by its pixel
+The tier is picked once per visit: turning a phone or resizing the window never changes it; only the
+frame-time watchdog steps it down. The drawing buffer is the window × the screen's DPR, capped by the tier's DPR cap and by its pixel
 budget, so 4K and Retina screens cannot multiply the cost. It follows the window on every real
 resize; height-only changes under 120 px (mobile browser bars) change nothing, and the canvas is
 sized to the largest viewport. Wider than 2:1, the horizontal field of view stays at its 2:1 value
