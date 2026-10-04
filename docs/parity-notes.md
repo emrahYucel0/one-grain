@@ -273,8 +273,9 @@ uniform, which only spiral read. They live in git history.
   (small vs desktop). The swap happens only while resting on a chapter, behind a 250 ms fade.
 - **The adaptive downgrade is new in Phase 4a** (v10 has a manual layer panel and a benchmark,
   no automatic downgrade). It switches off depth of field, then shadows, then drops to the next
-  tier's grains, one step per warm-up and only while resting. v10's `.fx` panel becomes the
-  `?debug` panel's toggles.
+  tier's grains, one step per warm-up and only while resting, and since Phase 6a undoes them once
+  frames have headroom (judged on our own GPU time where the timer exists). v10's `.fx` panel
+  becomes the `?debug` panel's toggles.
 
 ### Behaviour added on purpose
 - **Readable fallback.** Without WebGL2, the reference showed an empty HUD. The port shows the

@@ -64,6 +64,12 @@ export function pickTier(caps: GpuCaps, forced: string | null): Tier {
   return tier;
 }
 
+/** The next tier up, or null at the top. */
+export const upperTier = (t: Tier): Tier | null => {
+  const i = ORDER.indexOf(t.name);
+  return i < ORDER.length - 1 ? TIERS[ORDER[i + 1]!] : null;
+};
+
 /** The next tier down, or null at the bottom. */
 export const lowerTier = (t: Tier): Tier | null => {
   const i = ORDER.indexOf(t.name);
@@ -74,47 +80,107 @@ export const lowerTier = (t: Tier): Tier | null => {
 export const pixelRatioFor = (t: Tier, width = innerWidth, height = innerHeight): number =>
   Math.min(devicePixelRatio || 1, t.dpr, Math.max(t.dprFloor, Math.sqrt(t.pixels / Math.max(1, width * height))));
 
+/** A window's verdict: step down or back up, with the evidence. */
+export interface Verdict { dir: 'down' | 'up'; reason: string; gpu: number | null; frame: number }
+
+const median = (a: number[]): number => { const s = [...a].sort((x, y) => x - y); return s[s.length >> 1]!; };
+
 /**
- * Frame-time watchdog. 60 fps is the target; the budget is the point below which fewer grains
- * are a better deal than a stuttering story. Uses the median of 2 s windows (robust to vsync
- * quantisation and one-off hitches) and only complains after two bad windows in a row.
+ * Frame-cost watchdog. Judges 2 s windows of frame intervals and, where the GPU timer exists
+ * (EXT_disjoint_timer_query_webgl2), of our own GPU time per frame.
+ *   - Warm-up: nothing is judged for 8 s after the first rendered frame, nor for 3 s after a quality
+ *     step or a tab switch; a window that overlaps grain generation, a shader compile or a texture
+ *     upload (busy()) is thrown away.
+ *   - Down, with the timer: our GPU time over budget in two windows in a row. Long frame intervals
+ *     with our GPU time within budget are external (another app, a screen recorder): fewer grains
+ *     would not help, so nothing happens (`external`).
+ *   - Down, without the timer: the frame interval over budget in three windows in a row.
+ *   - Up: resting on a chapter, comfortably under budget (GPU under 65 %, or without the timer the
+ *     frame interval under 75 %) for 10 s in a row. The tier manager decides whether a step back is due.
  */
 export class FrameMonitor {
   static readonly BUDGET_MS = 25;
   static readonly WINDOW_MS = 2000;
-  static readonly WARMUP_MS = 3000;
-  private samples: number[] = [];
+  static readonly WARMUP_MS = 8000;
+  static readonly SETTLE_MS = 3000;
+  static readonly RECOVER_MS = 10000;
+  static readonly COMFORT_GPU = .65;
+  static readonly COMFORT_FRAME = .75;
+  /** whether our GPU time is measured (EXT_disjoint_timer_query_webgl2) */
+  readonly gpu: boolean;
+  /** the last complete window: median frame interval and GPU time (ms; gpu NaN without the timer) */
+  frame = 0;
+  gpuMs = NaN;
+  /** the last window was slow for a reason outside our control */
+  external = false;
+  private intervals: number[] = [];
+  private gpuSamples: number[] = [];
   private windowStart = -1;
-  private bad = 0;
   private last = -1;
-  private quietUntil = 0;
-  /** median of the last complete window, for the debug overlay */
-  median = 0;
+  private quietUntil = Infinity;
+  private dirty = false;
+  private allResting = true;
+  private bad = 0;
+  private comfortSince = -1;
 
-  /** Past the warm-up after a (re)build or a step down. */
-  warm(now: number): boolean { return now >= this.quietUntil; }
-
-  constructor() {
+  constructor(gpu: boolean) {
+    this.gpu = gpu;
     document.addEventListener('visibilitychange', () => this.reset(performance.now()));
   }
 
-  /** Ignore the next few seconds (after a build or a swap, when frames are not representative). */
-  reset(now: number): void {
-    this.samples = []; this.windowStart = -1; this.bad = 0; this.last = -1; this.quietUntil = now + FrameMonitor.WARMUP_MS;
+  /** The first rendered frame: judge nothing for the warm-up. */
+  start(now: number): void { this.reset(now, FrameMonitor.WARMUP_MS); }
+
+  /** Judge nothing for a while (after a quality step, a tab switch), and forget the streaks. */
+  reset(now: number, ms = FrameMonitor.SETTLE_MS): void {
+    this.intervals = []; this.gpuSamples = []; this.windowStart = -1; this.last = -1;
+    this.bad = 0; this.comfortSince = -1; this.dirty = false; this.allResting = true;
+    // the warm-up starts at the first frame; later pauses never shorten one already running
+    if (ms === FrameMonitor.WARMUP_MS) this.quietUntil = now + ms;
+    else if (this.quietUntil !== Infinity) this.quietUntil = Math.max(this.quietUntil, now + ms);
   }
 
-  /** Feed one frame; returns true when the budget has been blown long enough. */
-  sample(now: number): boolean {
+  /** Whether the warm-up (or the settling after a step) is over. */
+  warm(now: number): boolean { return now >= this.quietUntil; }
+
+  /** Heavy work outside the frame's own cost (generation, compile, upload): the current window does not count. */
+  busy(): void { this.dirty = true; }
+
+  /** One of our frames' GPU time, as the timer resolves it (a few frames late). */
+  gpuSample(ms: number): void { if (this.windowStart >= 0) this.gpuSamples.push(ms); }
+
+  /** Feed one rendered frame; returns a verdict when a window settles one. */
+  sample(now: number, resting: boolean): Verdict | null {
     const dt = this.last < 0 ? -1 : now - this.last;
     this.last = now;
-    if (dt < 0 || document.hidden || now < this.quietUntil) return false;
-    if (this.windowStart < 0) this.windowStart = now;
-    this.samples.push(dt);
-    if (now - this.windowStart < FrameMonitor.WINDOW_MS) return false;
-    const sorted = this.samples.sort((a, b) => a - b);
-    this.median = sorted[sorted.length >> 1]!;
-    this.samples = []; this.windowStart = now;
-    this.bad = this.median > FrameMonitor.BUDGET_MS ? this.bad + 1 : 0;
-    return this.bad >= 2;
+    if (dt < 0 || document.hidden || now < this.quietUntil) return null;
+    if (this.windowStart < 0) { this.windowStart = now; this.intervals = []; this.gpuSamples = []; this.dirty = false; this.allResting = true; }
+    this.intervals.push(dt);
+    this.allResting &&= resting;
+    if (now - this.windowStart < FrameMonitor.WINDOW_MS) return null;
+    const dirty = this.dirty, rested = this.allResting, start = this.windowStart;
+    this.windowStart = -1;
+    if (dirty || this.intervals.length < 5) { this.comfortSince = -1; return null; }
+    const B = FrameMonitor.BUDGET_MS, gpuKnown = this.gpu && this.gpuSamples.length >= 5;
+    this.frame = median(this.intervals);
+    this.gpuMs = gpuKnown ? median(this.gpuSamples) : NaN;
+    const slowFrame = this.frame > B;
+    const slow = this.gpu ? gpuKnown && this.gpuMs > B : slowFrame;
+    this.external = this.gpu && gpuKnown && slowFrame && !slow;
+    const need = this.gpu ? 2 : 3;
+    this.bad = slow ? this.bad + 1 : 0;
+    const gpu = gpuKnown ? +this.gpuMs.toFixed(1) : null, frame = +this.frame.toFixed(1);
+    if (this.bad >= need) {
+      this.bad = 0; this.comfortSince = -1;
+      const reason = this.gpu ? `GPU ${gpu} ms > ${B} ms in ${need} windows in a row` : `frame interval ${frame} ms > ${B} ms in ${need} windows in a row (no GPU timer)`;
+      return { dir: 'down', reason, gpu, frame };
+    }
+    const comfy = this.gpu ? gpuKnown && this.gpuMs < B * FrameMonitor.COMFORT_GPU : this.frame < B * FrameMonitor.COMFORT_FRAME;
+    if (!comfy || !rested) { this.comfortSince = -1; return null; }
+    if (this.comfortSince < 0) this.comfortSince = start;
+    if (now - this.comfortSince < FrameMonitor.RECOVER_MS) return null;
+    this.comfortSince = -1;
+    const reason = this.gpu ? `GPU ${gpu} ms < ${(B * FrameMonitor.COMFORT_GPU).toFixed(1)} ms for 10 s at rest` : `frame interval ${frame} ms < ${(B * FrameMonitor.COMFORT_FRAME).toFixed(1)} ms for 10 s at rest (no GPU timer)`;
+    return { dir: 'up', reason, gpu, frame };
   }
 }

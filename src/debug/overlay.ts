@@ -6,8 +6,9 @@ import type { TierManager } from '../core/tiers';
 const LABELS: Record<LayerName, string> = { light: 'Light', shadows: 'Shadows', dof: 'Depth of field', bloom: 'Bloom', grade: 'Grade' };
 
 /**
- * ?debug: a corner panel. A readout of tier, grain count, pixel ratio, frame time and GPU time per
- * pass (live, smoothed, plus the raw medians of whole frames and of shadow-refresh frames), and a
+ * ?debug: a corner panel. A readout of tier, effects, grain count, pixel ratio, frame time and GPU
+ * time per pass (live, smoothed, plus the raw medians of whole frames and of shadow-refresh frames),
+ * the quality monitor's last window and every quality step with its reason and numbers, and a
  * toggle per render layer. A toggle overrides tier and downgrade until reset. Not part of the
  * experience.
  */
@@ -53,10 +54,17 @@ export function debugOverlay(tiers: TierManager, layers: RenderLayers, pixelRati
   requestAnimationFrame(tick);
   sync();
   setInterval(() => {
-    const m = tiers.monitor.median;
-    el.textContent = `tier ${tiers.tier.name}${tiers.next ? ` → ${tiers.next} (queued)` : ''}\n` +
-      `grains ${tiers.tier.n.toLocaleString('en-US')} · dpr ${pixelRatio().toFixed(2)}\n` +
-      `fps ${frames.length} · median ${m > 0 ? m.toFixed(1) + ' ms' : '…'}` + pacingLine(pacer) + gpuLines(timer);
+    const m = tiers.monitor, now = performance.now();
+    const fx = LAYER_NAMES.filter((k) => layers.on(k)).join(' ') || 'none';
+    const state = !m.warm(now) ? 'warming up' : m.external ? 'slow frames, own GPU time fine: external, no step' : 'watching';
+    el.textContent = `tier ${tiers.tier.name}${tiers.next ? ` → ${tiers.next} (queued)` : ''} · effects ${fx}
+` +
+      `grains ${tiers.tier.n.toLocaleString('en-US')} · dpr ${pixelRatio().toFixed(2)}
+` +
+      `fps ${frames.length} · window: frame ${m.frame > 0 ? m.frame.toFixed(1) + ' ms' : '…'} · gpu ${Number.isNaN(m.gpuMs) ? (m.gpu ? '…' : 'no timer') : m.gpuMs.toFixed(1) + ' ms'} · ${state}${tiers.upLocked ? ' · steps up off' : ''}` +
+      tiers.log.map((r) => `
+  ${r.at.toFixed(1)} s ${r.dir === 'down' ? '↓' : '↑'} ${r.what}: ${r.reason} (frame ${r.frame} ms${r.gpu === null ? '' : `, gpu ${r.gpu} ms`})`).join('') +
+      pacingLine(pacer) + gpuLines(timer);
     sync(); // the downgrade may have switched a layer off
   }, 500);
 }

@@ -224,19 +224,34 @@ The layers and pixel-ratio caps follow v10: post costs per pixel. Layers are lig
 depth of field, bloom and grade (vignette and film grain); `core/layers.ts` combines the tier,
 the downgrade and overrides.
 
-`core/quality.ts` tracks the median frame time in 2 s windows. After two windows in a row over
-25 ms, the next step down is **queued** (`core/tiers.ts`):
+`core/quality.ts` judges 2 s windows of the frame interval and, where the GPU timer exists
+(`EXT_disjoint_timer_query_webgl2`, on every visit), of our own GPU time per frame. The budget is
+25 ms.
+
+- **Warm-up.** Nothing is judged for 8 s after the first rendered frame, nor for 3 s after a step or
+  a tab switch. A window that overlaps grain generation, a shader compile or a pack upload is
+  thrown away.
+- **Down.** With the timer: our GPU time over budget in two windows in a row. Long frame intervals
+  while our GPU time is within budget are an external slowdown (another app, a screen recorder):
+  fewer grains would not help, so nothing changes. Without the timer: the frame interval over
+  budget in three windows in a row.
+- **Up.** Resting on a chapter, comfortably under budget (GPU under 65 %, or without the timer the
+  frame interval under 75 %) for 10 s: the last step down is undone. After a step up that is
+  followed by a step down, it stops stepping up for the session.
+
+The steps down, queued in `core/tiers.ts`:
 
 1. depth of field off;
 2. shadows off;
 3. fewer grains: the next tier's worlds and pixel ratio.
 
+Steps up undo them in reverse.
+
 - A step is applied only while the visitor rests on a chapter, behind a 250 ms canvas dip.
   Nothing changes mid-transition.
 - New worlds are built in the worker, also only while resting.
-- Each step restarts the 3 s warm-up, so the next one needs fresh evidence.
-
-Quality never goes back up.
+- `?debug` shows the tier, the effects on, the monitor's last window, and every step with its
+  reason and numbers.
 
 Phase 1 measurement with `npm run perf`, headed Chromium, Intel UHD Graphics (i5-12450H laptop,
 144 Hz panel):
@@ -293,7 +308,8 @@ Everything is synthesised with Web Audio (no files), ported from `reference/v23-
 | Switch | Effect |
 |---|---|
 | `?tier=low\|mid\|high` | Force a tier (also turns off the automatic drop) |
-| `?debug` | Corner panel: tier, grains, DPR, fps, median frame time, GPU time per pass and per frame (live), and a toggle per render layer (overrides tier and downgrade until Reset) |
+| `?debug` | Corner panel: tier, effects, grains, DPR, fps, the quality monitor's last window and every step with its reason and numbers, GPU time per pass and per frame (live), and a toggle per render layer (overrides tier and downgrade until Reset) |
+| `?notimer` | No GPU timer: the quality monitor judges frame intervals only (three windows) |
 | `?debug&forceDrop` | Act as if the frame budget stayed blown, to watch the downgrade walk its steps |
 | `?perf` | Time every render pass on the GPU (`window.__gpu`, with the last 240 raw frames) |
 | `?off=a,b` | Switch render layers off (light, shadows, dof, bloom, grade), for measurements |

@@ -11,7 +11,7 @@ import { isLayerName, RenderLayers } from './core/layers';
 import { Pacer } from './core/pacing';
 import { Projection, onResize } from './core/resize';
 import { debugOverlay } from './debug/overlay';
-import { exposePack, flags } from './debug/parity';
+import { exposePack, exposeTiers, flags, gpuExtra } from './debug/parity';
 import { updateInteraction } from './input/interact';
 import { Pointer } from './input/pointer';
 import { GrainCloud } from './render/grains';
@@ -57,7 +57,7 @@ function boot(): void {
   if (flags.pointCap) grains.setPointMax(flags.pointCap);
   grains.setShadowSubset(flags.shadowStride, flags.shadowGrow);
   stage.overlay.add(...hero.objects);
-  const timer = new GpuTimer(stage.renderer.getContext() as WebGL2RenderingContext, flags.perf || flags.debug);
+  const timer = new GpuTimer(stage.renderer.getContext() as WebGL2RenderingContext, !flags.noTimer);
   const projection = new Projection(stage, (s) => grains.setScale(s));
   // the pixel ratio follows the window: the tier's DPR cap and its pixel budget (core/quality.ts)
   let activeTier = tier;
@@ -118,7 +118,7 @@ function boot(): void {
     if (sound.on) sound.sound!.frame({ a, b, t, eg, tr, hold });
   });
 
-  // quality: step down (queued, applied only while resting) if frames stay over budget
+  // quality: step down if our frames stay over budget, back up once they have headroom (queued, applied only while resting)
   const sim = new SimClient();
   const tiers = new TierManager(tier, layers, {
     auto: !flags.tier, forceDrop: flags.forceDrop,
@@ -130,8 +130,15 @@ function boot(): void {
       exposePack(pack);
       loop.setPack(pack);
     },
+  }, timer.gpu);
+  timer.onFrame = (ms) => tiers.monitor.gpuSample(ms + gpuExtra());
+  exposeTiers(tiers);
+  let firstFrame = true;
+  loop.onFrame(({ L, now }) => {
+    if (firstFrame) { firstFrame = false; tiers.monitor.start(now); }
+    tiers.frame(now, L.hold, stage.renderer.info.programs?.length ?? 0);
+    loop.fade = tiers.fade;
   });
-  loop.onFrame(({ L, now }) => { tiers.frame(now, L.hold); loop.fade = tiers.fade; });
   if (flags.debug) debugOverlay(tiers, layers, () => stage.renderer.getPixelRatio(), timer, pacer);
 
   sim.build(tier.n).then((pack) => {
@@ -139,7 +146,6 @@ function boot(): void {
     loop.setPack(pack);
     intro.ready();
     hash.restore();
-    tiers.monitor.reset(performance.now());
     loop.start();
   }, fallBack);
 }

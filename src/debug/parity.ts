@@ -8,10 +8,12 @@
 //   ?grains=N        grains per world instead of the tier's count (performance experiments)
 //   ?shadowstride=N  every N-th grain casts shadows (default 1 = all); &shadowgrow=F scales its disc
 //   ?pacing=off|on|auto  frame pacing (core/pacing.ts; default off)
+//   ?notimer         no GPU timer: the quality monitor falls back to frame intervals (core/quality.ts)
 //   ?off=a,b         switch render layers off (light, shadows, dof, bloom, grade), for measurements
 //   with ?parity, window.__AT = { tr, t, lean } renders transition tr at t with that camera lean
 //   with ?parity, window.__LIVE = ms pins the display's live clock (it counts real time otherwise)
 //   with ?parity, window.__FT = s pins the seconds spent in the current hold (ring fade, final hold)
+//   with ?parity, window.__GPU_EXTRA = ms is added to every measured GPU frame (check:tiers' simulated load)
 import { Vector3, type Camera } from 'three';
 import type { GpuTimes } from '../core/gpu-timer';
 import type { GrainPack } from '../sim/pack';
@@ -28,6 +30,9 @@ declare global {
     __overdraw?: boolean;
     __LIVE?: number | null;
     __FT?: number | null;
+    __GPU_EXTRA?: number;
+    /** ?parity: the tier manager (check:tiers reads its log and state) */
+    __tiers?: unknown;
     __renderT?: number[];
     /** ?parity: the sound, once created (the audio check reads its taps and counters) */
     __audio?: unknown;
@@ -54,6 +59,7 @@ export const flags = {
   grains: params.has('grains') ? Number(params.get('grains')) : null,
   shadowStride: Number(params.get('shadowstride') ?? 1),
   shadowGrow: Number(params.get('shadowgrow') ?? 1),
+  noTimer: params.has('notimer'),
   pacing: ((m) => (m === 'on' || m === 'auto' ? m : 'off'))(params.get('pacing')) as 'off' | 'on' | 'auto',
   off: new Set((params.get('off') ?? '').split(',').filter(Boolean)),
 };
@@ -86,6 +92,12 @@ export function reportHeroRendered(hero: Vector3, camera: Camera): void {
   const p = rendered.copy(hero).applyMatrix4(camera.matrixWorldInverse).applyMatrix4(camera.projectionMatrix);
   window.__heroRendered = { x: p.x, y: p.y };
 }
+
+/** ?parity: milliseconds added to every measured GPU frame (simulated load for check:tiers). */
+export const gpuExtra = (): number => (flags.parity && typeof window.__GPU_EXTRA === 'number' ? window.__GPU_EXTRA : 0);
+
+/** ?parity: expose the tier manager for check:tiers. */
+export function exposeTiers(tiers: unknown): void { if (flags.parity) window.__tiers = tiers; }
 
 /** ?parity: expose the sound for the audio check. */
 export function exposeAudio(sound: unknown): void { if (flags.parity) window.__audio = sound; }

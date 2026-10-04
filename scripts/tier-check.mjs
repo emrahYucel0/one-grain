@@ -40,7 +40,7 @@ try {
   check('starts on the forced tier with every layer', start.n === TIERS.mid.n && Object.values(start.on).every(Boolean), `${start.n} grains, ${JSON.stringify(start.on)}`);
 
   await page.evaluate((v) => { window.__V = v; window.__T = 10; }, transitionMidpoint(2));
-  await page.waitForTimeout(6500);
+  await page.waitForTimeout(10500); // past the 8 s warm-up
   const parked = await state(page);
   check('first step queued while mid-transition, nothing applied', parked.n === TIERS.mid.n && parked.on['Depth of field'] && /dof off \(queued\)/.test(parked.overlay), `${parked.n} grains, "${parked.overlay}"`);
 
