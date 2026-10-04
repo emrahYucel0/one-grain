@@ -3,6 +3,8 @@ import { PORTRAIT_EXTRA_DEG } from '../camera/confinement';
 import type { Stage } from './renderer';
 
 const buffer = new Vector2();
+/** Wider screens than this crop top and bottom instead of showing more of the sides (and the worlds' edges). */
+const MAX_ASPECT = 2;
 
 /**
  * The camera's projection: canvas size, portrait or landscape, and the lens, which confinement
@@ -36,6 +38,8 @@ export class Projection {
     const { renderer, camera } = this.stage;
     this.lens = fov;
     camera.fov = fov + (this.portrait ? PORTRAIT_EXTRA_DEG : 0);
+    // past 2:1 the horizontal field of view stays at its 2:1 value: the vertical one narrows instead
+    if (camera.aspect > MAX_ASPECT) camera.fov = 2 * MathUtils.radToDeg(Math.atan(Math.tan(MathUtils.degToRad(camera.fov / 2)) * MAX_ASPECT / camera.aspect));
     camera.updateProjectionMatrix();
     renderer.getDrawingBufferSize(buffer);
     this.scale = buffer.y / (2 * Math.tan(MathUtils.degToRad(camera.fov / 2)));

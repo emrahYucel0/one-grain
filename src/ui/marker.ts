@@ -17,20 +17,23 @@ export class HeroMarker {
   private opacity = '';
   private transform = '';
   private label = '';
-  /** viewport size, cached: reading innerWidth after the frame's style writes can force a layout */
-  private vw = innerWidth;
-  private vh = innerHeight;
+  /** the canvas's box on screen, cached on resize (reading layout after the frame's style writes would
+   * force it; and on mobile the canvas, sized to the largest viewport, is not the visible viewport) */
+  private box = { left: 0, top: 0, width: innerWidth, height: innerHeight };
 
-  constructor(el: HTMLElement, label: HTMLElement) {
+  constructor(el: HTMLElement, label: HTMLElement, canvas: HTMLElement) {
     this.el = el; this.labelEl = label;
-    addEventListener('resize', () => { this.vw = innerWidth; this.vh = innerHeight; });
+    const measure = (): void => { const r = canvas.getBoundingClientRect(); this.box = { left: r.left, top: r.top, width: r.width, height: r.height }; };
+    measure();
+    addEventListener('resize', measure);
   }
 
   /** `hold`: the chapter resting on, or -1 while moving; `light`: the grain's light (1 until the final hold). */
   update(hero: Vector3, camera: Camera, heroVisible: boolean, v: number, hold: number, now: number, light = 1): void {
     proj.copy(hero).project(camera);
     const vis = proj.z < 1 && Math.abs(proj.x) < 1.1 && Math.abs(proj.y) < 1.1 && heroVisible;
-    const transform = `translate(${((proj.x + 1) / 2 * this.vw).toFixed(1)}px, ${((1 - proj.y) / 2 * this.vh).toFixed(1)}px)`;
+    const b = this.box;
+    const transform = `translate(${(b.left + (proj.x + 1) / 2 * b.width).toFixed(1)}px, ${(b.top + (1 - proj.y) / 2 * b.height).toFixed(1)}px)`;
     if (transform !== this.transform) { this.transform = transform; this.el.style.transform = transform; }
     if (hold < 0) this.holdAt = this.holdSince = -1;
     else if (hold !== this.holdAt) { this.holdAt = hold; this.holdSince = now; }

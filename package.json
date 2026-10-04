@@ -23,7 +23,8 @@
     "check:fonts": "vite build && node scripts/fonts-check.mjs",
     "check:tiers": "node scripts/tier-check.mjs",
     "check:audio": "node scripts/audio-check.mjs",
-    "responsive": "vite build && node scripts/responsive.mjs"
+    "responsive": "vite build && node scripts/responsive.mjs",
+    "check:responsive": "node scripts/responsive-check.mjs"
   },
   "engines": {
     "node": ">=20"

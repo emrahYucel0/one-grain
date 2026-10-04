@@ -79,7 +79,7 @@ function boot(): void {
   const clock = new ClockView($('time'), $('clock'), $('clockUnit'), copy);
   const intro = new Intro($('intro'), $('introHint'));
   const ending = new Ending($('chapter'));
-  const marker = new HeroMarker($('marker'), $('markerLabel'));
+  const marker = new HeroMarker($('marker'), $('markerLabel'), stage.renderer.domElement);
   const cut = $('cut');
   const sound = new SoundToggle($<HTMLButtonElement>('sound'));
   const a11y = new StoryA11y($('story'), $('status'), copy, {
