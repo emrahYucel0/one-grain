@@ -53,7 +53,7 @@ try {
       shots.push({ id: p.id, file });
       if (p.hold) {
         const r = await page.evaluate(() => {
-          const h = window.__hero, c = document.getElementById('scene').getBoundingClientRect(), m = document.querySelector('.marker'), mr = m.getBoundingClientRect();
+          const h = { ...window.__hero, ...window.__heroRendered }, c = document.getElementById('scene').getBoundingClientRect(), m = document.querySelector('.marker'), mr = m.getBoundingClientRect();
           const op = +getComputedStyle(m).opacity;
           if (!h || !h.visible || h.z >= 1 || Math.abs(h.x) > 1.1 || Math.abs(h.y) > 1.1 || op === 0) return null;
           const hx = c.left + (h.x + 1) / 2 * c.width, hy = c.top + (1 - h.y) / 2 * c.height;

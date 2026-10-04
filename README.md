@@ -215,7 +215,8 @@ budget, so 4K and Retina screens cannot multiply the cost (on high the budget ne
 DPR 1; on low and mid it may). It follows the window on every real
 resize; height-only changes under 120 px (mobile browser bars) change nothing, and the canvas is
 sized to the largest viewport. Wider than 2:1, the horizontal field of view stays at its 2:1 value
-(wider screens crop top and bottom).
+and the look target goes down by (aspect − 2)/2 of the visible half-height: wider screens crop
+from the top, keeping the 2:1 frame's bottom edge.
 
 The layers and pixel-ratio caps follow v10: post costs per pixel. Layers are light, shadows,
 depth of field, bloom and grade (vignette and film grain); `core/layers.ts` combines the tier,

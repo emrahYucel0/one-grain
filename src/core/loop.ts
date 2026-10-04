@@ -4,7 +4,7 @@ import { CONFINEMENT, towards } from '../camera/confinement';
 import { ss } from './ease';
 import { LightRigBlend, type RigState } from './light-rig';
 import { shot } from '../camera/shot';
-import { overdrawView, progressOverride, reportGpu, reportHero, reportProgress, reportRender, restPathAllowed, timeOverride, transitionOverride } from '../debug/parity';
+import { overdrawView, progressOverride, reportGpu, reportHero, reportHeroRendered, reportProgress, reportRender, restPathAllowed, timeOverride, transitionOverride } from '../debug/parity';
 import type { GrainCloud } from '../render/grains';
 import type { Pipeline } from '../render/pipeline';
 import type { GpuTimer } from './gpu-timer';
@@ -178,6 +178,7 @@ export class Loop {
       grains: stage.scene, overlay: stage.overlay, camera: cam, shadows: shadows && !overdraw, clear: stageColour.fogLinear, direct: overdraw,
       post: { bloom: layers.on('bloom'), dof: layers.on('dof'), grade: layers.on('grade'), near: cam.near, far: cam.far, focus: cam.position.distanceTo(S.hero), dofScale: this.rigState.dof, time, grainMoves: !reduced },
     });
+    reportHeroRendered(S.hero, cam);
     timer.tick();
     reportGpu(timer);
   }

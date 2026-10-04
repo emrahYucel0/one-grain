@@ -1,10 +1,8 @@
 import { MathUtils, Vector2 } from 'three';
-import { PORTRAIT_EXTRA_DEG } from '../camera/confinement';
+import { MAX_ASPECT, PORTRAIT_EXTRA_DEG } from '../camera/confinement';
 import type { Stage } from './renderer';
 
 const buffer = new Vector2();
-/** Wider screens than this crop top and bottom instead of showing more of the sides (and the worlds' edges). */
-const MAX_ASPECT = 2;
 
 /**
  * The camera's projection: canvas size, portrait or landscape, and the lens, which confinement

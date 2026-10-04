@@ -1,6 +1,7 @@
 // Responsive check (npm run check:responsive), on the dev server across the matrix's viewports:
 //  1. the hero ring's centre is within 2 px of the hero grain as the camera projects it, at every
-//     chapter hold (window.__hero mapped through the canvas's own box on screen)
+//     chapter hold (window.__heroRendered, projected after rendering through the matrices the frame was
+//     drawn with, mapped through the canvas's own box on screen)
 //  2. touch viewports: the sound button takes a touch anywhere in a 44×44 px box around its centre;
 //     tablets: every rail button takes one in a 44 px wide box (elementFromPoint; their height is
 //     reported); phones: the rail is an indicator only (a progress line with a mark per act change,
@@ -42,7 +43,7 @@ try {
       await page.evaluate((v) => { window.__V = v; window.__T = 10; window.__FT = 0; }, SNAP_POINTS[i]);
       await page.waitForTimeout(700);
       const d = await page.evaluate(() => {
-        const h = window.__hero, c = document.getElementById('scene').getBoundingClientRect(), m = document.querySelector('.marker'), r = m.getBoundingClientRect();
+        const h = { ...window.__hero, ...window.__heroRendered }, c = document.getElementById('scene').getBoundingClientRect(), m = document.querySelector('.marker'), r = m.getBoundingClientRect();
         if (!h || !h.visible || h.z >= 1 || Math.abs(h.x) > 1.1 || Math.abs(h.y) > 1.1 || +getComputedStyle(m).opacity === 0) return null;
         return Math.hypot(r.left + r.width / 2 - (c.left + (h.x + 1) / 2 * c.width), r.top + r.height / 2 - (c.top + (1 - h.y) / 2 * c.height));
       });

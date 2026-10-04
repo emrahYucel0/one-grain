@@ -10,6 +10,8 @@ import { WORLDS } from '../story/worlds';
 export const lensFor = (c: number): number => 48 - 18 * c;
 /** Portrait screens get this much more field of view. */
 export const PORTRAIT_EXTRA_DEG = 9;
+/** Wider screens than this crop top and bottom instead of showing more of the sides (and the worlds' edges). */
+export const MAX_ASPECT = 2;
 /** Title and clock axes: wide and light while time is slow, condensed and heavy as it compresses. */
 export const typeAxesFor = (c: number): { wdth: number; wght: number } => ({ wdth: 125 - 63 * c, wght: 380 + 250 * c }); // width carries the story; weight only compensates, so titles keep a steady density (v15)
 /** How restless resting matter is (world units of drift). */

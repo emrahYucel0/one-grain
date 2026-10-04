@@ -12,6 +12,7 @@
 //   with ?parity, window.__AT = { tr, t, lean } renders transition tr at t with that camera lean
 //   with ?parity, window.__LIVE = ms pins the display's live clock (it counts real time otherwise)
 //   with ?parity, window.__FT = s pins the seconds spent in the current hold (ring fade, final hold)
+import { Vector3, type Camera } from 'three';
 import type { GpuTimes } from '../core/gpu-timer';
 import type { GrainPack } from '../sim/pack';
 
@@ -32,6 +33,8 @@ declare global {
     __audio?: unknown;
     /** ?parity: the hero grain projected by the camera (NDC x, y, z) and whether it is shown, each frame */
     __hero?: { x: number; y: number; z: number; visible: boolean };
+    /** ?parity: the same grain projected after rendering, through the matrices the frame was drawn with */
+    __heroRendered?: { x: number; y: number };
     /** ?perf: the pacer's lock at each rendered frame (0 = none) */
     __renderLock?: number[];
   }
@@ -75,6 +78,14 @@ export function reportProgress(v: number): void {
 /** With ?perf or ?debug, publish the per-pass GPU timings (for scripts/perf.mjs). */
 /** ?parity: the hero grain in normalised device coordinates, for the ring check. */
 export function reportHero(x: number, y: number, z: number, visible: boolean): void { if (flags.parity) window.__hero = { x, y, z, visible }; }
+
+const rendered = new Vector3();
+/** ?parity: the hero projected after rendering, so the ring check does not share the loop's projection path. */
+export function reportHeroRendered(hero: Vector3, camera: Camera): void {
+  if (!flags.parity) return;
+  const p = rendered.copy(hero).applyMatrix4(camera.matrixWorldInverse).applyMatrix4(camera.projectionMatrix);
+  window.__heroRendered = { x: p.x, y: p.y };
+}
 
 /** ?parity: expose the sound for the audio check. */
 export function exposeAudio(sound: unknown): void { if (flags.parity) window.__audio = sound; }
