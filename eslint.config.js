@@ -1,6 +1,7 @@
 import js from '@eslint/js';
 import tseslint from 'typescript-eslint';
 import globals from 'globals';
+import compat from 'eslint-plugin-compat';
 
 // Layering rules: simulation never knows how grains are drawn, and drawing never
 // knows how worlds are generated. Only render/ may touch the GLSL.
@@ -11,6 +12,9 @@ export default tseslint.config(
   { ignores: ['dist/', 'reference/', 'parity/', 'node_modules/', 'scripts/_*'] }, // scripts/_* are git-ignored scratch tools
   js.configs.recommended,
   ...tseslint.configs.recommended,
+  // web APIs the oldest supported browsers lack (package.json browserslist: Safari/iOS 15 and up,
+  // the same as vite.config.ts's build target, which handles syntax)
+  { ...compat.configs['flat/recommended'], files: ['src/**/*.ts'] },
   {
     files: ['src/**/*.ts'],
     languageOptions: { globals: { ...globals.browser } },
