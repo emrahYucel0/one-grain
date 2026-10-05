@@ -30,6 +30,8 @@
     "capture": "node scripts/capture.mjs",
     "encode": "node scripts/encode.mjs",
     "icons": "node scripts/icons.mjs",
+    "serve": "vite build && node scripts/serve.mjs",
+    "lighthouse": "node scripts/lighthouse.mjs",
     "og-image": "node scripts/og-image.mjs"
   },
   "engines": {

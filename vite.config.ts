@@ -44,9 +44,10 @@ function site(): Plugin {
     },
     writeBundle(opts) {
       const csp = [
-        "default-src 'self'", `script-src 'self' ${hashes.script.join(' ')}`, `style-src 'self' ${hashes.style.join(' ')}`,
-        "img-src 'self' data:", "font-src 'self'", "connect-src 'self'", "worker-src 'self'", "media-src 'self'",
-        "object-src 'none'", "base-uri 'self'", "form-action 'none'", "frame-ancestors 'none'", 'upgrade-insecure-requests',
+        // closed by default; each source the site uses named (icons, fonts, module preloads, the worker, the manifest)
+        "default-src 'none'", `script-src 'self' ${hashes.script.join(' ')}`, `style-src 'self' ${hashes.style.join(' ')}`,
+        "img-src 'self'", "font-src 'self'", "connect-src 'self'", "worker-src 'self'", "manifest-src 'self'",
+        "base-uri 'self'", "form-action 'none'", "frame-ancestors 'none'", 'upgrade-insecure-requests',
       ].join('; ');
       writeFileSync(join(opts.dir!, '_headers'), `/*
   Content-Security-Policy: ${csp}

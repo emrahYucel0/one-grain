@@ -13,6 +13,7 @@ scripts/_*
 # per-run outputs of the checks; only the parity baselines (the reference captures, parity/ref/) stay tracked
 parity/fonts/
 parity/load/
+parity/lighthouse/
 parity/port/
 parity/diff/
 parity/index.html
