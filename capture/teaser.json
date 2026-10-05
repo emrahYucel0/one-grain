@@ -1,0 +1,18 @@
+{
+  "_doc": "The teaser (npm run encode -- --teaser capture/teaser.json [--storyboard]): clips in story order, master seconds (capture/path.json's timeline, npm run capture -- --list). 'join' is how a clip meets the one before: a hard cut, or a crossfade of 'fadeFrames' (only where the act changes). Sound follows the picture with 'soundFadeMs' fades at every cut; the last second is silent. In and out points sit on motion (measured frame to frame), except the card, which is still by nature.",
+  "fadeFrames": 8,
+  "soundFadeMs": 150,
+  "silentEnd": 1,
+  "clips": [
+    { "label": "Opening: magma crystals, the title", "from": 1.8, "to": 4.8 },
+    { "label": "Granite → river: the crack", "from": 13.4, "to": 15.9, "join": "cut" },
+    { "label": "Coast → desert: the wave turns into wind", "from": 25.9, "to": 29.4, "join": "cut" },
+    { "label": "\"One day,\" in silence", "from": 43.75, "to": 46.25, "join": "cut" },
+    { "label": "Quarry → furnace: grey rock falls into the glow", "from": 53.3, "to": 57.3, "join": "fade" },
+    { "label": "Purity → crystal: rising from the melt", "from": 67.2, "to": 71.2, "join": "cut" },
+    { "label": "Crystal → wafer: the slice", "from": 74.9, "to": 77.4, "join": "cut" },
+    { "label": "Light", "from": 81.6, "to": 83.6, "join": "cut" },
+    { "label": "Chip: the cursor lights the switches", "from": 91.6, "to": 94.1, "join": "fade" },
+    { "label": "Display → now, and the end: pixels become grains; the sentence, the light fading, the landing, silence", "from": 103.6, "to": 115.6, "join": "cut" }
+  ]
+}

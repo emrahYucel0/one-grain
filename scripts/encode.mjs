@@ -3,13 +3,17 @@
 //                        1080p one when that is all there is) scaled to 1920×1080 (Lanczos), H.264
 //                        High, two passes at the bitrate that lands on --target-mb (200), GOP of half a
 //                        second, the master's AAC copied → capture/out/one-grain-1080p-submission.mp4
-//   --teaser <file.json> a short cut: [{ "from": s, "to": s }, …] (master seconds), joined with
-//                        --fade (0.6 s) crossfades of picture and sound, faded in and out, 1080p H.264
-//                        (CRF 17) → capture/out/one-grain-teaser.mp4
+//   --teaser <file.json> a short cut (capture/teaser.json): clips of master seconds in order, each
+//                        meeting the one before with a hard cut or a crossfade of fadeFrames; the sound
+//                        follows the picture with soundFadeMs fades at every cut; the last silentEnd
+//                        seconds are silent; 1080p H.264, two passes at --kbps (13 000, the submission
+//                        file's rate) → capture/out/one-grain-teaser.mp4
+//   … --storyboard       first, a sheet of every clip's in, middle and out frames →
+//                        capture/out/teaser-storyboard.jpg (--storyboard-only: just the sheet)
 // The masters stay as rendered (CRF 14). ffmpeg as in scripts/capture.mjs.
 import { spawn } from 'node:child_process';
 import { existsSync } from 'node:fs';
-import { readFile, rm, stat } from 'node:fs/promises';
+import { mkdir, readFile, rm, stat } from 'node:fs/promises';
 import { createRequire } from 'node:module';
 
 const args = process.argv.slice(2);
@@ -47,17 +51,65 @@ if (!teaser) {
   for (const f of ['-0.log', '-0.log.mbtree']) await rm(`${log}${f}`, { force: true });
   console.log(`→ ${out} · ${((await stat(out)).size / 1048576).toFixed(0)} MB · ${((Date.now() - t0) / 60000).toFixed(1)} min`);
 } else {
-  const clips = JSON.parse(await readFile(teaser, 'utf8')), fade = +opt('--fade', .6), out = `${OUT}/one-grain-teaser.mp4`;
-  // each clip trimmed from the master; picture and sound crossfaded into the next
+  const spec = JSON.parse(await readFile(teaser, 'utf8')), clips = spec.clips, fps = 60;
+  const fade = (spec.fadeFrames ?? 8) / fps, sf = (spec.soundFadeMs ?? 150) / 1000, silent = spec.silentEnd ?? 1;
+  const out = `${OUT}/one-grain-teaser.mp4`;
+  if (args.includes('--storyboard') || args.includes('--storyboard-only')) await storyboard(clips, `${OUT}/teaser-storyboard.jpg`);
+  if (args.includes('--storyboard-only')) process.exit(0);
+  // each clip trimmed from the master; its sound faded at the edges that are hard cuts
   const parts = [];
-  clips.forEach((c, i) => parts.push(`[0:v]trim=${c.from}:${c.to},setpts=PTS-STARTPTS,${scale}[v${i}]`, `[0:a]atrim=${c.from}:${c.to},asetpts=PTS-STARTPTS[a${i}]`));
+  clips.forEach((c, i) => {
+    const len = c.to - c.from, next = clips[i + 1];
+    const fadeIn = i === 0 || c.join !== 'fade', fadeOut = next && next.join !== 'fade';
+    const af = [fadeIn && `afade=t=in:d=${sf}`, fadeOut && `afade=t=out:st=${(len - sf).toFixed(3)}:d=${sf}`].filter(Boolean).join(',');
+    parts.push(`[0:v]trim=start=${c.from}:end=${c.to},setpts=PTS-STARTPTS,settb=AVTB,${scale}[v${i}]`, `[0:a]atrim=start=${c.from}:end=${c.to},asetpts=PTS-STARTPTS${af ? ',' + af : ''}[a${i}]`);
+  });
+  // joined in order: a crossfade where the act changes, a hard cut elsewhere
   let v = 'v0', a = 'a0', len = clips[0].to - clips[0].from;
   for (let i = 1; i < clips.length; i++) {
-    parts.push(`[${v}][v${i}]xfade=transition=fade:duration=${fade}:offset=${(len - fade).toFixed(3)}[vx${i}]`, `[${a}][a${i}]acrossfade=d=${fade}[ax${i}]`);
-    v = `vx${i}`; a = `ax${i}`; len += clips[i].to - clips[i].from - fade;
+    const d = clips[i].to - clips[i].from;
+    if (clips[i].join === 'fade') {
+      parts.push(`[${v}][v${i}]xfade=transition=fade:duration=${fade.toFixed(4)}:offset=${(len - fade).toFixed(4)}[vj${i}]`, `[${a}][a${i}]acrossfade=d=${fade.toFixed(4)}[aj${i}]`);
+      len += d - fade;
+    } else {
+      parts.push(`[${v}][${a}][v${i}][a${i}]concat=n=2:v=1:a=1[vj${i}][aj${i}]`);
+      len += d;
+    }
+    v = `vj${i}`; a = `aj${i}`;
   }
-  parts.push(`[${v}]fade=t=in:d=0.5,fade=t=out:st=${(len - .8).toFixed(3)}:d=0.8,format=yuv420p[vo]`, `[${a}]afade=t=in:d=0.5,afade=t=out:st=${(len - .8).toFixed(3)}:d=0.8[ao]`);
-  console.log(`${clips.length} clips · ${len.toFixed(1)} s`);
-  await run(['-i', master, '-filter_complex', parts.join(';'), '-map', '[vo]', '-map', '[ao]', ...h264, '-crf', '17', '-c:a', 'aac', '-b:a', '320k', out]);
+  // the end: the sound fades into silence for the last second
+  parts.push(`[${v}]format=yuv420p[vo]`, `[${a}]afade=t=out:st=${(len - silent - sf).toFixed(3)}:d=${sf},volume=volume=0:enable='gte(t,${(len - silent).toFixed(3)})'[ao]`);
+  console.log(`${clips.length} clips · ${len.toFixed(2)} s`);
+  // the submission file's quality: two passes at its video bitrate (--kbps, 13 000)
+  const kbps = +opt('--kbps', 13000), log = `${OUT}/x264-teaser`, rate = ['-b:v', `${kbps}k`, '-maxrate', `${Math.round(kbps * 1.6)}k`, '-bufsize', `${kbps * 3}k`];
+  const graph = ['-i', master, '-filter_complex', parts.join(';'), '-map', '[vo]', '-map', '[ao]'];
+  await run([...graph, ...h264, ...rate, '-pass', '1', '-passlogfile', log, '-c:a', 'aac', '-f', 'mp4', process.platform === 'win32' ? 'NUL' : '/dev/null']);
+  await run([...graph, ...h264, ...rate, '-pass', '2', '-passlogfile', log, '-c:a', 'aac', '-b:a', '320k', out]);
+  for (const f of ['-0.log', '-0.log.mbtree']) await rm(`${log}${f}`, { force: true });
   console.log(`→ ${out} · ${((await stat(out)).size / 1048576).toFixed(0)} MB`);
+}
+
+/** A sheet of each clip's in, middle and out frames, with its label and times (rendered with Playwright). */
+async function storyboard(list, file) {
+  const { chromium } = await import('playwright');
+  const tmp = `${OUT}/storyboard-frames`;
+  await mkdir(tmp, { recursive: true });
+  const rows = [];
+  for (const [i, c] of list.entries()) {
+    const times = [c.from, (c.from + c.to) / 2, c.to - 1 / 60];
+    const imgs = [];
+    for (const [k, t] of times.entries()) {
+      const f = `${tmp}/${i}-${k}.jpg`;
+      await run(['-ss', t.toFixed(3), '-i', master, '-frames:v', '1', '-vf', 'scale=480:-1', '-q:v', '3', f]);
+      imgs.push(`data:image/jpeg;base64,${(await readFile(f)).toString('base64')}`);
+    }
+    rows.push({ i, c, times, imgs });
+  }
+  const html = rows.map(({ i, c, times, imgs }) => `<div class="r"><div class="t"><b>${i + 1}.</b> ${c.label}<br><span>${c.from.toFixed(2)}–${c.to.toFixed(2)} s · ${(c.to - c.from).toFixed(2)} s${i ? ` · ${c.join === 'fade' ? 'crossfade in' : 'cut in'}` : ''}</span></div>${imgs.map((src, k) => `<figure><img src="${src}"><figcaption>${['in', 'middle', 'out'][k]} ${times[k].toFixed(2)} s</figcaption></figure>`).join('')}</div>`).join('');
+  const b = await chromium.launch(), p = await b.newPage({ viewport: { width: 1800, height: 400 } });
+  await p.setContent(`<style>body{margin:0;padding:12px;background:#141414;color:#eee;font:14px system-ui}.r{display:flex;gap:8px;align-items:center;margin-bottom:8px}.t{width:330px}.t span{color:#aaa}figure{margin:0}img{display:block;width:480px}figcaption{color:#aaa;font-size:12px}</style><h1 style="font:600 18px system-ui;margin:0 0 12px">Teaser storyboard · ${list.length} clips</h1>${html}`);
+  await p.screenshot({ path: file, type: 'jpeg', quality: 85, fullPage: true });
+  await b.close();
+  await rm(tmp, { recursive: true, force: true });
+  console.log(`→ ${file}`);
 }

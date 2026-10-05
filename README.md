@@ -231,8 +231,11 @@ video offline, one frame at a time, from the built site in capture mode (`?captu
   excerpt to check a passage.
 - **Delivery encodes** (`npm run encode`): the 1080p submission file for Vimeo/YouTube, scaled from
   the 2560×1440 master, two-pass H.264 at the bitrate that lands on `--target-mb` (200), the
-  master's sound copied → `capture/out/one-grain-1080p-submission.mp4`; and `--teaser <file.json>`,
-  a short cut from `[{ "from": s, "to": s }, …]` with 0.6 s crossfades, faded in and out. The
+  master's sound copied → `capture/out/one-grain-1080p-submission.mp4`; and the teaser,
+  `--teaser capture/teaser.json [--storyboard]`: clips of master seconds in story order (about
+  38 s), hard cuts except 8-frame crossfades where the act changes, the sound following the picture
+  with 150 ms fades at every cut, the last second silent, two passes at the submission file's
+  13 Mb/s; `--storyboard` first writes a sheet of every clip's in, middle and out frames. The
   masters stay as rendered.
 - **ffmpeg:** `$FFMPEG`, else the `ffmpeg-static` dev dependency (its install script downloads the
   binary; npm may ask to approve it: `npm install-scripts approve ffmpeg-static`), else `ffmpeg` on
