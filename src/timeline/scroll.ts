@@ -22,6 +22,8 @@ export class ScrollTimeline {
   readonly state = { v: 0 };
   private target = -1;
   private targetAt = 0;
+  /** the scroll range as last measured (a resize changes it before refresh() runs) */
+  private max = 0;
 
   constructor(track: HTMLElement, { snap = true }: { snap?: boolean } = {}) {
     track.style.height = `${TOTAL * 100 + 100}vh`;
@@ -31,7 +33,7 @@ export class ScrollTimeline {
         trigger: track, start: 'top top', end: 'bottom bottom', scrub: 1.6,
         ...(snap ? { snap: { snapTo: this.snapTo, duration: { min: .9, max: 2 }, delay: .15, ease: 'power2.inOut' } } : {}),
       },
-    });
+    });    this.max = document.documentElement.scrollHeight - innerHeight;
   }
 
   /**
@@ -57,5 +59,17 @@ export class ScrollTimeline {
     return nearestChapter(max > 0 ? scrollY / max : 0);
   }
 
-  refresh(): void { ScrollTrigger.refresh(); }
+  /**
+   * After a real resize: the track is measured in screen heights, so the same scroll offset in
+   * pixels would be another place in the story. Keep the place: resting on a chapter, stay on it;
+   * mid-transition, keep the same share of the track.
+   */
+  refresh(): void {
+    const share = this.max > 0 ? scrollY / this.max : 0;
+    ScrollTrigger.refresh();
+    this.max = document.documentElement.scrollHeight - innerHeight;
+    const at = SNAP_POINTS.findIndex((p) => Math.abs(p - share) < .002);
+    if (at >= 0) this.goTo(at, true);
+    else scrollTo({ top: share * this.max, behavior: 'auto' });
+  }
 }
