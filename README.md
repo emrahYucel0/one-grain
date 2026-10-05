@@ -205,8 +205,8 @@ video offline, one frame at a time, from the built site in capture mode (`?captu
   timeline (the light going out, the landing, the silence) runs at real-time pace.
 - **Hands-on holds without hints.** Capture mode hides the interaction hints; an invisible scripted
   cursor (`cursor`: keys of seconds and normalised device coordinates per chapter, a smooth curve
-  through them) hovers across the desert's dunes, which part around it, and the chip, whose
-  switches light up. It steers the camera's pointer parallax at half strength.
+  through them) hovers across the desert's dunes, which part around it (held down for 1.5 s mid-sweep,
+  `press`, so the parting reads at small sizes), and the chip, whose switches light up. It steers the camera's pointer parallax at half strength.
 - **Deterministic.** The page runs on a virtual clock that the script advances 1/60 s per frame
   (`performance.now()`, the shader clock and film grain, the live clock, the ring, the ending); CSS
   transitions and the clock's punch are moved to the same clock. High tier, every effect on, no

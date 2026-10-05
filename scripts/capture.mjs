@@ -73,7 +73,11 @@ const cursorAt = (keys, t) => {
 const stateAt = (sec) => {
   let t = sec;
   for (const s of segs) {
-    if (t <= s.d) return { v: s.a === s.b ? s.a : s.a + (s.b - s.a) * ease(t / s.d), cursor: s.hold ? cursorAt(path.cursor?.[s.hold], t) : null };
+    if (t <= s.d) {
+      const cursor = s.hold ? cursorAt(path.cursor?.[s.hold], t) : null;
+      if (cursor) cursor.press = (path.press?.[s.hold] ?? []).some(([a, b]) => t >= a && t <= b);
+      return { v: s.a === s.b ? s.a : s.a + (s.b - s.a) * ease(t / s.d), cursor };
+    }
     t -= s.d;
   }
   return { v: 1, cursor: null };
