@@ -29,6 +29,8 @@ export class StageColour {
   private readonly scrim: HTMLElement | null;
   private readonly scrimTop: HTMLElement | null;
   private readonly scrimRight: HTMLElement | null;
+  /** the local scrims' owners (the controls, the rail): --stage-rgb, so those scrims melt into the stage */
+  private readonly local: HTMLElement[];
   /** the page's stage colour as last written (8-bit hex) */
   hex = '';
 
@@ -37,6 +39,7 @@ export class StageColour {
     this.scrim = document.querySelector<HTMLElement>('.scrim:not(.scrim-top):not(.scrim-right)');
     this.scrimTop = document.querySelector<HTMLElement>('.scrim-top');
     this.scrimRight = document.querySelector<HTMLElement>('.scrim-right');
+    this.local = [...document.querySelectorAll<HTMLElement>('.controls, .timeline')];
   }
 
   update(a: number, b: number, eg: number): void {
@@ -55,5 +58,7 @@ export class StageColour {
     // behind the HUD: subtle (70 %), so bright scenes keep the clock readable
     if (this.scrimTop) this.scrimTop.style.background = `linear-gradient(to bottom,${hex}d9,transparent)`;
     if (this.scrimRight) this.scrimRight.style.background = `linear-gradient(to left,${hex}e6,${hex}99 45%,transparent)`;
+    const rgb = [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16)).join(' ');
+    for (const el of this.local) el.style.setProperty('--stage-rgb', rgb);
   }
 }

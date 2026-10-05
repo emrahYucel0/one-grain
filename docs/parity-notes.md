@@ -48,7 +48,10 @@ compared word for word everywhere else.
   fading over clamp(160px, 17vw, 280px)); the top scrim goes from 70 % to 85 %.
 - **A dark halo** under the small labels (clock unit, controls, rail, hints, micro lines), denser
   for the controls and the rail labels, and a **soft local scrim** behind the controls row and each
-  rail label; a deeper shadow under the final sentence (AAA).
+  rail label; a deeper shadow under the final sentence (AAA). Phase 6d: the local scrims are the
+  stage colour itself, dense under the words and fading out over a wider ellipse (eased stops), so
+  on bright worlds they read as the stage showing through rather than as shapes
+  (docs/a11y/scrims-*.jpg); every text block still at AA, the lowest 5.79.
 
 `npm run parity` judges positions outside the top 20 % and the right scrim band since then, and
 reports the full-frame diff alongside. The quarry positions are listed as intentional (Phase 6a).
