@@ -7,13 +7,21 @@ import { defineConfig, type Plugin } from 'vite';
 const SITE: string = (JSON.parse(readFileSync(new URL('./site.config.json', import.meta.url), 'utf8')) as { url: string }).url.replace(/\/?$/, '/');
 
 /**
+ * The oldest browsers the site runs in, for every JavaScript transform: the build, the dev server's
+ * source and its pre-bundled dependencies. The default ("baseline widely available") means Safari
+ * 16.4; iOS 15 is the last system of the iPhone 6s/7 generation, and Safari 15 cannot parse syntax
+ * three.js ships untransformed (class static blocks), so nothing would run at all.
+ */
+const TARGETS = ['chrome100', 'edge100', 'firefox100', 'safari15', 'ios15'];
+
+/** The faces the first view shows (fontsource's Latin subsets): preloaded. */
+const FIRST_FONTS = ['archivo-latin-wdth-normal', 'newsreader-latin-opsz-normal', 'newsreader-latin-opsz-italic'];
+
+/**
  * index.html's %SITE_URL%, robots.txt and sitemap.xml, and _headers (Netlify / Cloudflare Pages format,
  * docs/deploy.md): the security headers, cache rules, and a CSP that allows only what the site uses,
  * with the hashes of index.html's two inline blocks (the class script and the critical styles).
  */
-/** The faces the first view shows (fontsource's Latin subsets): preloaded. */
-const FIRST_FONTS = ['archivo-latin-wdth-normal', 'newsreader-latin-opsz-normal', 'newsreader-latin-opsz-italic'];
-
 function site(): Plugin {
   let hashes = { script: [] as string[], style: [] as string[] };
   const sha = (s: string): string => `'sha256-${createHash('sha256').update(s).digest('base64')}'`;
@@ -72,8 +80,10 @@ function site(): Plugin {
 export default defineConfig({
   base: './',
   plugins: [site()],
+  oxc: { target: TARGETS },
+  optimizeDeps: { rolldownOptions: { transform: { target: TARGETS } } },
   build: {
-    target: 'es2022',
+    target: TARGETS,
     outDir: 'dist',
     emptyOutDir: true,
     // three is ~530 kB minified (~130 kB gzipped) on its own; it gets its own long-cached chunk.
