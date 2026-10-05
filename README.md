@@ -4,6 +4,12 @@ A scroll-driven WebGL story about one grain of sand, from magma to the screen yo
 it on. Fifteen worlds, each a cloud of grains computed on the GPU; scrolling carries the same
 grains from one world to the next.
 
+By Emrah Yücel. Fifteen chapters in three acts (Nature, Industry, Now) follow one grain of quartz: out
+of magma and granite, down a river to the coast and the desert, then round again; from a quarry
+into the furnace, through purification, a crystal, a wafer, light and a chip, to the display,
+and finally to the sand on the reader's own screen. The whole story is also a plain article in the page,
+so it can be read without WebGL, without JavaScript or with a screen reader.
+
 The behavioural spec is `reference/blockout-v8.html` (Phase 3: typography, art direction through
 confinement, stage colour per act, reworked drift, break and grow, the final dramaturgy). Earlier
 phases ported `blockout-v5.html` and `v6`, which are kept alongside. The port keeps its exact
@@ -19,6 +25,7 @@ npm install
 npm run dev          # http://localhost:5173
 npm run build        # static site in dist/ (relative paths: upload the folder anywhere)
 npm run preview      # serve dist/ locally
+npm run serve        # build, then serve dist/ as a host would (Brotli, the _headers rules) at :4173
 npm run typecheck
 npm run lint
 ```
@@ -33,11 +40,13 @@ npm run lint
 | `npm run check:fonts` | No layout shift when the web fonts arrive (on the built site, fonts held back 1.5 s), and the wdth axis really renders |
 | `npm run check:tiers` | The downgrade is queued mid-transition, applied only while resting, in order (depth of field, shadows, grains); the low tier's layers; the debug panel's toggles; with simulated loads: no step during the warm-up, none for an external slowdown, back up once the load is gone, no oscillation, and the three-window rule without the GPU timer |
 | `npm run check:console` | Zero console warnings or errors in dev and build, Chromium and Firefox |
-| `npm run check:a11y` | axe WCAG 2.1 AA, keyboard chapter steps, status line, focus ring, reduced motion, no-WebGL2 and no-JS fallbacks |
+| `npm run check:a11y` | axe WCAG 2.2 AA, the WCAG 2.2 checks (target size, reflow at 320 px, text spacing, focus order and visibility, status once), the motion button, keyboard chapter steps, status line, focus ring, reduced motion, no-WebGL2 and no-JS fallbacks |
 | `npm run check:load` | First load, dev and production: the first paint (script held back) hides the article and shows only the stage, brand and loading line; so does every frame until the scene arrives; the line fills forward; no layout shift; reduced motion without fades. Screenshots → `parity/load/` |
 | `npm run check:responsive` | Across 14 viewports: the hero ring on the grain at every hold (≤ 2 px), 44 px touch targets, the pixel budget, a mobile browser bar changing nothing, and the tier picked per device class |
 | `npm run responsive [label]` | Contact sheets of the built site at every hold across phones, tablets and desktops → `docs/responsive/<label>/` |
 | `npm run check:audio` | Sound: nothing before the visitor asks; the button clickable at 900×560 and 1440×700; exact silence in the "One day," cut and after the final landing (and sound again after scrolling back); ambience above the music where it should be; peaks below −6 dBFS; off within 0.5 s; hidden tab suspends; the remembered choice; no console noise both ways |
+| `npm run check:contrast` | Real contrast behind every text block (the text drawn, then hidden, the background under it measured) at every chapter hold and the loading screen, at 390×844, 1440×900 and 2560×1440: the worst 5 % of pixels at AA at least → `docs/a11y/contrast.md` |
+| `npm run lighthouse` | The production build served with compression and the deploy headers: no console messages, no CSP violations, no 404s, only the requests the first view needs; Lighthouse mobile and desktop → `docs/lighthouse.md` |
 | `npm run perf` | Frame times at every position and while scrubbing through the whole story, headed, on this machine's GPU |
 
 **Pre-commit hook.** `npm install` runs the `prepare` script, which points git at the
@@ -51,7 +60,9 @@ The harness scripts use Playwright. Run `npx playwright install chromium firefox
 so they need network access.
 
 Deploy by uploading `dist/` to any static host. Open it over http(s), not `file://`, because
-browsers refuse module workers from `file://`.
+browsers refuse module workers from `file://`. **[docs/deploy.md](docs/deploy.md)** lists what to
+set before the first deploy (the domain in `site.config.json`), the compression, cache and
+security headers (`dist/_headers`, with the CSP), and why no source maps are shipped.
 
 ## Architecture
 
@@ -361,8 +372,15 @@ Everything is synthesised with Web Audio (no files), ported from `reference/v23-
   - Arrow keys and Page Up / Page Down step between chapters.
   - Focus inside an article chapter takes the experience there.
   - Focus on the article's signature link draws the ring on the visible link.
-- **`prefers-reduced-motion`:** worlds swap behind a short fade instead of morphing. Resting
-  motion, parallax, interactions and the clock punch are off, and chapter jumps are instant.
+- **Reduced motion:** worlds swap behind a short fade instead of morphing. Resting motion,
+  parallax, interactions and the clock punch are off, and chapter jumps are instant. It follows
+  `prefers-reduced-motion` until the visitor uses the **Motion on / off** button beside the sound
+  button. That choice is remembered (`localStorage`, `og-motion`).
+- **Contrast:** every text block reaches AA against what is really behind it, and body text and
+  titles reach AAA. This comes from scrims, halos and local shades, not from a change to the art
+  (`npm run check:contrast`, `docs/a11y/contrast.md`).
+- `npm run check:a11y` also covers the WCAG 2.2 checks: target size, reflow at 320 px, text
+  spacing, focus order and visible focus, and each status announced once.
 
 ## URL switches
 
@@ -380,3 +398,13 @@ Everything is synthesised with Web Audio (no files), ported from `reference/v23-
 | `?parity` | Let a harness drive progress (`window.__V`) and shader time (`window.__T`), or render a transition point directly (`window.__AT = { tr, t, lean }`); pin the display's live clock (`window.__LIVE`, ms) and the seconds spent in the current hold (`window.__FT`: ring fade, final hold); the rendered progress is published as `window.__progress` |
 | `?nosnap` | Scrolling does not settle on chapters, so a position mid-transition can be held |
 | `#magma` … `#now` | Open at that chapter |
+
+## Credits
+
+- Author: **Emrah Yücel**.
+- Type: [Archivo](https://github.com/Omnibus-Type/Archivo) by Omnibus-Type and
+  [Newsreader](https://github.com/productiontype/Newsreader) by Production Type, both under the
+  SIL Open Font License 1.1 and self-hosted via [Fontsource](https://fontsource.org).
+- [three.js](https://threejs.org) (MIT) for rendering and [GSAP](https://gsap.com) with
+  ScrollTrigger (GreenSock standard license, free to use) for the scroll timeline.
+- The sound is synthesised in the browser and uses no recordings.
