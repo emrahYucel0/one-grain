@@ -198,10 +198,15 @@ loader: the article is the page.
 `npm run capture -- [1920x1080|2560x1440] [--path capture/path.json] [--seconds a-b]` renders the
 video offline, one frame at a time, from the built site in capture mode (`?capture`, `src/capture/`):
 
-- **The path** (`capture/path.json`, editable): seconds on each chapter (`hold`, `holds`), the pace
-  of each move (`scroll` seconds per screen height of the story's track, `moves` per chapter), the
-  intro and the final hold. Moves ease like the scroll snap. The final hold's timeline (the light
-  going out, the landing, the silence) runs at real-time pace.
+- **The path** (`capture/path.json`, editable; `--list` prints its timeline): seconds on each
+  chapter (`hold`, `holds`), the pace of each move (`scroll` seconds per screen height of the
+  story's track, `moves` per chapter), rests in the middle of a move (`rests`: the "One day," card
+  for 2.5 s), the intro and the final hold. Moves ease like the scroll snap. The final hold's
+  timeline (the light going out, the landing, the silence) runs at real-time pace.
+- **Hands-on holds without hints.** Capture mode hides the interaction hints; an invisible scripted
+  cursor (`cursor`: keys of seconds and normalised device coordinates per chapter, a smooth curve
+  through them) hovers across the desert's dunes, which part around it, and the chip, whose
+  switches light up. It steers the camera's pointer parallax at half strength.
 - **Deterministic.** The page runs on a virtual clock that the script advances 1/60 s per frame
   (`performance.now()`, the shader clock and film grain, the live clock, the ring, the ending); CSS
   transitions and the clock's punch are moved to the same clock. High tier, every effect on, no
@@ -218,6 +223,11 @@ video offline, one frame at a time, from the built site in capture mode (`?captu
   the picture.
 - **Output:** `capture/out/one-grain-<W>x<H>.mp4` (ignored by git). `--seconds a-b` renders an
   excerpt to check a passage.
+- **Delivery encodes** (`npm run encode`): the 1080p submission file for Vimeo/YouTube, scaled from
+  the 2560×1440 master, two-pass H.264 at the bitrate that lands on `--target-mb` (200), the
+  master's sound copied → `capture/out/one-grain-1080p-submission.mp4`; and `--teaser <file.json>`,
+  a short cut from `[{ "from": s, "to": s }, …]` with 0.6 s crossfades, faded in and out. The
+  masters stay as rendered.
 - **ffmpeg:** `$FFMPEG`, else the `ffmpeg-static` dev dependency (its install script downloads the
   binary; npm may ask to approve it: `npm install-scripts approve ffmpeg-static`), else `ffmpeg` on
   the PATH.
