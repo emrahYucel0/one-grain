@@ -76,6 +76,10 @@ function boot(): void {
   bindChapterKeys(timeline);
   const pipeline = new Pipeline(stage.renderer, timer);
   grains.attachShadow(pipeline.shadow);
+  // Every program compiles in parallel off the main thread (KHR_parallel_shader_compile) while the worlds
+  // are built, instead of inside the first frame, where a slow CPU would wait for every link in one long
+  // task. The first frame waits for both; after the first pack a second pass finds them all cached.
+  const compiled = grains.whileVisible(() => pipeline.compile(stage.scene, stage.overlay, stage.camera)).catch(() => {});
   const typeAxes = new TypeAxes($('chapter'), $('time'));
   const layers = new RenderLayers(tier.fx);
   for (const k of flags.off) if (isLayerName(k)) layers.override[k] = false;
@@ -150,9 +154,10 @@ function boot(): void {
   // the loading line: the worlds' generation fills 90 %, the first rendered frame the rest
   const loader = new Loader($('loaderFill'), flags.parity);
   loader.progress(.04);
-  sim.build(tier.n, (p) => loader.progress(.04 + .86 * p)).then((pack) => {
+  Promise.all([sim.build(tier.n, (p) => loader.progress(.04 + .86 * p)), compiled]).then(async ([pack]) => {
     exposePack(pack);
     loop.setPack(pack);
+    await pipeline.compile(stage.scene, stage.overlay, stage.camera).catch(() => {}); // a safety net: all cached
     intro.ready();
     hash.restore();
     if (!flags.capture) loop.start();

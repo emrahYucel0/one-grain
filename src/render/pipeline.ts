@@ -1,6 +1,6 @@
 import { Color, type Camera, type Scene, type Vector3, type WebGLRenderer } from 'three';
 import type { GpuTimer } from '../core/gpu-timer';
-import { PostChain, type PostFrame } from './post';
+import { PostChain, type CompileOne, type PostFrame } from './post';
 import { ShadowMap } from './shadow';
 
 export interface PipelineFrame {
@@ -33,6 +33,31 @@ export class Pipeline {
   private readonly clear = new Color();
 
   constructor(renderer: WebGLRenderer, timer: GpuTimer) { this.renderer = renderer; this.timer = timer; }
+
+  /**
+   * Compile every program the first frame needs (the grains and their shadow variant, the overlay,
+   * the post passes) while the worlds are built, in parallel where the browser can: otherwise they
+   * would all compile inside the first frame, one long task on a slow CPU.
+   */
+  compile(scene: Scene, overlay: Scene, camera: Camera): Promise<unknown> {
+    // a program depends on where it draws (the screen or a target: colour space, tone mapping), so each
+    // is compiled against the target the frame uses; compileAsync takes that state when it is called
+    // without KHR_parallel_shader_compile (some Firefox and Safari setups) compileAsync only warns and
+    // waits, so those browsers compile synchronously, still during loading rather than in the first frame
+    const r = this.renderer, jobs: Promise<unknown>[] = [];
+    const parallel = r.extensions.has('KHR_parallel_shader_compile');
+    const one: CompileOne = (s, c) => (parallel ? r.compileAsync(s, c) : (r.compile(s, c), Promise.resolve()));
+    this.post.fit(r);
+    r.setRenderTarget(this.shadow.target); jobs.push(one(this.shadow.scene, this.shadow.camera));
+    r.setRenderTarget(this.post.scene); jobs.push(one(scene, camera), one(overlay, camera));
+    jobs.push(this.post.compile(r, one));
+    r.setRenderTarget(null);
+    // then each program's uniform table, one per task: three.js reads it with a synchronous WebGL call per
+    // uniform on a program's first use, which would otherwise all land in the first frame
+    return Promise.all(jobs).then(async () => {
+      for (const p of r.info.programs ?? []) { await new Promise((ok) => setTimeout(ok)); p.getUniforms(); }
+    });
+  }
 
   /**
    * Capture mode's unrecorded frames: everything a frame does to state, without drawing. The shadow

@@ -1,10 +1,13 @@
 import { flags } from '../debug/parity';
 import {
   DepthTexture, GLSL3, HalfFloatType, LinearFilter, Mesh, OrthographicCamera, PlaneGeometry, Scene, ShaderMaterial, Vector2, WebGLRenderTarget,
-  type IUniform, type Texture, type WebGLRenderer,
+  type Camera, type IUniform, type Texture, type WebGLRenderer,
 } from 'three';
 import type { GpuTimer } from '../core/gpu-timer';
 import { postShaders, type ShaderPair } from '../shaders';
+
+/** Compiles one scene's programs for a camera against the current render target; resolves when ready. */
+export type CompileOne = (scene: Scene, camera: Camera) => Promise<unknown>;
 
 /** What the composite needs from the frame. */
 export interface PostFrame {
@@ -128,6 +131,15 @@ export class PostChain {
     this.blur.u.uTex!.value = from.texture as Texture;
     (this.blur.u.uDir!.value as Vector2).set(dx / from.width, dy / from.height);
     this.run(renderer, this.blur, to);
+  }
+
+  /** Compile every pass's program now, in parallel where the browser can (KHR_parallel_shader_compile). */
+  compile(renderer: WebGLRenderer, one: CompileOne): Promise<unknown> {
+    const jobs = ([[this.bright, this.bloomA], [this.blur, this.bloomA2], [this.dof, this.dofTarget], [this.composite, null]] as const).map(([pass, target]) => {
+      renderer.setRenderTarget(target);
+      return one(pass.scene, this.camera);
+    });
+    return Promise.all(jobs);
   }
 
   private run(renderer: WebGLRenderer, pass: FullscreenPass, target: WebGLRenderTarget | null): void {

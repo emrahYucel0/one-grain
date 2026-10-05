@@ -4,7 +4,7 @@ import {
 } from 'three';
 import { grainShaders, grainShadowShaders } from '../shaders';
 import type { GrainPack, LayerName } from '../sim/pack';
-import { layerDefines, layerTextures, layerUniform } from './bind';
+import { PACK_LAYERS, layerDefines, layerTextures, layerUniform, layoutDefines } from './bind';
 import type { ShadowMap } from './shadow';
 import type { FrameUniforms } from './types';
 
@@ -49,14 +49,26 @@ export class GrainCloud {
       [layerUniform('pos')]: { value: null },
       [layerUniform('surface')]: { value: null },
     };
-    this.material = new ShaderMaterial({ glslVersion: GLSL3, uniforms: this.u, defines: { TEX_WIDTH: 1024 }, ...grainShaders });
-    this.object = new Points(new BufferGeometry(), this.material);
+    // the final layout's defines from the start: the programs compile while the worlds are built (render/pipeline.ts compile())
+    this.material = new ShaderMaterial({ glslVersion: GLSL3, uniforms: this.u, defines: layoutDefines(1024, PACK_LAYERS), ...grainShaders });
+    // a position attribute from the start (the pack replaces it): three.js keys a program on having one,
+    // and the programs are compiled before the first pack (render/pipeline.ts compile())
+    const geometry = new BufferGeometry();
+    geometry.setAttribute('position', new BufferAttribute(new Float32Array(3), 3));
+    this.object = new Points(geometry, this.material);
     this.object.frustumCulled = false;
     this.object.visible = false;
-    this.shadowMaterial = new ShaderMaterial({ glslVersion: GLSL3, uniforms: this.u, defines: { TEX_WIDTH: 1024, SHADOW: '' }, ...grainShadowShaders });
+    this.shadowMaterial = new ShaderMaterial({ glslVersion: GLSL3, uniforms: this.u, defines: { ...layoutDefines(1024, PACK_LAYERS), SHADOW: '' }, ...grainShadowShaders });
     this.shadowObject = new Points(this.object.geometry, this.shadowMaterial);
     this.shadowObject.frustumCulled = false;
     this.shadowObject.visible = false;
+  }
+
+  /** Run fn with the cloud visible (three.js compiles only visible objects; the cloud shows from its first pack). */
+  whileVisible<T>(fn: () => T): T {
+    const was = this.object.visible;
+    this.object.visible = this.shadowObject.visible = true;
+    try { return fn(); } finally { this.object.visible = this.shadowObject.visible = was; }
   }
 
   /** Draw into this shadow map and sample it. */
