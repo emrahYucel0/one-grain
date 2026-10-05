@@ -14,13 +14,13 @@ const SITE: string = (JSON.parse(readFileSync(new URL('./site.config.json', impo
  */
 const TARGETS = ['chrome100', 'edge100', 'firefox100', 'safari15', 'ios15'];
 
-/** The faces the first view shows (fontsource's Latin subsets): preloaded. */
-const FIRST_FONTS = ['archivo-latin-wdth-normal', 'newsreader-latin-opsz-normal', 'newsreader-latin-opsz-italic'];
+/** main.css's web font faces (Archivo; Newsreader roman and italic), subset in src/fonts/ (npm run fonts). */
+const WEB_FACES = 3;
 
 /**
- * index.html's %SITE_URL%, robots.txt and sitemap.xml, and _headers (Netlify / Cloudflare Pages format,
- * docs/deploy.md): the security headers, cache rules, and a CSP that allows only what the site uses,
- * with the hashes of index.html's two inline blocks (the class script and the critical styles).
+ * index.html's %SITE_URL%, robots.txt and sitemap.xml, the web font faces inline, and _headers
+ * (Netlify / Cloudflare Pages format, docs/deploy.md): the security headers, cache rules, and a CSP
+ * that allows only what the site uses, with the hashes of index.html's inline scripts and styles.
  */
 function site(): Plugin {
   let hashes = { script: [] as string[], style: [] as string[] };
@@ -34,11 +34,19 @@ function site(): Plugin {
         // the dev server shows the startup guard's error report from the first problem on (index.html)
         if (ctx.server) out = out.replace('<html lang="en">', '<html lang="en" data-dev>');
         if (ctx.bundle) {
-          // the three faces the first view needs, found early; the stylesheet for visitors without JavaScript
-          const files = Object.keys(ctx.bundle);
-          const fonts = FIRST_FONTS.map((f) => files.find((n) => n.includes(f) && n.endsWith('.woff2'))).filter(Boolean);
-          const css = files.find((n) => n.endsWith('.css')); // the one stylesheet
-          const tags = [...fonts.map((f) => `<link rel="preload" href="./${f}" as="font" type="font/woff2" crossorigin>`), ...(css ? [`<noscript><link rel="stylesheet" href="./${css}"></noscript>`] : [])];
+          // The web font faces, copied from the built stylesheet into the page, so they load from the
+          // first paint (the loader's brand and its hidden warm-up glyphs use them at once) instead of
+          // after the script brings main.css. No <link rel=preload>: Safari fetches a preloaded font
+          // (CORS) and the same font from CSS (no CORS) twice, and warns the preload went unused. And the
+          // stylesheet for visitors without JavaScript.
+          const css = Object.keys(ctx.bundle).find((n) => n.endsWith('.css')); // the one stylesheet
+          const asset = css ? ctx.bundle[css] : undefined;
+          const source = asset && asset.type === 'asset' ? String(asset.source) : '';
+          const faces = source.match(/@font-face\{[^}]*(?:Archivo|Newsreader) Variable[^}]*\}/g) ?? [];
+          if (faces.length !== WEB_FACES) throw new Error(`one-grain-site: expected ${WEB_FACES} web font faces in ${css}, found ${faces.length}`);
+          // url(./x.woff2) is relative to assets/main-….css; from the page it is assets/x.woff2
+          const inline = faces.map((f) => f.replace(/url\((?:\.\/)?([^)/]+\.woff2)\)/g, 'url(./assets/$1)')).join('');
+          const tags = [`<style>${inline}</style>`, `<noscript><link rel="stylesheet" href="./${css}"></noscript>`];
           out = out.replace('</head>', `${tags.join('\n')}\n</head>`);
         }
         hashes = {

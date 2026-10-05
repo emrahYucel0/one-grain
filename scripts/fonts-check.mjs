@@ -4,11 +4,16 @@
 //     happens while we measure. A control run without the font gate shows the measurement would
 //     catch a shift. The no-WebGL2 article (no gate, metric-matched fallbacks only) is reported.
 //  2. the wdth axis really renders: the same probe word, in the title's live font settings, is
-//     measured at magma (wide) and at crystal (condensed); crops of both titles go to parity/fonts/.
+//     measured at magma (wide) and at crystal (condensed); crops of both titles go to parity/fonts/;
+//  3. the subset faces (src/fonts/, npm run fonts) have every character index.html uses that the full
+//     Latin faces have (those they lack, like ≈, fall through to the system font as before), and keep
+//     their variable axes. Needs Python with fontTools.
+import { execFileSync } from 'node:child_process';
 import { mkdir } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 import { launch } from './lib/browser.mjs';
 import { startPreview } from './lib/servers.mjs';
+import { fontChars } from './subset-fonts.mjs';
 
 const OUT = fileURLToPath(new URL('../parity/fonts/', import.meta.url));
 await mkdir(OUT, { recursive: true });
@@ -18,6 +23,19 @@ const dev = await startPreview(5181);
 const results = [];
 const check = (name, ok, detail) => { results.push(ok); console.log(`${ok ? 'PASS' : 'FAIL'}  ${name}  (${detail})`); };
 const info = (name, detail) => console.log(`INFO  ${name}  (${detail})`);
+
+// 3: the subsets cover the copy
+{
+  const read = (file) => JSON.parse(execFileSync('python', ['-c', 'import sys, json; from fontTools.ttLib import TTFont; f = TTFont(sys.argv[1]); print(json.dumps({"cmap": sorted(f.getBestCmap()), "axes": [a.axisTag for a in f["fvar"].axes] if "fvar" in f else []}))', file], { encoding: 'utf8' }));
+  const want = fontChars();
+  for (const [subset, source] of [['archivo-wdth', '@fontsource-variable/archivo/files/archivo-latin-wdth-normal'], ['newsreader-opsz', '@fontsource-variable/newsreader/files/newsreader-latin-opsz-normal'], ['newsreader-opsz-italic', '@fontsource-variable/newsreader/files/newsreader-latin-opsz-italic']]) {
+    const sub = read(`src/fonts/${subset}.woff2`), full = read(`node_modules/${source}.woff2`), has = new Set(sub.cmap), inFull = new Set(full.cmap);
+    const missing = want.filter((c) => inFull.has(c) && !has.has(c)), fallthrough = want.filter((c) => !inFull.has(c) && c > 0x7e);
+    const axes = sub.axes.join('+'), fullAxes = full.axes.join('+');
+    check(`${subset}: every character of the copy the font has, and its axes (${axes})`, missing.length === 0 && axes === fullAxes,
+      missing.length ? `missing ${String.fromCodePoint(...missing)}: run npm run fonts` : `${sub.cmap.length} of ${full.cmap.length} glyph codes kept; to the system font: ${String.fromCodePoint(...fallthrough) || 'none'}`);
+  }
+}
 // Layout shift below this is noise, not a font swap (an intermittent 0.0001 appears with and
 // without the gate). Lighthouse's "good" threshold is 0.1, so 0.001 is still a hundred times stricter.
 const CLS_TOLERANCE = .001;

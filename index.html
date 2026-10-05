@@ -91,8 +91,12 @@ body{margin:0;background:#0d181c}
 html.js:not(.nogl) #story{position:absolute;width:1px;height:1px;margin:-1px;padding:0;overflow:hidden;clip:rect(0 0 0 0);clip-path:inset(50%);white-space:nowrap;border:0}
 html.js:not(.ready):not(.nogl) :is(.hud,.intro,.story,.timeline,.marker,.cut){visibility:hidden}
 .loader{position:fixed;inset:0;z-index:6;background:#0d181c;pointer-events:none;padding:calc(env(safe-area-inset-top,0px) + 1.2rem) clamp(1.25rem,5vw,4.5rem) 0;
-  font:500 1.05rem/1.5 "Archivo Variable","Archivo Fallback",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;font-stretch:125%;letter-spacing:.01em;-webkit-font-smoothing:antialiased}
-.loader .brand{text-shadow:0 1px 10px rgba(0,0,0,.55),0 0 2px rgba(0,0,0,.35)}
+  font:500 1.05rem/1.5 "Archivo Variable","Archivo Fallback",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;letter-spacing:.01em;-webkit-font-smoothing:antialiased}
+/* font-stretch in a rule of its own: the minifier folds it into a font shorthand as a percentage, which browsers reject (and drop the whole font) */
+.loader .brand{font-stretch:125%;text-shadow:0 1px 10px rgba(0,0,0,.55),0 0 2px rgba(0,0,0,.35)}
+/* invisible glyphs in Newsreader roman and italic: both faces start loading with the first paint, as Archivo does for the brand */
+.loader::before,.loader::after{content:"a";position:absolute;left:0;top:0;font:400 1px/1 "Newsreader Variable",serif;visibility:hidden}
+.loader::after{font-style:italic}
 .loader-line{position:absolute;left:50%;top:50%;width:min(14rem,40vw);height:1px;margin-left:max(-7rem,-20vw);background:rgba(236,227,211,.22);overflow:hidden}
 .loader-line i{display:block;height:100%;background:#ece3d3;transform:scaleX(var(--load,0));transform-origin:left}
 html:not(.js) .loader,html.nogl .loader{display:none}

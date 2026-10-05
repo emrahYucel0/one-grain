@@ -2,7 +2,7 @@
 // (scripts/serve.mjs: Brotli, the _headers CSP and cache rules).
 //  1. A browser visit at 1440×900 and at 390×844 (touch): no console messages, no CSP violations,
 //     no response of 400 or more, and only the requests the first view uses (the page, its scripts,
-//     the stylesheet, the worker, the three preloaded faces, the icon); every request is listed.
+//     the stylesheet, the worker, the three font faces, the icon); every request is listed.
 //  2. Lighthouse 12 (installed on demand by npx), mobile and desktop presets: the four category
 //     scores, LCP, CLS, TBT, FCP, and the bytes per resource type.
 // Writes docs/lighthouse.md; the raw reports go to parity/lighthouse/ (ignored).
@@ -22,7 +22,7 @@ const results = [];
 const check = (name, ok, detail) => { results.push([name, ok, detail]); console.log(`${ok ? 'PASS' : 'FAIL'}  ${name}  (${detail})`); };
 /** what the first view may request: everything else is unused */
 const EXPECTED = [/\/$/, /\/assets\/index-[\w-]+\.js$/, /\/assets\/three-[\w-]+\.js$/, /\/assets\/gsap-[\w-]+\.js$/, /\/assets\/main-[\w-]+\.css$/,
-  /\/assets\/sim\.worker-[\w-]+\.js$/, /\/assets\/build-[\w-]+\.js$/, /archivo-latin-wdth-normal-[\w-]+\.woff2$/, /newsreader-latin-opsz-(normal|italic)-[\w-]+\.woff2$/,
+  /\/assets\/sim\.worker-[\w-]+\.js$/, /\/assets\/build-[\w-]+\.js$/, /\/assets\/archivo-wdth-[\w-]+\.woff2$/, /\/assets\/newsreader-opsz(-italic)?-[\w-]+\.woff2$/,
   /\/favicon\.svg$/, /\/favicon-32\.png$/, /\/site\.webmanifest$/];
 
 let network = [];

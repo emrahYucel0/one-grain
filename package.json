@@ -31,6 +31,7 @@
     "capture": "node scripts/capture.mjs",
     "encode": "node scripts/encode.mjs",
     "icons": "node scripts/icons.mjs",
+    "fonts": "node scripts/subset-fonts.mjs",
     "serve": "vite build && node scripts/serve.mjs",
     "lighthouse": "node scripts/lighthouse.mjs",
     "og-image": "node scripts/og-image.mjs"
@@ -46,13 +47,13 @@
     "node": ">=20"
   },
   "dependencies": {
-    "@fontsource-variable/archivo": "^5.3.0",
-    "@fontsource-variable/newsreader": "^5.3.0",
     "gsap": "^3.15.0",
     "three": "^0.186.1"
   },
   "devDependencies": {
     "@axe-core/playwright": "^4.13.0",
+    "@fontsource-variable/archivo": "^5.3.0",
+    "@fontsource-variable/newsreader": "^5.3.0",
     "@eslint/js": "^10.0.1",
     "@types/node": "^26.6.4",
     "@types/three": "^0.186.0",
