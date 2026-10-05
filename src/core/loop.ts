@@ -113,10 +113,10 @@ export class Loop {
     requestAnimationFrame(tick);
   }
 
-  /** Capture mode: render one frame now, outside the rAF loop (src/capture/). */
-  step(): void { this.frame(); }
+  /** Capture mode: one frame now, outside the rAF loop (src/capture/); `draw` false skips only the GPU work. */
+  step(draw = true): void { this.frame(draw); }
 
-  private frame(): void {
+  private frame(draw = true): void {
     const { stage, grains, hero, timeline, hash, projection, typeAxes, stageColour, pipeline, timer, layers } = this.d;
     const reduced = env.reduced;
     const v = progressOverride() ?? timeline.state.v;
@@ -178,8 +178,10 @@ export class Loop {
     grains.update(u);
     hash.update(L.hold);
     const cam = stage.camera;
+    const shadowEvery = L.hold >= 0 ? flags.shadowEvery ?? SHADOW_EVERY.rest : SHADOW_EVERY.moving;
+    if (!draw) { pipeline.skip(shadows && !overdraw, shadowEvery); timer.tick(); return; }
     pipeline.render({
-      grains: stage.scene, overlay: stage.overlay, camera: cam, shadows: shadows && !overdraw, shadowEvery: L.hold >= 0 ? flags.shadowEvery ?? SHADOW_EVERY.rest : SHADOW_EVERY.moving, clear: stageColour.fogLinear, direct: overdraw,
+      grains: stage.scene, overlay: stage.overlay, camera: cam, shadows: shadows && !overdraw, shadowEvery, clear: stageColour.fogLinear, direct: overdraw,
       post: { bloom: layers.on('bloom'), dof: layers.on('dof'), grade: layers.on('grade'), near: cam.near, far: cam.far, focus: cam.position.distanceTo(S.hero), dofScale: this.rigState.dof, time, grainMoves: !reduced },
     });
     reportHeroRendered(S.hero, cam);

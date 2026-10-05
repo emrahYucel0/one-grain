@@ -8,6 +8,8 @@
 // stepped, unrecorded, so the page's own timers see them). --sound-only steps the path in a small
 // window without recording frames, renders the sound and puts it into every finished
 // capture/out/one-grain-<W>x<H>.mp4 (the picture is copied, not re-encoded): for a new seed.
+// The picture is rendered in chunks of --chunk frames (1500), each in a fresh browser that first
+// steps the earlier frames in a small window, then joined without re-encoding.
 // --list prints the path's timeline and exits.
 // ffmpeg: $FFMPEG, else the ffmpeg-static dev dependency, else ffmpeg on the PATH.
 import { spawn } from 'node:child_process';
@@ -87,56 +89,80 @@ console.log(`${W}×${H} · ${total.toFixed(1)} s · ${count} frames at ${fps} fp
 await mkdir(OUT, { recursive: true });
 await build({ logLevel: 'error' });
 const server = await startPreview(5199);
-const browser = await launch({ args: [`--window-size=${W},${H}`] });
-const name = `${OUT}/one-grain-${W}x${H}${range ? `-${range[0]}-${range[1]}s` : ''}`;
-try {
-  const page = await (await browser.newContext({ viewport: { width: W, height: H }, deviceScaleFactor: 1 })).newPage();
-  page.on('console', (m) => { if (m.type() === 'error' || m.type() === 'warning') console.log(`page ${m.type()}: ${m.text()}`); });
-  // a crashed page or browser must end the run, not leave it waiting
+const name = soundOnly ? `${OUT}/one-grain` : `${OUT}/one-grain-${W}x${H}${range ? `-${range[0]}-${range[1]}s` : ''}`;
+const CHUNK = +opt('--chunk', 1500); // frames per browser session: long sessions wear Chromium out (a crash, a hung readback)
+
+/**
+ * One browser session: step frames 0..from-1 without drawing (the page's timers, trackers and
+ * smoothing see every frame; the last three are drawn, so the shadow map is what a continuous run
+ * has: the same pixels, checked), then step and read back from..to-1 into `part` (an H.264 file of
+ * its own). With `sound`, step to the end without drawing and render the sound for every frame.
+ * Throws with the frame number when the page crashes, the browser closes or a frame takes over a
+ * minute.
+ */
+async function session(from, to, part, sound) {
+  const browser = await launch({ args: [`--window-size=${W},${H}`] });
   let lost = null;
-  page.on('crash', () => { lost = 'the page crashed'; });
   browser.on('disconnected', () => { lost ??= 'the browser closed'; });
-  await page.goto(`${server.origin}/?capture`);
-  await page.waitForFunction(() => window.__PACK && window.__capture, null, { timeout: 180000 });
-  const env = await page.evaluate(() => ({ n: window.__PACK.n, buffer: `${document.getElementById('scene').width}×${document.getElementById('scene').height}` }));
-  console.log(`high tier: ${env.n} grains · drawing buffer ${env.buffer}`);
-  const cdp = await page.context().newCDPSession(page);
-  const within = (p, what) => Promise.race([p, new Promise((_, fail) => setTimeout(() => fail(new Error(lost ?? `${what} took over 60 s`)), 60000))]);
-  const step = (i) => { const st = stateAt(i / fps); return within(page.evaluate(([ms, v, c]) => window.__capture.step(ms, v, null, c), [i * 1000 / fps, st.v, st.cursor]), `frame ${i}`)
-    .catch((e) => { throw new Error(`frame ${i} (${(i / fps).toFixed(2)} s): ${lost ?? e.message}`); }); };
-  await step(0);
-  await page.waitForFunction(() => !document.documentElement.classList.contains('fonts-pending'), null, { timeout: 10000 });
-  for (let i = 1; i < first; i++) await step(i);
+  try {
+    const page = await (await browser.newContext({ viewport: { width: W, height: H }, deviceScaleFactor: 1 })).newPage();
+    page.on('console', (m) => { if (m.type() === 'error' || m.type() === 'warning') console.log(`page ${m.type()}: ${m.text()}`); });
+    page.on('crash', () => { lost = 'the page crashed'; });
+    await page.goto(`${server.origin}/?capture`);
+    await page.waitForFunction(() => window.__PACK && window.__capture, null, { timeout: 180000 });
+    const within = (pr, what) => Promise.race([pr, new Promise((_, fail) => setTimeout(() => fail(new Error(lost ?? `${what} took over 60 s`)), 60000))]);
+    const step = (i, draw = true) => { const st = stateAt(i / fps); return within(page.evaluate(([ms, v, c, d]) => window.__capture.step(ms, v, null, c, d), [i * 1000 / fps, st.v, st.cursor, draw]), `frame ${i}`)
+      .catch((e) => { throw new Error(`frame ${i} (${(i / fps).toFixed(2)} s): ${lost ?? e.message}`); }); };
+    await step(0);
+    await page.waitForFunction(() => !document.documentElement.classList.contains('fonts-pending'), null, { timeout: 10000 });
+    for (let i = 1; i < from; i++) await step(i, i >= from - 3);
+    if (part) {
+      const cdp = await page.context().newCDPSession(page);
+      const enc = run(['-f', 'image2pipe', '-framerate', String(fps), '-c:v', 'png', '-i', '-', '-c:v', 'libx264', '-preset', 'slow', '-crf', '14', '-pix_fmt', 'yuv420p', part], 'pipe');
+      const t0 = Date.now();
+      for (let i = from; i < to; i++) {
+        if (i > 0) await step(i);
+        const { data } = await within(cdp.send('Page.captureScreenshot', { format: 'png', optimizeForSpeed: true }), `reading frame ${i}`);
+        if (!enc.p.stdin.write(Buffer.from(data, 'base64'))) await new Promise((ok) => enc.p.stdin.once('drain', ok));
+      }
+      enc.p.stdin.end(); await enc.done;
+      console.log(`  frames ${from}–${to}: ${((Date.now() - t0) / (to - from)).toFixed(0)} ms per frame`);
+    }
+    if (!sound) return null;
+    for (let i = Math.max(to, 1); i < count; i++) await step(i, false);
+    return Buffer.from(await page.evaluate(([f, seed]) => window.__capture.sound(f, seed), [fps, path.seed]), 'base64');
+  } finally { await browser.close().catch(() => {}); }
+}
+const attempt = async (...a) => { try { return await session(...a); } catch (e) { console.log(`  retrying: ${e.message}`); return session(...a); } };
+
+try {
+  const t0 = Date.now();
+  // the sound: every frame stepped once, in the small window
+  const wav = await attempt(0, 0, null, true);
+  await writeFile(`${name}.wav`, wav);
+  console.log(`sound: ${((Date.now() - t0) / 1000).toFixed(0)} s`);
   if (soundOnly) {
-    const t0 = Date.now();
-    for (let i = 1; i < count; i++) await step(i);
-    console.log(`stepped ${count} frames in ${((Date.now() - t0) / 60000).toFixed(1)} min`);
-    const wav = `${OUT}/one-grain.wav`;
-    await writeFile(wav, Buffer.from(await page.evaluate(([f, seed]) => window.__capture.sound(f, seed), [fps, path.seed]), 'base64'));
     for (const f of (await readdir(OUT)).filter((x) => /^one-grain-\d+x\d+\.mp4$/.test(x))) {
-      await run(['-i', `${OUT}/${f}`, '-i', wav, '-map', '0:v', '-map', '1:a', '-c:v', 'copy', '-c:a', 'aac', '-b:a', '320k', '-shortest', '-movflags', '+faststart', `${OUT}/new-${f}`]).done;
+      await run(['-i', `${OUT}/${f}`, '-i', `${name}.wav`, '-map', '0:v', '-map', '1:a', '-c:v', 'copy', '-c:a', 'aac', '-b:a', '320k', '-shortest', '-movflags', '+faststart', `${OUT}/new-${f}`]).done;
       await rename(`${OUT}/new-${f}`, `${OUT}/${f}`);
-      await writeFile(`${OUT}/${f.replace(/\.mp4$/, '.wav')}`, await readFile(wav));
+      await writeFile(`${OUT}/${f.replace(/\.mp4$/, '.wav')}`, wav);
       console.log(`→ new sound in ${OUT}/${f}`);
     }
   } else {
-    const enc = run(['-f', 'image2pipe', '-framerate', String(fps), '-c:v', 'png', '-i', '-', '-c:v', 'libx264', '-preset', 'slow', '-crf', '14', '-pix_fmt', 'yuv420p', `${name}.video.mp4`], 'pipe');
-    const t0 = Date.now();
-    for (let i = first; i < last; i++) {
-      if (i > 0) await step(i);
-      const { data } = await within(cdp.send('Page.captureScreenshot', { format: 'png', optimizeForSpeed: true }), `reading frame ${i}`);
-      if (!enc.p.stdin.write(Buffer.from(data, 'base64'))) await new Promise((ok) => enc.p.stdin.once('drain', ok));
-      if ((i - first) % 300 === 299) { const done = i - first + 1, per = (Date.now() - t0) / done; console.log(`  ${done}/${last - first} frames · ${per.toFixed(0)} ms per frame · ${((last - first - done) * per / 60000).toFixed(1)} min left`); }
+    // the picture, chunk by chunk, each in a fresh browser; then joined without re-encoding
+    const parts = [];
+    for (let from = first; from < last; from += CHUNK) {
+      const part = `${name}.part${parts.length}.mp4`;
+      await attempt(from, Math.min(last, from + CHUNK), part, false);
+      parts.push(part);
+      const done = Math.min(last, from + CHUNK) - first, per = (Date.now() - t0) / done;
+      console.log(`  ${done}/${last - first} frames · ${((last - first - done) * per / 60000).toFixed(1)} min left`);
     }
-    enc.p.stdin.end(); await enc.done;
+    await writeFile(`${name}.parts.txt`, parts.map((f) => `file '${f.split('/').pop()}'`).join('\n'));
+    await run(['-f', 'concat', '-safe', '0', '-i', `${name}.parts.txt`, '-c', 'copy', `${name}.video.mp4`]).done;
     console.log(`video: ${last - first} frames in ${((Date.now() - t0) / 60000).toFixed(1)} min`);
-    // the sound for every frame stepped (from the story's start; an excerpt's offset is cut below)
-    const t1 = Date.now();
-    const wav = await page.evaluate(([f, seed]) => window.__capture.sound(f, seed), [fps, path.seed]);
-    await writeFile(`${name}.wav`, Buffer.from(wav, 'base64'));
-    console.log(`sound: ${((Date.now() - t1) / 1000).toFixed(0)} s`);
     await run(['-i', `${name}.video.mp4`, '-ss', String(first / fps), '-i', `${name}.wav`, '-map', '0:v', '-map', '1:a', '-c:v', 'copy', '-c:a', 'aac', '-b:a', '320k', '-shortest', '-movflags', '+faststart', `${name}.mp4`]).done;
-    await rm(`${name}.video.mp4`);
+    for (const f of [...parts, `${name}.parts.txt`, `${name}.video.mp4`]) await rm(f, { force: true });
     console.log(`→ ${name}.mp4 (the sound alone: ${name}.wav)`);
   }
-} finally { await browser.close(); await server.close(); }
+} finally { await server.close(); }

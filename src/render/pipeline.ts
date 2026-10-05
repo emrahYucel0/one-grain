@@ -34,6 +34,14 @@ export class Pipeline {
 
   constructor(renderer: WebGLRenderer, timer: GpuTimer) { this.renderer = renderer; this.timer = timer; }
 
+  /**
+   * Capture mode's unrecorded frames: everything a frame does to state, without drawing. The shadow
+   * map's cadence advances as if drawn (a later drawn frame refreshes on the same frames).
+   */
+  skip(shadows: boolean, every?: number): void {
+    if (!shadows) this.shadow.invalidate(); else this.shadow.due(every);
+  }
+
   render(f: PipelineFrame): void {
     const { renderer, timer, shadow, post } = this;
     if (!f.shadows) shadow.invalidate();

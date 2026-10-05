@@ -221,6 +221,11 @@ video offline, one frame at a time, from the built site in capture mode (`?captu
   least significant bit on a few hundred samples: Chrome sums a node's inputs in varying order.
   `--sound-only` renders the sound again and puts it into the finished videos without re-encoding
   the picture.
+- **Chunks.** Long browser sessions wore Chromium out here (a crash, a hung readback after thousands
+  of frames), so the picture is rendered in chunks (`--chunk`, 1500 frames), each in a fresh
+  browser that first steps the earlier frames without drawing (the last three drawn, so the shadow
+  map matches): the same pixels as a continuous run. The parts are joined without re-encoding; a
+  chunk whose browser fails is tried once more.
 - **Output:** `capture/out/one-grain-<W>x<H>.mp4` (ignored by git). `--seconds a-b` renders an
   excerpt to check a passage.
 - **Delivery encodes** (`npm run encode`): the 1080p submission file for Vimeo/YouTube, scaled from

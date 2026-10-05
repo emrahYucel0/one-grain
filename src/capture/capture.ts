@@ -14,9 +14,10 @@ export interface CaptureApi {
   /**
    * Render the frame at `nowMs` on the capture's clock, at story progress v; `holdSec`: seconds resting
    * on the current chapter (null while moving); `cursor`: the scripted pointer in normalised device
-   * coordinates, or null when it is away.
+   * coordinates, or null when it is away; `draw` false runs the frame without the GPU work (frames
+   * stepped only for the page's state: before an excerpt or a chunk, and for the sound).
    */
-  step(nowMs: number, v: number, holdSec: number | null, cursor?: { x: number; y: number } | null): void;
+  step(nowMs: number, v: number, holdSec: number | null, cursor?: { x: number; y: number } | null, draw?: boolean): void;
   /** Render the sound for every stepped frame offline; resolves to a 16-bit stereo WAV, base64. */
   sound(fps: number, seed: number): Promise<string>;
 }
@@ -40,7 +41,7 @@ const PARALLAX = .5;
  * path says (the desert's dunes part, the chip's switches light).
  * Returns the recorder the frame listener feeds.
  */
-export function exposeCapture(loop: { step(): void }, pointer: Pointer): (f: SoundFrame) => void {
+export function exposeCapture(loop: { step(draw?: boolean): void }, pointer: Pointer): (f: SoundFrame) => void {
   document.documentElement.classList.add('capture');
   const frames: SoundFrame[] = [];
   const born = new WeakMap<Animation, number>();
@@ -48,11 +49,11 @@ export function exposeCapture(loop: { step(): void }, pointer: Pointer): (f: Sou
   const button = document.getElementById('sound');
   if (button) { button.textContent = button.dataset.on ?? button.textContent; button.setAttribute('aria-pressed', 'true'); }
   window.__capture = {
-    step(nowMs, v, holdSec, cursor = null) {
+    step(nowMs, v, holdSec, cursor = null, draw = true) {
       window.__VNOW = nowMs; window.__V = v; window.__FT = holdSec;
       pointer.hovering = !!cursor;
       if (cursor) { pointer.nx = cursor.x; pointer.ny = cursor.y; pointer.x = cursor.x / 2 * PARALLAX; pointer.y = -cursor.y / 2 * PARALLAX; } else { pointer.x = 0; pointer.y = 0; }
-      loop.step();
+      loop.step(draw);
       for (const a of document.getAnimations()) {
         if (!born.has(a)) born.set(a, nowMs);
         a.pause();
