@@ -1,4 +1,4 @@
-// Responsive matrix (npm run responsive [before|after]): the built site in headed Chromium on this
+// Responsive matrix (npm run responsive [label] [viewport filter] [extra query, e.g. nosafe]): the built site in headed Chromium on this
 // machine's GPU, at every chapter hold and at display → now t = .3 / .7, across phones, tablets
 // and desktops. One contact sheet per viewport → docs/responsive/<label>/<viewport>.jpg; the single
 // shots go to the OS temp folder. The tier is picked as on a real visit (no ?tier).
@@ -14,7 +14,7 @@ import { startPreview } from './lib/servers.mjs';
 import { VIEWPORTS } from './lib/viewports.mjs';
 
 
-const label = process.argv[2] ?? 'before', only = process.argv[3];
+const label = process.argv[2] ?? 'before', only = process.argv[3], extra = process.argv[4] ? `&${process.argv[4]}` : ''; // e.g. nosafe
 const vite = await createServer({ server: { middlewareMode: true }, appType: 'custom', logLevel: 'error' });
 const { SEGMENTS, SNAP_POINTS, TOTAL } = await vite.ssrLoadModule('/src/timeline/segments.ts');
 const { WORLDS } = await vite.ssrLoadModule('/src/story/worlds.ts');
@@ -39,7 +39,7 @@ try {
     const errors = [];
     page.on('pageerror', (e) => errors.push(e.message));
     page.on('console', (m) => { if (m.type() === 'error' || m.type() === 'warning') errors.push(m.text()); });
-    await page.goto(`${server.origin}/?parity`);
+    await page.goto(`${server.origin}/?parity${extra}`);
     await page.waitForFunction(() => window.__PACK, null, { timeout: 120000 });
     const info = await page.evaluate(() => ({ n: window.__PACK.n, buffer: [document.getElementById('scene').width, document.getElementById('scene').height] }));
     await mkdir(join(SHOTS, vp.name), { recursive: true });

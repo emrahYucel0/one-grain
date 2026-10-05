@@ -21,6 +21,7 @@ import { bindChapterKeys } from './timeline/keys';
 import { ScrollTimeline } from './timeline/scroll';
 import { transitionMidpoint } from './timeline/segments';
 import { StoryA11y } from './ui/a11y';
+import { TextBlock } from './ui/text-block';
 import { ChapterView } from './ui/chapter';
 import { ClockView, clockProgress } from './ui/clock';
 import { readCopy, type Copy } from './ui/copy';
@@ -92,7 +93,8 @@ function boot(): void {
   const typeAxes = new TypeAxes($('chapter'), $('time'));
   const layers = new RenderLayers(tier.fx);
   for (const k of flags.off) if (isLayerName(k)) layers.override[k] = false;
-  const loop = new Loop({ stage, grains, hero, timeline, hash, projection, typeAxes, stageColour: new StageColour(), pipeline, timer, layers });
+  const textBlock = new TextBlock($('chapter'), stage.renderer.domElement, document.querySelector<HTMLElement>('.scrim-top'));
+  const loop = new Loop({ stage, grains, hero, timeline, hash, projection, typeAxes, stageColour: new StageColour(), pipeline, timer, layers, textBlock });
   const go = (i: number): void => timeline.goTo(i);
 
   // words and instruments

@@ -11,6 +11,9 @@
 //  4. phones: a mobile browser bar coming in (height −100 px) rebuilds nothing: same drawing buffer,
 //     same scroll position, same story progress (no ScrollTrigger refresh, no jump)
 //     and turning the phone (width and height swapped) keeps the tier
+//  6. the hero grain's safe area (camera/safe-area.ts): at every hold and every transition midpoint
+//     where it is drawn, the grain as rendered lies within ±0.6 horizontally and ±0.65 vertically,
+//     below the HUD's top scrim, and not under the chapter's visible text
 //  5. the pixel ratio each tier gets on a 4K screen at DPR 1 and a 1440p one at DPR 2 (the tier
 //     itself, picked from the device, is check:tiers')
 import { readFileSync } from 'node:fs';
@@ -20,7 +23,8 @@ import { startDev } from './lib/servers.mjs';
 import { VIEWPORTS } from './lib/viewports.mjs';
 
 const vite = await createServer({ server: { middlewareMode: true }, appType: 'custom', logLevel: 'error' });
-const { SNAP_POINTS } = await vite.ssrLoadModule('/src/timeline/segments.ts');
+const { SNAP_POINTS, transitionMidpoint } = await vite.ssrLoadModule('/src/timeline/segments.ts');
+const { SAFE } = await vite.ssrLoadModule('/src/camera/safe-area.ts');
 const { TIERS } = await vite.ssrLoadModule('/src/core/quality.ts');
 const ACTS = readFileSync('index.html', 'utf8').match(/class="act-group" data-act=/g)?.length ?? 0;
 await vite.close();
@@ -48,6 +52,28 @@ try {
       if (d !== null) { n++; if (d > worst) { worst = d; where = `hold ${i + 1}`; } }
     }
     check(`${vp.name}: ring on the grain at every hold`, worst <= 2, `${n} holds, at most ${worst.toFixed(2)} px${where ? ` (${where})` : ''}`);
+    // 6: the hero grain's safe area
+    {
+      const at = [];
+      SNAP_POINTS.forEach((v, i) => { at.push([`hold ${i + 1}`, v]); if (i < SNAP_POINTS.length - 1) at.push([`midpoint ${i + 1}→${i + 2}`, transitionMidpoint(i)]); });
+      const out = [];
+      let n = 0;
+      for (const [name, v] of at) {
+        await page.evaluate((x) => { window.__V = x; window.__T = 10; window.__FT = 0; }, v);
+        await page.waitForTimeout(600);
+        const m = await page.evaluate(() => {
+          const h = { ...window.__hero, ...window.__heroRendered }, c = document.getElementById('scene').getBoundingClientRect();
+          if (!h || !h.visible || h.z >= 1) return null;
+          const px = c.left + (h.x + 1) / 2 * c.width, py = c.top + (1 - h.y) / 2 * c.height, ch = document.getElementById('chapter');
+          const under = +getComputedStyle(ch).opacity > .05 && [...ch.children].some((e) => { const r = e.getBoundingClientRect(); return r.width > 0 && r.height > 0 && px >= r.left - 10 && px <= r.right + 10 && py >= r.top - 10 && py <= r.bottom + 10; });
+          return { x: px / innerWidth * 2 - 1, y: 1 - py / innerHeight * 2, under, hud: py < document.querySelector('.scrim-top').getBoundingClientRect().bottom };
+        });
+        if (!m) continue;
+        n++;
+        if (Math.abs(m.x) > SAFE.x || Math.abs(m.y) > SAFE.y || m.under || m.hud) out.push(`${name} at ${m.x.toFixed(2)}, ${m.y.toFixed(2)}${m.under ? ' under the text' : ''}${m.hud ? ' under the HUD' : ''}`);
+      }
+      check(`${vp.name}: the hero grain inside the safe area, clear of the text, at every hold and midpoint`, out.length === 0, out.join('; ') || `${n} positions`);
+    }
     // 3: the pixel budget
     const buf = await page.evaluate(() => ({ w: document.getElementById('scene').width, h: document.getElementById('scene').height, n: window.__PACK.n }));
     const tierName = Object.values(TIERS).find((t) => t.n === buf.n)?.name ?? '?', floor = Math.min(vp.dpr, TIERS[tierName]?.dprFloor ?? 0);

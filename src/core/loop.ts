@@ -1,6 +1,7 @@
 import { SHADOW_EVERY } from '../render/shadow';
 import { Vector3 } from 'three';
 import { frameShot } from '../camera/rig';
+import { SAFE, keepInSafeArea } from '../camera/safe-area';
 import { CONFINEMENT, towards } from '../camera/confinement';
 import { ss } from './ease';
 import { LightRigBlend, type RigState } from './light-rig';
@@ -19,6 +20,8 @@ import type { ScrollTimeline } from '../timeline/scroll';
 import { locate, locateAt, type Located } from '../timeline/segments';
 import { FixedClock } from './clock';
 import { env } from './env';
+import { chapterOpacity } from '../ui/overlays';
+import type { TextBlock } from '../ui/text-block';
 import type { TypeAxes } from '../ui/type-axes';
 import type { Stage } from './renderer';
 import type { Projection } from './resize';
@@ -37,6 +40,8 @@ export interface LoopDeps {
   timer: GpuTimer;
   /** what to draw: the tier's layers and ?debug / ?off overrides (core/layers.ts) */
   layers: RenderLayers;
+  /** the chapter's text block and the HUD's scrim on screen: where the hero grain must not sit */
+  textBlock: TextBlock;
 }
 
 /** Per-frame hook for the parts that react to where the story is (UI, input, audio, quality). */
@@ -144,6 +149,9 @@ export class Loop {
     hero.visible = heroVisible;
     for (const fn of this.listeners.camera) fn(info);
     frameShot(stage.camera, S, reduced ? null : this.parallax, towards(wa.wideAnchor, wb.wideAnchor, S.eg));
+    // narrow screens: turn just enough to keep the hero grain on screen and clear of the words
+    const tb = this.d.textBlock;
+    if (!flags.noSafe) keepInSafeArea(stage.camera, S.hero, { x: SAFE.x, bottom: -SAFE.y, top: tb.top, text: tb.box, textWeight: chapterOpacity(tr, t) });
     const hp = this.heroNdc.copy(S.hero).project(stage.camera);
     reportHero(hp.x, hp.y, hp.z, heroVisible);
     const grain = towards(wa.grain, wb.grain, S.eg);

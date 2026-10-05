@@ -104,3 +104,20 @@ Real iOS and iPadOS Safari, real Android Chrome, Apple Silicon. Chromium's mobil
 browser bars: it resizes vh with the window, so the bar check tests that ScrollTrigger keeps its
 mapping and nothing rebuilds, not Safari's own viewport behaviour. A check on real devices is
 recommended before launch.
+
+## Hero safe area (Phase 6d)
+
+The shots are composed for 16:9 and put the hero grain right of centre; on narrow portrait screens
+that side fell outside the frame. `camera/safe-area.ts` now turns the camera just enough (a yaw,
+pitch only where needed) to keep the grain within ±0.6 × ±0.65 of the screen, below the HUD scrim
+and clear of the chapter text, computed every frame from the camera as placed. Measured on all 14
+viewports at every hold and transition midpoint: 368/392 inside before, 392/392 after; no desktop
+position moved (140/140 identical). Before (`?nosafe`) and after, phones:
+
+| Viewport | Before | After |
+|---|---|---|
+| 360×800 | [before](safe-area-before/phone-360x800.jpg) | [after](safe-area-after/phone-360x800.jpg) |
+| 375×667 | [before](safe-area-before/phone-375x667.jpg) | [after](safe-area-after/phone-375x667.jpg) |
+| 390×844 | [before](safe-area-before/phone-390x844.jpg) | [after](safe-area-after/phone-390x844.jpg) |
+| 430×932 | [before](safe-area-before/phone-430x932.jpg) | [after](safe-area-after/phone-430x932.jpg) |
+| 844×390 | [before](safe-area-before/phone-844x390-landscape.jpg) | [after](safe-area-after/phone-844x390-landscape.jpg) |

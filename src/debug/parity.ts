@@ -3,6 +3,7 @@
 //   ?tier=low|mid|high  force a quality tier
 //   ?debug           the tier and the rule that chose it, the GPU, frame and GPU times (measured only here)
 //   ?nosnap          scrolling does not settle on chapters (to hold a position mid-transition)
+//   ?nosafe          no hero safe area: the camera as composed for 16:9 (camera/safe-area.ts), for comparison
 //   ?perf            time every render pass on the GPU and publish the timings as window.__gpu
 //   ?pointcap=N      largest grain in pixels (performance experiments)
 //   ?grains=N        grains per world instead of the tier's count (performance experiments)
@@ -55,6 +56,7 @@ export const flags = {
   debug: params.has('debug'),
   tier: capture ? 'high' : params.get('tier'),
   noSnap: params.has('nosnap'),
+  noSafe: params.has('nosafe'),
   perf: params.has('perf'),
   pointCap: params.has('pointcap') ? Number(params.get('pointcap')) : null,
   grains: params.has('grains') ? Number(params.get('grains')) : null,
