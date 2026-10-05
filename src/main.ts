@@ -31,6 +31,7 @@ import { readCopy, type Copy } from './ui/copy';
 import { revealWhenFontsReady } from './ui/fonts';
 import { Loader } from './ui/loader';
 import { HeroMarker } from './ui/marker';
+import { MotionToggle } from './ui/motion';
 import { TimelineNav } from './ui/nav';
 import { TypeAxes } from './ui/type-axes';
 import { Ending, Intro, chapterOpacity, cutOpacity } from './ui/overlays';
@@ -94,6 +95,7 @@ function boot(): void {
   const marker = new HeroMarker($('marker'), $('markerLabel'), stage.renderer.domElement);
   const cut = $('cut');
   const sound = new SoundToggle($<HTMLButtonElement>('sound'));
+  new MotionToggle($<HTMLButtonElement>('motion'));
   const a11y = new StoryA11y($('story'), $('status'), copy, {
     go,
     onSignatureFocus: (focused) => { ending.forced = focused; chapter.setSignatureFocus(focused); },

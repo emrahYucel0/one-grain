@@ -35,8 +35,12 @@ html.fonts-pending .loader .brand{visibility:hidden}
   <div class="hud-side">
     <div class="time u-years" id="time" aria-hidden="true"
       data-years="years" data-approx="≈ " data-million="million" data-now="Now" data-live-unit="on your screen" data-ms=" ms"><b id="clock">0</b><span id="clockUnit">years</span></div>
-    <button class="sound" id="sound" type="button" aria-pressed="false"
-      data-listen="Listen" data-on="Sound on" data-off="Sound off" data-unavailable="Sound unavailable">Listen</button>
+    <div class="controls">
+      <button class="sound" id="sound" type="button" aria-pressed="false"
+        data-listen="Listen" data-on="Sound on" data-off="Sound off" data-unavailable="Sound unavailable">Listen</button>
+      <button class="sound motion" id="motion" type="button" aria-pressed="true"
+        data-on="Motion on" data-off="Motion off">Motion on</button>
+    </div>
   </div>
 </header>
 

@@ -53,4 +53,4 @@ export const env = {
   touchOnly: matchMedia('(hover: none)').matches,
 };
 
-reducedQuery.addEventListener('change', (e) => { env.reduced = e.matches; });
+// later changes of the system setting, and the visitor's own choice, are the motion button's (ui/motion.ts)
