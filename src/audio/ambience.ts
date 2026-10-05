@@ -46,16 +46,17 @@ export class AmbienceLayer {
   schedule(now: number): void {
     const w = this.w;
     if (!w) return;
-    const R = rand, ahead = now + AHEAD;
-    for (const t of this.due('thump', w.thump, now, ahead)) this.thump(t, .04);
-    for (const t of this.due('crack', w.crack, now, ahead)) this.burst(t, w.crackF[0] + R() * (w.crackF[1] - w.crackF[0]), 12, .015 + R() * .04, .3 + R() * .3, (R() - .5) * 1.4);
+    // g: the world's gain on every event (the random draws stay in the same order whatever it is)
+    const R = rand, ahead = now + AHEAD, g = 10 ** ((w.gain ?? 0) / 20);
+    for (const t of this.due('thump', w.thump, now, ahead)) this.thump(t, .04 * g);
+    for (const t of this.due('crack', w.crack, now, ahead)) this.burst(t, w.crackF[0] + R() * (w.crackF[1] - w.crackF[0]), 12, .015 + R() * .04, (.3 + R() * .3) * g, (R() - .5) * 1.4);
     const bf = w.bubF ?? [3000, 6000];
-    for (const t of this.due('bubble', w.bubble, now, ahead)) this.burst(t, bf[0] + R() * (bf[1] - bf[0]), 18, .02 + R() * .05, .34 + R() * .3, (R() - .5) * 1.6);
-    for (const t of this.due('tick', w.tick, now, ahead)) this.burst(t, w.tickF * (.8 + R() * .4), 6, .008, .28 + R() * .16, (R() - .5) * 1.4);
-    for (const t of this.due('gust', w.gust, now, ahead)) this.swell(t, (w.gustF ?? 5000) * (.85 + R() * .3), 1.2, 1.8 + R() * 2, 2.5 + R() * 3, .09, (R() - .5) * 1.4, 'bandpass');
-    for (const t of this.due('wave', w.wave, now, ahead)) this.swell(t, 900 + R() * 400, .6, 2.6 + R(), 3.6 + R() * 1.5, .07, (R() - .5) * .8, 'lowpass');
-    for (const t of this.due('metal', w.metal, now, ahead)) this.metal(t, .05);
-    for (const t of this.due('brook', w.brook ?? 0, now, ahead)) this.bubble(t, .012 + R() * .022, (R() - .5) * 1.5);
+    for (const t of this.due('bubble', w.bubble, now, ahead)) this.burst(t, bf[0] + R() * (bf[1] - bf[0]), 18, .02 + R() * .05, (.34 + R() * .3) * g, (R() - .5) * 1.6);
+    for (const t of this.due('tick', w.tick, now, ahead)) this.burst(t, w.tickF * (.8 + R() * .4), 6, .008, (.28 + R() * .16) * g, (R() - .5) * 1.4);
+    for (const t of this.due('gust', w.gust, now, ahead)) this.swell(t, (w.gustF ?? 5000) * (.85 + R() * .3), 1.2, 1.8 + R() * 2, 2.5 + R() * 3, .09 * g, (R() - .5) * 1.4, 'bandpass');
+    for (const t of this.due('wave', w.wave, now, ahead)) this.swell(t, 900 + R() * 400, .6, 2.6 + R(), 3.6 + R() * 1.5, .07 * g, (R() - .5) * .8, 'lowpass');
+    for (const t of this.due('metal', w.metal, now, ahead)) this.metal(t, .05 * g);
+    for (const t of this.due('brook', w.brook ?? 0, now, ahead)) this.bubble(t, (.012 + R() * .022) * g, (R() - .5) * 1.5);
   }
 
   /** Every event time of one kind inside the window (at most six per call). */

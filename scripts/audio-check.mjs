@@ -4,7 +4,8 @@
 //  3. silence: output exactly 0 in the middle of the "One day," cut and after the final landing;
 //     non-zero again after scrolling back from either
 //  4. per-world levels: ambience above the music in magma, river, coast, desert and furnace (RMS over
-//     15 s: the ambience is random events and slow swells); output peaks below −6 dBFS at every hold
+//     30 s: the ambience is random events and slow swells, and 15 s let a sparse stretch of events
+//     decide; the rule is the same); output peaks below −6 dBFS at every hold
 //  5. toggling off reaches exactly 0 within 0.5 s; a hidden tab suspends the context, a visible one resumes it
 //  6. a returning visitor who chose sound gets it on the first gesture (also when that gesture is the button)
 //  7. a scroll through the whole story, both ways, with sound on: no console warnings or errors; the
@@ -92,8 +93,8 @@ try {
     if (i === LAST) continue; // the final hold withdraws into silence (checked below)
     await go(page, SNAP_POINTS[i]);
     await page.waitForTimeout(1200);
-    // the ambience is random events (Poisson) and slow swells: the worlds held to "ambience above the music" get 15 s windows
-    const L = await levels(page, loud.has(w.slug) ? 15000 : 5000);
+    // the ambience is random events (Poisson) and slow swells: the worlds held to "ambience above the music" get 30 s windows
+    const L = await levels(page, loud.has(w.slug) ? 30000 : 5000);
     maxPeak = Math.max(maxPeak, L.out.peak);
     rows.push(`${w.slug.padEnd(8)} music ${fdb(db(L.music.rms))}, ambience ${fdb(db(L.ambience.rms))}, output peak ${fdb(db(L.out.peak))}`);
     if (loud.has(w.slug)) check(`${w.slug}: ambience above the music`, L.ambience.rms > L.music.rms, `ambience ${fdb(db(L.ambience.rms))} vs music ${fdb(db(L.music.rms))}`);

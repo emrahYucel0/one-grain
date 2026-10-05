@@ -60,13 +60,14 @@ export const PULSE: ReadonlySet<string> = new Set(['quarry', 'furnace', 'purity'
  *   bubble a short high noise burst  metal  a distant metal ring
  *   tick   a tiny dry click (tickF)  brook  bubbles on running water: tiny rising sine tones
  *   bed    the water rush, 0..1 (the only continuous sound, only where there is water)
+ *   gain   dB on every event of the world (0 when left out)
  */
 export interface Ambience {
   thump: number; crack: number; crackF: readonly [number, number];
   gust: number; gustF?: number; wave: number;
   bubble: number; bubF?: readonly [number, number];
   metal: number; tick: number; tickF: number;
-  brook?: number; bed?: number;
+  brook?: number; bed?: number; gain?: number;
 }
 
 export const AMB: Readonly<Record<string, Ambience>> = {
@@ -77,7 +78,8 @@ export const AMB: Readonly<Record<string, Ambience>> = {
   desert: { thump: 0, crack: 0, crackF: [3000, 6000], gust: .14, gustF: 6200, wave: 0, bubble: 0, metal: 0, tick: 3, tickF: 6500 },
   again: { thump: .06, crack: .12, crackF: [2000, 4000], gust: .05, gustF: 4000, wave: 0, bubble: 0, metal: 0, tick: 0, tickF: 7000 },
   quarry: { thump: .05, crack: .15, crackF: [2000, 4000], gust: .05, gustF: 3500, wave: 0, bubble: 0, metal: .1, tick: 0, tickF: 7000 },
-  furnace: { thump: .16, crack: 2.6, crackF: [2500, 6000], gust: 0, wave: 0, bubble: 0, metal: .04, tick: 0, tickF: 7000 },
+  // +1.5 dB: its crackle sat level with the pulsing music; now clearly in front of it
+  furnace: { thump: .16, crack: 2.6, crackF: [2500, 6000], gust: 0, wave: 0, bubble: 0, metal: .04, tick: 0, tickF: 7000, gain: 1.5 },
   purity: { thump: 0, crack: 0, crackF: [3000, 6000], gust: .1, gustF: 8200, wave: 0, bubble: 0, metal: 0, tick: .5, tickF: 8500 },
   crystal: { thump: 0, crack: 0, crackF: [3000, 6000], gust: .09, gustF: 9000, wave: 0, bubble: 0, metal: 0, tick: .25, tickF: 9500 },
   wafer: { thump: 0, crack: 0, crackF: [3000, 6000], gust: .08, gustF: 8500, wave: 0, bubble: 0, metal: 0, tick: 1.2, tickF: 8000 },
