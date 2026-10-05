@@ -1,4 +1,4 @@
 {
-  "_doc": "Where the site lives: canonical, Open Graph and Twitter URLs, JSON-LD, robots.txt and sitemap.xml all come from this one value (vite.config.ts). A placeholder until the domain is decided.",
-  "url": "https://one-grain.example/"
+  "_doc": "Where the site lives: canonical, Open Graph and Twitter URLs, JSON-LD, robots.txt and sitemap.xml all come from this one value (vite.config.ts).",
+  "url": "https://onegrain.world/"
 }

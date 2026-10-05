@@ -7,7 +7,7 @@ serve it over HTTPS. Nothing runs on the server.
 
 - **Set the domain** in `site.config.json` (`url`, with a trailing slash). The canonical link,
   the Open Graph and Twitter URLs, the JSON-LD, `robots.txt` and `sitemap.xml` all come from
-  this one value. The repository ships with the placeholder `https://one-grain.example/`.
+  this one value: `https://onegrain.world/`.
 - Run `npm run build`, then `npm run lighthouse`. That command builds the site, serves it the
   way a host would (`scripts/serve.mjs`: Brotli, the headers below), and checks the console,
   the CSP, 404s and the request list. It writes `docs/lighthouse.md`.
