@@ -67,8 +67,7 @@ export function exposeCapture(loop: { step(draw?: boolean): void }, pointer: Poi
       const engine = Engine.offline(ctx), sound = Sound.driven(engine);
       const every = Math.max(1, Math.round(SCHEDULE_EVERY_S * fps));
       // The whole score is scheduled before rendering starts, frame by frame on the frame's exact time
-      // (Engine.clock): nodes created while an OfflineAudioContext is suspended join its graph at a
-      // moment that varies from run to run, so their starts would too.
+      // (Engine.clock): no suspend/resume round trips, no reads of the audio thread's state.
       for (let i = 0; i < frames.length; i++) { engine.clock = i / fps; sound.frame(frames[i]!, i * 1000 / fps); if (i % every === 0) sound.schedule(); }
       return wavBase64(await ctx.startRendering());
     },

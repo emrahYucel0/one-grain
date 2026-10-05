@@ -57,8 +57,8 @@ export class Engine {
   static offline(ctx: OfflineAudioContext): Engine { return new Engine(ctx, false); }
 
   /**
-   * Capture mode sets the clock itself (the frame's exact time): an OfflineAudioContext's currentTime,
-   * read on the main thread while suspended, can trail the suspension point by a varying amount.
+   * Capture mode sets the clock itself: it schedules the whole score before an offline render starts,
+   * so each frame's events are timed from that frame's exact time, not from currentTime.
    */
   clock: number | null = null;
 

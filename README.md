@@ -216,9 +216,10 @@ video offline, one frame at a time, from the built site in capture mode (`?captu
 - **Sound**, rendered offline on an `OfflineAudioContext` (48 kHz) from the story state of every
   frame: the whole score is scheduled before rendering, frame by frame on each frame's exact time,
   the scheduler at its realtime 50 ms period, every random choice seeded (`seed`), then muxed in as
-  AAC 320 kb/s; the WAV is kept too. (Scheduling while the context is suspended is not repeatable in
-  Chrome: nodes created then join the graph at varying moments.) Two renders agree to within one
-  least significant bit on a few hundred samples: Chrome sums a node's inputs in varying order.
+  AAC 320 kb/s; the WAV is kept too. Two renders agree to within one least significant bit on a
+  few thousand of 12 million samples (about −150 dBFS before 16-bit rounding): Chrome sums a node's
+  inputs in varying order. (Driving the render with suspend/resume gives the same: an earlier
+  "−4.5 dB" difference was a measuring mistake, an ffmpeg mix that did not subtract.)
   `--sound-only` renders the sound again and puts it into the finished videos without re-encoding
   the picture.
 - **Chunks.** Long browser sessions wore Chromium out here (a crash, a hung readback after thousands
