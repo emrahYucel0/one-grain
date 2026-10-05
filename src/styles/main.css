@@ -224,6 +224,8 @@ html.motion-off :is(.loader,.loader-line i){transition:none}
 
 /* capture mode (the video): no interaction hints; a scripted cursor shows the interaction instead */
 html.capture .chapter .hint{display:none !important}
+/* nor the sound and motion buttons, with their scrim (the video has its own sound); hidden in place, so the HUD keeps its layout */
+html.capture .controls{visibility:hidden}
 
 /* contrast (Phase 6c, npm run check:contrast): the small muted texts (clock unit, controls, rail labels,
    hints, micro lines) sit over the scene without the bottom scrim; a tight dark halo keeps them at AA

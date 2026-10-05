@@ -215,7 +215,7 @@ video offline, one frame at a time, from the built site in capture mode (`?captu
   story's track, `moves` per chapter), rests in the middle of a move (`rests`: the "One day," card
   for 2.5 s), the intro and the final hold. Moves ease like the scroll snap. The final hold's
   timeline (the light going out, the landing, the silence) runs at real-time pace.
-- **Hands-on holds without hints.** Capture mode hides the interaction hints; an invisible scripted
+- **Hands-on holds without hints or buttons.** Capture mode hides the interaction hints and the sound and motion buttons with their scrim (hidden in place: the HUD keeps its layout); an invisible scripted
   cursor (`cursor`: keys of seconds and normalised device coordinates per chapter, a smooth curve
   through them) hovers across the desert's dunes, which part around it (held down for 1.5 s mid-sweep,
   `press`, so the parting reads at small sizes), and the chip, whose switches light up. It steers the camera's pointer parallax at half strength.
