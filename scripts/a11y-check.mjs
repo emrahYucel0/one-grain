@@ -3,8 +3,11 @@
 //  - the article stays in the accessibility tree, the overlay does not duplicate it
 //  - arrow keys / Page Down step between chapters; timeline buttons show a focus ring
 //  - prefers-reduced-motion: no morph, the canvas fades instead
+//  - WCAG 2.2 beyond axe (scripts/lib/a11y-wcag22.mjs): the motion button, target size, reflow at
+//    320 px, text spacing, focus order and visible focus, status announcements without repeats
 //  - no WebGL2, and no JavaScript: the article is the page
 import AxeBuilder from '@axe-core/playwright';
+import { wcag22 } from './lib/a11y-wcag22.mjs';
 import { launch } from './lib/browser.mjs';
 import { startDev } from './lib/servers.mjs';
 
@@ -13,7 +16,7 @@ const url = `${server.origin}/`;
 const results = [];
 const check = (name, ok, detail = '') => { results.push({ name, ok }); console.log(`${ok ? 'PASS' : 'FAIL'}  ${name}${detail ? `  (${detail})` : ''}`); };
 const axe = async (page, label) => {
-  const r = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa']).analyze();
+  const r = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa']).analyze();
   check(`axe: ${label}`, r.violations.length === 0, r.violations.map((v) => `${v.id} ×${v.nodes.length}`).join(', '));
 };
 
@@ -74,6 +77,8 @@ try {
   const end = await page.evaluate(() => ({ cls: document.getElementById('chapter').className, stage: document.body.style.backgroundColor }));
   check('signature link focus → fully revealed (sentence, signature, end colour)', /\bin\b/.test(end.cls) && /\bsig\b/.test(end.cls) && end.stage === END_STAGE, JSON.stringify(end));
   await page.close();
+
+  await wcag22(browser, url, check);
 
   // --- reduced motion: a quarter into the first transition the canvas is fading, not morphing
   const rm = await newPage(browser, { viewport: { width: 1440, height: 900 }, reducedMotion: 'reduce' });
