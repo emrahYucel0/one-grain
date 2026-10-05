@@ -215,3 +215,5 @@ html.fonts-pending .loader .brand{visibility:hidden}
 html.ready .loader{opacity:0;visibility:hidden}
 @media (prefers-reduced-motion:reduce){.loader,.loader-line i{transition:none}}
 
+/* capture mode (the video): no interaction hints; a scripted cursor shows the interaction instead */
+html.capture .chapter .hint{display:none !important}

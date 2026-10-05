@@ -100,7 +100,7 @@ function boot(): void {
   });
   // ?capture: the frames are stepped by scripts/capture.mjs (src/capture/), and their sound recorded
   let record: ((f: SoundFrame) => void) | null = null;
-  if (flags.capture) void import('./capture/capture').then((m) => { record = m.exposeCapture(loop); });
+  if (flags.capture) void import('./capture/capture').then((m) => { record = m.exposeCapture(loop, pointer); });
   const pointer = new Pointer();
   chapter.show(0); nav.setCurrent(0);
 

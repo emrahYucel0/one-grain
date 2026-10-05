@@ -8,6 +8,7 @@
 // stepped, unrecorded, so the page's own timers see them). --sound-only steps the path in a small
 // window without recording frames, renders the sound and puts it into every finished
 // capture/out/one-grain-<W>x<H>.mp4 (the picture is copied, not re-encoded): for a new seed.
+// --list prints the path's timeline and exits.
 // ffmpeg: $FFMPEG, else the ffmpeg-static dev dependency, else ffmpeg on the PATH.
 import { spawn } from 'node:child_process';
 import { existsSync } from 'node:fs';
@@ -42,22 +43,44 @@ const run = (argv, stdin = 'ignore') => {
 // the timeline: the story progress at every frame
 const path = JSON.parse(await readFile(PATH, 'utf8'));
 const vite = await createServer({ server: { middlewareMode: true }, appType: 'custom', logLevel: 'error' });
-const { SNAP_POINTS, TOTAL } = await vite.ssrLoadModule('/src/timeline/segments.ts');
+const { SNAP_POINTS, TOTAL, transitionMidpoint } = await vite.ssrLoadModule('/src/timeline/segments.ts');
 const { WORLDS } = await vite.ssrLoadModule('/src/story/worlds.ts');
 await vite.close();
 const ease = (x) => (x < .5 ? 2 * x * x : 1 - (-2 * x + 2) ** 2 / 2); // the scroll snap's power2.inOut
-const segs = []; // [seconds, from v, to v]
+// segments: rest on a chapter (hold), move between progress values (eased), or rest mid-transition
+const segs = [];
 WORLDS.forEach((w, i) => {
   const end = i === WORLDS.length - 1;
-  segs.push([i === 0 ? path.intro : end ? path.final : path.holds?.[w.slug] ?? path.hold, SNAP_POINTS[i], SNAP_POINTS[i]]);
-  if (!end) segs.push([path.moves?.[w.slug] ?? (SNAP_POINTS[i + 1] - SNAP_POINTS[i]) * TOTAL * path.scroll, SNAP_POINTS[i], SNAP_POINTS[i + 1]]);
+  segs.push({ d: i === 0 ? path.intro : end ? path.final : path.holds?.[w.slug] ?? path.hold, a: SNAP_POINTS[i], b: SNAP_POINTS[i], hold: w.slug });
+  if (end) return;
+  const d = path.moves?.[w.slug] ?? (SNAP_POINTS[i + 1] - SNAP_POINTS[i]) * TOTAL * path.scroll, rest = path.rests?.[w.slug];
+  if (!rest) { segs.push({ d, a: SNAP_POINTS[i], b: SNAP_POINTS[i + 1] }); return; }
+  const mid = transitionMidpoint(i); // e.g. the "One day," card, fully shown around the cut's middle
+  segs.push({ d: d / 2, a: SNAP_POINTS[i], b: mid }, { d: rest, a: mid, b: mid }, { d: d / 2, a: mid, b: SNAP_POINTS[i + 1] });
 });
-const fps = path.fps, total = segs.reduce((a, s) => a + s[0], 0), count = Math.round(total * fps);
-const progressAt = (sec) => {
-  let t = sec;
-  for (const [d, a, b] of segs) { if (t <= d) return a === b ? a : a + (b - a) * ease(t / d); t -= d; }
-  return 1;
+const fps = path.fps, total = segs.reduce((a, s) => a + s.d, 0), count = Math.round(total * fps);
+/** Catmull-Rom through [t, x, y] keys; null before the first and after the last */
+const cursorAt = (keys, t) => {
+  if (!keys?.length || t < keys[0][0] || t > keys.at(-1)[0]) return null;
+  let k = 0; while (k < keys.length - 2 && t > keys[k + 1][0]) k++;
+  const p0 = keys[Math.max(0, k - 1)], p1 = keys[k], p2 = keys[Math.min(keys.length - 1, k + 1)], p3 = keys[Math.min(keys.length - 1, k + 2)];
+  const u = p2[0] > p1[0] ? (t - p1[0]) / (p2[0] - p1[0]) : 0, cr = (a, b, c, d) => .5 * (2 * b + (c - a) * u + (2 * a - 5 * b + 4 * c - d) * u * u + (3 * b - a - 3 * c + d) * u * u * u);
+  return { x: cr(p0[1], p1[1], p2[1], p3[1]), y: cr(p0[2], p1[2], p2[2], p3[2]) };
 };
+/** progress and the scripted cursor at a time (seconds) */
+const stateAt = (sec) => {
+  let t = sec;
+  for (const s of segs) {
+    if (t <= s.d) return { v: s.a === s.b ? s.a : s.a + (s.b - s.a) * ease(t / s.d), cursor: s.hold ? cursorAt(path.cursor?.[s.hold], t) : null };
+    t -= s.d;
+  }
+  return { v: 1, cursor: null };
+};
+if (args.includes('--list')) { // the timeline, to pick excerpts or teaser moments
+  let t = 0;
+  for (const g of segs) { console.log(`${t.toFixed(2).padStart(7)}–${(t + g.d).toFixed(2).padStart(7)} s  ${g.hold ? `hold ${g.hold}` : g.a === g.b ? 'rest mid-transition' : 'move'}`); t += g.d; }
+  process.exit(0);
+}
 const first = range ? Math.round(range[0] * fps) : 0, last = range ? Math.min(count, Math.round(range[1] * fps)) : count;
 console.log(`${W}×${H} · ${total.toFixed(1)} s · ${count} frames at ${fps} fps${range ? ` · rendering frames ${first}–${last}` : ''} · ffmpeg: ${ffmpeg}`);
 
@@ -79,8 +102,8 @@ try {
   console.log(`high tier: ${env.n} grains · drawing buffer ${env.buffer}`);
   const cdp = await page.context().newCDPSession(page);
   const within = (p, what) => Promise.race([p, new Promise((_, fail) => setTimeout(() => fail(new Error(lost ?? `${what} took over 60 s`)), 60000))]);
-  const step = (i) => within(page.evaluate(([ms, v]) => window.__capture.step(ms, v, null), [i * 1000 / fps, progressAt(i / fps)]), `frame ${i}`)
-    .catch((e) => { throw new Error(`frame ${i} (${(i / fps).toFixed(2)} s): ${lost ?? e.message}`); });
+  const step = (i) => { const st = stateAt(i / fps); return within(page.evaluate(([ms, v, c]) => window.__capture.step(ms, v, null, c), [i * 1000 / fps, st.v, st.cursor]), `frame ${i}`)
+    .catch((e) => { throw new Error(`frame ${i} (${(i / fps).toFixed(2)} s): ${lost ?? e.message}`); }); };
   await step(0);
   await page.waitForFunction(() => !document.documentElement.classList.contains('fonts-pending'), null, { timeout: 10000 });
   for (let i = 1; i < first; i++) await step(i);
