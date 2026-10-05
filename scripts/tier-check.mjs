@@ -10,6 +10,9 @@
 //     external slowdown, our GPU time fine); a step down under GPU load and back up once the load is
 //     gone; after that up-and-down, no more steps up; without the GPU timer (?notimer) the frame
 //     interval decides, over three windows;
+//  6. the pacing lock in auto (the default), on synthetic refresh cadences: never where frames fit
+//     (60 Hz, 120 Hz, 144 Hz at one or two refreshes), only where 144 Hz frames mix two and three;
+//     and the page runs in auto unless ?pacing says otherwise;
 //  and no console errors.
 import { createServer } from 'vite';
 import { launch, watchConsole } from './lib/browser.mjs';
@@ -18,6 +21,7 @@ import { startDev } from './lib/servers.mjs';
 const vite = await createServer({ server: { middlewareMode: true }, appType: 'custom', logLevel: 'error' });
 const { transitionMidpoint, SNAP_POINTS } = await vite.ssrLoadModule('/src/timeline/segments.ts');
 const { TIERS } = await vite.ssrLoadModule('/src/core/quality.ts');
+const { lockFor } = await vite.ssrLoadModule('/src/core/pacing.ts');
 await vite.close();
 
 const dev = await startDev(5179);
@@ -139,6 +143,28 @@ try {
     const first = down.l[0], after = first ? first.at * 1000 - packAt : 0;
     check('?notimer: the frame interval steps down after three slow windows', first?.what === 'dof off' && /in 3 windows/.test(first.reason) && after >= 8000 + 3 * 2000,
       first ? `${first.what} at ${(after / 1000).toFixed(1)} s after the worlds: ${first.reason}` : 'no step');
+    await pg.context().close();
+  }
+
+  // 6: the pacing lock
+  {
+    const jitter = (r, n, mults) => Array.from({ length: n }, (_, i) => r * mults[i % mults.length] + Math.sin(i * 12.9898) * .3);
+    const cases = [
+      ['60 Hz, frames fit one refresh', 16.67, [1], 0],
+      ['60 Hz, frames take two refreshes', 16.67, [2], 0],
+      ['60 Hz, one and two mixed', 16.67, [1, 2, 1], 0],
+      ['120 Hz, frames at 16.7 ms (two refreshes)', 8.33, [2], 0],
+      ['120 Hz, one and two mixed', 8.33, [1, 2], 0],
+      ['144 Hz, frames fit two refreshes', 6.94, [2], 0],
+      ['144 Hz, two and three mixed, mostly three', 6.94, [3, 2, 3, 3], 3],
+    ];
+    for (const [name, r, mults, want] of cases) {
+      const got = lockFor(jitter(r, 120, mults), r, 'auto');
+      check(`pacing auto: ${name} → ${want ? `every ${want}` : 'no lock'}`, got === want, got ? `every ${got}` : 'no lock');
+    }
+    const pg = await open('');
+    const mode = await pg.evaluate(() => document.querySelector('pre').textContent.split('\n').find((l) => l.startsWith('pacing')));
+    check('pacing: auto is the default', /^pacing auto/.test(mode), mode);
     await pg.context().close();
   }
 

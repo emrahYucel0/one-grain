@@ -557,7 +557,7 @@ heavier holds. The options for that (depth of field, bloom, fewer grains, every 
 casting shadows) are in the delta 6 and Phase 4a tables, and all of them weaken the look, so none
 is adopted.
 
-### Option: the pacing lock (`?pacing=off|on|auto`, `core/pacing.ts`; default off)
+### Option: the pacing lock (`?pacing=off|on|auto`, `core/pacing.ts`; default auto since Phase 6a)
 
 - **Refresh:** measured from rAF while the worlds build.
 - **When it engages (auto):** only when frames mostly take three refreshes or more and at least

@@ -4,7 +4,7 @@
  * than a steady three. The pacer can then lock rendering to a fixed cadence: every n-th refresh.
  *
  *   off   never lock
- *   auto  lock only when frames mostly take three or more refreshes and at least 15 % of them come
+ *   auto  (the default) lock only when frames mostly take three or more refreshes and at least 15 % of them come
  *         in faster: then they do not fit, and a steady cadence beats the mix. Frames that fit in
  *         one or two refreshes (60 Hz, 120 Hz at 16.7 ms) never engage it.
  *   on    lock to the most common cadence whenever it is two refreshes or more (measurements)
@@ -45,6 +45,23 @@ export function refreshFrom(deltas: readonly number[]): number {
 const WINDOW_MS = 2000, MIN_FRAMES = 40, PROBE_EVERY_MS = 10000, PROBE_MS = 1000, QUIET_MS = 1500;
 /** the slowest cadence it locks to (every 4th refresh: 36 fps at 144 Hz); slower frames are left as they come */
 const MAX_LOCK = 4;
+
+/**
+ * The cadence a window of frame intervals asks for (0: render whenever ready). Each interval counts
+ * as a whole number of refreshes; the most common one is the mode. auto locks only when the mode is
+ * three refreshes or more and at least 15 % of the frames came faster (they do not fit, and a steady
+ * cadence beats the mix); on locks whenever the mode is two or more; never beyond MAX_LOCK.
+ */
+export function lockFor(deltas: readonly number[], refresh: number, mode: PacingMode): number {
+  if (mode === 'off' || !refresh || !deltas.length) return 0;
+  const counts = new Map<number, number>();
+  for (const d of deltas) { const k = Math.max(1, Math.round(d / refresh)); counts.set(k, (counts.get(k) ?? 0) + 1); }
+  let most = 1, best = 0;
+  for (const [k, c] of counts) if (c > best || (c === best && k > most)) { most = k; best = c; }
+  const faster = [...counts].filter(([k]) => k < most).reduce((s, [, c]) => s + c, 0) / deltas.length;
+  if (most > MAX_LOCK) return 0; // too slow for a cadence to help
+  return mode === 'on' ? (most >= 2 ? most : 0) : most >= 3 && faster >= .15 ? most : 0;
+}
 
 export interface PacingState { mode: PacingMode; refresh: number; lock: number; probing: boolean }
 
@@ -124,17 +141,10 @@ export class Pacer {
   get state(): PacingState { return { mode: this.mode, refresh: this.refresh, lock: this.lock, probing: performance.now() < this.probeUntil }; }
 
   private decide(now: number): void {
-    const counts = new Map<number, number>();
-    for (const d of this.deltas) { const k = Math.max(1, Math.round(d / this.refresh)); counts.set(k, (counts.get(k) ?? 0) + 1); }
-    const n = this.deltas.length;
-    let mode = 1, best = 0;
-    for (const [k, c] of counts) if (c > best || (c === best && k > mode)) { mode = k; best = c; }
-    const faster = [...counts].filter(([k]) => k < mode).reduce((s, [, c]) => s + c, 0) / n;
-    const lock = mode > MAX_LOCK ? 0 // too slow for a cadence to help
-      : this.mode === 'on' ? (mode >= 2 ? mode : 0)
-      : mode >= 3 && faster >= .15 ? mode : 0;
+    const lock = lockFor(this.deltas, this.refresh, this.mode);
     this.lock = lock;
     this.deltas = []; this.windowStart = -1; this.probeUntil = 0;
     if (lock) this.nextProbe = now + PROBE_EVERY_MS;
   }
+
 }

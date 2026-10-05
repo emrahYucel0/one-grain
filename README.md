@@ -356,7 +356,7 @@ Everything is synthesised with Web Audio (no files), ported from `reference/v23-
 | `?perf` | Time every render pass on the GPU (`window.__gpu`, with the last 240 raw frames) |
 | `?off=a,b` | Switch render layers off (light, shadows, dof, bloom, grade), for measurements |
 | `?grains=N` · `?pointcap=N` · `?shadowstride=N` | Measurements: grains per world, largest grain in pixels, every N-th grain casts shadows (default 1: all) |
-| `?pacing=off\|on\|auto` | Frame pacing (`core/pacing.ts`, default off): lock rendering to every n-th refresh when frames do not fit two (docs/perf.md) |
+| `?pacing=off\|on\|auto` | Frame pacing (`core/pacing.ts`, default auto): lock rendering to every n-th refresh when frames mostly take three or more and some come faster; never where frames fit (docs/perf.md) |
 | `?parity` | Let a harness drive progress (`window.__V`) and shader time (`window.__T`), or render a transition point directly (`window.__AT = { tr, t, lean }`); pin the display's live clock (`window.__LIVE`, ms) and the seconds spent in the current hold (`window.__FT`: ring fade, final hold); the rendered progress is published as `window.__progress` |
 | `?nosnap` | Scrolling does not settle on chapters, so a position mid-transition can be held |
 | `#magma` … `#now` | Open at that chapter |

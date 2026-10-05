@@ -9,7 +9,7 @@
 //   ?shadowstride=N  every N-th grain casts shadows (default 1 = all); &shadowgrow=F scales its disc
 //   ?dofres=N        depth of field at 1/N resolution (default 2 = half; 4 = quarter), measurements only
 //   ?shadowevery=N   at rest the shadow map refreshes every N-th frame (default 2; every 2nd in transitions), measurements only
-//   ?pacing=off|on|auto  frame pacing (core/pacing.ts; default off)
+//   ?pacing=off|on|auto  frame pacing (core/pacing.ts; default auto; capture mode never paces)
 //   ?notimer         no GPU timer: the quality monitor falls back to frame intervals (core/quality.ts)
 //   ?capture         the submission video's offline render (src/capture/, scripts/capture.mjs): implies
 //                    ?parity and the high tier; the page runs on a virtual clock, one frame per step
@@ -71,7 +71,7 @@ export const flags = {
   shadowEvery: Math.max(1, Number(params.get('shadowevery') ?? 2) | 0),
   shadowGrow: Number(params.get('shadowgrow') ?? 1),
   noTimer: params.has('notimer'),
-  pacing: ((m) => (m === 'on' || m === 'auto' ? m : 'off'))(params.get('pacing')) as 'off' | 'on' | 'auto',
+  pacing: ((m) => (m === 'on' || m === 'off' ? m : 'auto'))(params.get('pacing')) as 'off' | 'on' | 'auto',
   off: new Set((params.get('off') ?? '').split(',').filter(Boolean)),
 };
 
