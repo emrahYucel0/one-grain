@@ -7,13 +7,14 @@ rm -rf "$tmp" && mkdir -p "$tmp"
 
 # The staged copies of everything typecheck and lint read. Inside .git, module resolution
 # still walks up to the repository's node_modules.
-git ls-files -z -- src scripts index.html eslint.config.js vite.config.ts tsconfig.json package.json \
+git ls-files -z -- src scripts index.html eslint.config.js vite.config.ts tsconfig.json tsconfig.node.json site.config.json package.json \
   | git checkout-index -z --stdin --prefix="$tmp/"
 
 status=0
 cd "$tmp" || exit 1
 echo "pre-commit: typecheck (staged files)"
 node "$root/node_modules/typescript/bin/tsc" --noEmit -p . || status=1
+node "$root/node_modules/typescript/bin/tsc" --noEmit -p tsconfig.node.json || status=1
 echo "pre-commit: lint (staged files)"
 node "$root/node_modules/eslint/bin/eslint.js" . || status=1
 cd "$root" && rm -rf "$tmp"
