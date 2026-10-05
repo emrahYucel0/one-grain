@@ -31,6 +31,8 @@ function site(): Plugin {
       order: 'post',
       handler(html, ctx) {
         let out = html.replaceAll('%SITE_URL%', SITE);
+        // the dev server shows the startup guard's error report from the first problem on (index.html)
+        if (ctx.server) out = out.replace('<html lang="en">', '<html lang="en" data-dev>');
         if (ctx.bundle) {
           // the three faces the first view needs, found early; the stylesheet for visitors without JavaScript
           const files = Object.keys(ctx.bundle);

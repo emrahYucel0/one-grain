@@ -13,12 +13,14 @@ export class SimClient {
   private seq = 0;
   private readonly pending = new Map<number, Pending>();
 
-  constructor() {
+  /** `onIssue` hears why the worker was given up (the startup guard's on-screen report). */
+  constructor(onIssue?: (what: string, detail: string) => void) {
     try {
       this.worker = new Worker(new URL('./sim.worker.ts', import.meta.url), { type: 'module' });
       this.worker.onmessage = (e: MessageEvent<Reply>) => this.settle(e.data);
-      this.worker.onerror = (e) => { e.preventDefault(); this.abandonWorker(); };
-    } catch {
+      this.worker.onerror = (e) => { e.preventDefault(); onIssue?.('worker failed, building here', e.message); this.abandonWorker(); };
+    } catch (err) {
+      onIssue?.('no module worker, building here', String(err));
       this.worker = null;
     }
   }

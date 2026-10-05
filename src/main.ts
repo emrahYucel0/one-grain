@@ -28,6 +28,7 @@ import { ClockView, clockProgress } from './ui/clock';
 import { readCopy, type Copy } from './ui/copy';
 import { revealWhenFontsReady } from './ui/fonts';
 import { Loader } from './ui/loader';
+import { guard } from './ui/guard';
 import { HeroMarker } from './ui/marker';
 import { MotionToggle } from './ui/motion';
 import { TimelineNav } from './ui/nav';
@@ -43,7 +44,8 @@ const LAST = WORLDS.length - 1;
 
 function boot(): void {
   const gpu = probeGpu();
-  if (!gpu.webgl2) { root.classList.add('nogl'); return; }
+  guard.log('gpu', `WebGL2 ${gpu.webgl2 ? 'yes' : 'no'}${gpu.performant ? '' : ' (not performant)'} · ${gpu.renderer || 'renderer hidden'} · max texture ${gpu.maxTextureSize}`);
+  if (!gpu.webgl2) { root.classList.add('nogl'); guard.fail('no WebGL2'); return; }
   const copy = readCopy($('story'));
   root.classList.add('gl');
   revealWhenFontsReady();
@@ -52,7 +54,13 @@ function boot(): void {
   const picked = pickTier(gpu, flags.tier);
   const tier = flags.grains ? { ...picked, n: flags.grains } : picked;
   const dpr = pixelRatioFor(tier);
+  guard.log('tier', `${tier.name} · ${tier.n} grains · pixel ratio ${dpr.toFixed(2)}`);
   const stage = createStage($<HTMLCanvasElement>('scene'), dpr);
+  if (guard.shown) {
+    const gl = stage.renderer.getContext();
+    guard.log('extensions', ['EXT_color_buffer_float', 'EXT_color_buffer_half_float', 'OES_texture_float_linear', 'KHR_parallel_shader_compile', 'EXT_disjoint_timer_query_webgl2']
+      .map((x) => `${x.replace(/^(EXT|OES|KHR)_/, '')} ${gl.getSupportedExtensions()?.includes(x) ? 'yes' : 'no'}`).join(' · '));
+  }
   const grains = new GrainCloud(), hero = new HeroGrain(dpr);
   stage.scene.add(grains.object);
   if (flags.pointCap) grains.setPointMax(flags.pointCap);
@@ -129,7 +137,7 @@ function boot(): void {
   });
 
   // quality: step down if our frames stay over budget, back up once they have headroom (queued, applied only while resting)
-  const sim = new SimClient();
+  const sim = new SimClient(guard.log);
   const tiers = new TierManager(tier, layers, {
     auto: !flags.tier, forceDrop: flags.forceDrop,
     build: (n) => sim.build(n),
@@ -158,6 +166,7 @@ function boot(): void {
     exposePack(pack);
     loop.setPack(pack);
     await pipeline.compile(stage.scene, stage.overlay, stage.camera).catch(() => {}); // a safety net: all cached
+    if (guard.failed) return; // the guard gave up on this load and the article is the page
     intro.ready();
     hash.restore();
     if (!flags.capture) loop.start();
@@ -168,9 +177,12 @@ function boot(): void {
 function fallBack(err: unknown): void {
   root.classList.remove('gl');
   root.classList.add('nogl');
+  guard.fail(err instanceof Error ? err.message : String(err));
   throw err;
 }
 
 // The stylesheet does not block the first paint (index.html carries the critical styles: the stage and
 // the loader); the experience starts once it applies.
+guard.log('bundle running');
+guard.alive();
 import('./styles/main.css').then(() => { try { boot(); } catch (err) { fallBack(err); } }, fallBack);

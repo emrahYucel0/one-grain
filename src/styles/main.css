@@ -213,7 +213,6 @@ html:not(.gl) #story{max-width:40rem;margin:0 auto;padding:clamp(2rem,8vh,5rem) 
    so the scene and its words fade in together. The critical part is inline in index.html. */
 .loader{padding:calc(env(safe-area-inset-top,0px) + 1.2rem) clamp(1.25rem,5vw,4.5rem) 0;background:var(--stage);transition:opacity .6s ease,visibility 0s linear .6s}
 .loader .brand{text-shadow:0 1px 10px rgba(0,0,0,.55),0 0 2px rgba(0,0,0,.35)}
-html.fonts-pending .loader .brand{visibility:hidden}
 .loader-line{position:absolute;left:50%;top:50%;width:min(14rem,40vw);height:1px;margin-left:max(-7rem,-20vw);background:var(--rule);overflow:hidden}
 .loader-line i{display:block;height:100%;background:var(--ink);transform:scaleX(var(--load,0));transform-origin:left;transition:transform .3s ease-out}
 html.ready .loader{opacity:0;visibility:hidden}
