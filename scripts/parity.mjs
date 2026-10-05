@@ -22,16 +22,19 @@ const SETTLE_MS = 1600;      // CSS: clock font-size .5 s, punch .7 s
 const FINAL_EARLY_MS = 1500; // final chapter: the sentence is in (.4 s), the grain hovers in full light (it fades from 3 s)
 const FINAL_LATE_MS = 15000; // final chapter: the grain has landed (6.4 s), signature and footnote in (8 s)
 const REVIEW_PCT = 2;
-// Since Phase 6a the port has a top scrim behind the HUD (fading over 20vh) that the reference lacks:
-// positions are judged below that band; the full-frame diff is reported alongside.
+// Since Phase 6a the port has a top scrim behind the HUD (fading over 20vh) and since Phase 6c a right
+// scrim behind the rail (clamp(160px, 17vw, 280px)) that the reference lacks: positions are judged
+// outside those bands; the full-frame diff is reported alongside.
 const TOP_BAND = .2;
+const rightBand = (w) => Math.round(Math.min(280, Math.max(160, w * .17)));
 
 // Positions where the port differs from the reference on purpose (docs/parity-notes.md).
 // Transitions with a camera subject (the purity → crystal reframe) are added automatically.
 // Since Phase 4a the reference for the look is v10 (lit, with post); the v8-era entries (exact
 // ends, the signature's CSS tie) are gone: v10 fixed the tie, and ulp-level differences from exact
 // ends no longer stand out under lighting and post.
-const DEVIATIONS = {};
+const QUARRY = 'quarry reframe (Phase 6a): seen from the side of the pit, the pit filling the frame';
+const DEVIATIONS = { '13-hold-quarry': QUARRY, '14-tr-quarry-furnace': QUARRY, '35-tr-quarry-furnace-t30': QUARRY, '36-tr-quarry-furnace-t55': QUARRY, '37-tr-quarry-furnace-t80': QUARRY };
 // harness only: the reference's layer panel, benchmark box and version label are not part of the look
 const HIDE_REFERENCE_TOOLS = ['</head>', '<style>.fx,.bench,.brand span{display:none !important}</style></head>'];
 const SUBJECT_REASON = 'purity → crystal reframe (Phase 2): the pool centred, the crystal followed up';
@@ -124,10 +127,10 @@ try {
     const A = PNG.sync.read(a), B = PNG.sync.read(b), D = new PNG({ width: A.width, height: A.height });
     const px = pixelmatch(A.data, B.data, D.data, A.width, A.height, { threshold: .1, diffMask: true });
     await writeFile(new URL(`diff/${s.id}.png`, OUT), PNG.sync.write(D));
-    const top = Math.round(A.height * TOP_BAND);
+    const top = Math.round(A.height * TOP_BAND), right = A.width - rightBand(A.width);
     let below = 0;
-    for (let i = top * A.width * 4 + 3; i < D.data.length; i += 4) if (D.data[i]) below++;
-    const pct = below / (A.width * (A.height - top)) * 100, pctFull = px / (A.width * A.height) * 100;
+    for (let y = top; y < A.height; y++) for (let x = 0; x < right; x++) if (D.data[(y * A.width + x) * 4 + 3]) below++;
+    const pct = below / (right * (A.height - top)) * 100, pctFull = px / (A.width * A.height) * 100;
     let strictPx = 0;
     for (let k = 0; k < A.data.length; k += 4) if (A.data[k] !== B.data[k] || A.data[k + 1] !== B.data[k + 1] || A.data[k + 2] !== B.data[k + 2]) strictPx++;
     const strict = strictPx / (A.width * A.height) * 100;
@@ -154,7 +157,7 @@ const md = [
   '',
   '"Strict" counts every pixel whose colour differs at all, however little; it catches uniform colour shifts the perceptual threshold absorbs.',
   '',
-  '| # | Position | Progress | Diff (below the top 20 %) | Diff (full frame) | Strict | Status |',
+  '| # | Position | Progress | Diff (outside the top 20 % and the right scrim) | Diff (full frame) | Strict | Status |',
   '|---|---|---|---|---|---|---|',
   ...results.map((r, i) => `| ${i + 1} | ${r.label} | ${r.v.toFixed(4)} | ${r.pct.toFixed(3)} % | ${r.pctFull.toFixed(3)} % | ${r.strict.toFixed(3)} % | ${status(r)} |`),
   '',

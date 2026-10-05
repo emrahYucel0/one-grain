@@ -26,6 +26,7 @@
     "responsive": "vite build && node scripts/responsive.mjs",
     "check:responsive": "node scripts/responsive-check.mjs",
     "check:load": "node scripts/load-check.mjs",
+    "check:contrast": "node scripts/contrast-check.mjs",
     "capture": "node scripts/capture.mjs",
     "encode": "node scripts/encode.mjs"
   },

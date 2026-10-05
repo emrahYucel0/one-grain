@@ -28,13 +28,15 @@ export class StageColour {
   private readonly body: HTMLElement;
   private readonly scrim: HTMLElement | null;
   private readonly scrimTop: HTMLElement | null;
+  private readonly scrimRight: HTMLElement | null;
   /** the page's stage colour as last written (8-bit hex) */
   hex = '';
 
   constructor(body: HTMLElement = document.body) {
     this.body = body;
-    this.scrim = document.querySelector<HTMLElement>('.scrim:not(.scrim-top)');
+    this.scrim = document.querySelector<HTMLElement>('.scrim:not(.scrim-top):not(.scrim-right)');
     this.scrimTop = document.querySelector<HTMLElement>('.scrim-top');
+    this.scrimRight = document.querySelector<HTMLElement>('.scrim-right');
   }
 
   update(a: number, b: number, eg: number): void {
@@ -51,6 +53,7 @@ export class StageColour {
     this.body.style.backgroundColor = hex;
     if (this.scrim) this.scrim.style.background = `linear-gradient(to top,${hex} 8%,transparent)`;
     // behind the HUD: subtle (70 %), so bright scenes keep the clock readable
-    if (this.scrimTop) this.scrimTop.style.background = `linear-gradient(to bottom,${hex}b3,transparent)`;
+    if (this.scrimTop) this.scrimTop.style.background = `linear-gradient(to bottom,${hex}d9,transparent)`;
+    if (this.scrimRight) this.scrimRight.style.background = `linear-gradient(to left,${hex}e6,${hex}99 45%,transparent)`;
   }
 }
