@@ -173,7 +173,10 @@ try {
     await run(['-f', 'concat', '-safe', '0', '-i', `${name}.parts.txt`, '-c', 'copy', `${name}.video.mp4`]).done;
     console.log(`video: ${last - first} frames in ${((Date.now() - t0) / 60000).toFixed(1)} min`);
     await run(['-i', `${name}.video.mp4`, '-ss', String(first / fps), '-i', `${name}.wav`, '-map', '0:v', '-map', '1:a', '-c:v', 'copy', '-c:a', 'aac', '-b:a', '320k', '-shortest', '-movflags', '+faststart', `${name}.mp4`]).done;
-    for (const f of [...parts, ...parts.map((x) => `${x}.done`), `${name}.parts.txt`, `${name}.video.mp4`]) await rm(f, { force: true, maxRetries: 10, retryDelay: 500 }); // Windows may hold a file a moment longer (EBUSY)
+    for (const f of [...parts, ...parts.map((x) => `${x}.done`), `${name}.parts.txt`, `${name}.video.mp4`]) {
+      // Windows (a virus scan of a new large file) may hold a part longer: the video is done, so only warn
+      await rm(f, { force: true, maxRetries: 10, retryDelay: 1000 }).catch((e) => console.log(`  left ${f} (${e.code}): delete it later`));
+    }
     console.log(`→ ${name}.mp4 (the sound alone: ${name}.wav)`);
   }
 } finally { await server.close(); }
