@@ -70,6 +70,8 @@ try {
     const before = await page.evaluate(() => ({ count: window.__acCount, text: document.getElementById('sound').textContent }));
     let clicked = true;
     await page.locator('#sound').click({ timeout: 4000 }).catch(() => { clicked = false; });
+    // the sound's code loads on the first request (src/audio/toggle.ts): the button turns once it has
+    if (clicked) await page.waitForFunction(() => document.getElementById('sound').getAttribute('aria-pressed') === 'true', null, { timeout: 3000 }).catch(() => {});
     const after = await page.evaluate(() => ({ count: window.__acCount, pressed: document.getElementById('sound').getAttribute('aria-pressed'), text: document.getElementById('sound').textContent }));
     if (vp.width === 900) check('nothing created before the visitor asks; the button reads "Listen"', before.count === 0 && before.text === 'Listen', `${before.count} contexts, "${before.text}"`);
     check(`sound button takes a real click at ${vp.width}×${vp.height}`, clicked && after.pressed === 'true' && after.text === 'Sound on' && after.count === 1, clicked ? `aria-pressed ${after.pressed}, "${after.text}"` : 'another element receives the click');

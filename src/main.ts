@@ -1,4 +1,3 @@
-import './styles/main.css';
 import type { SoundFrame } from './audio/frame';
 import { SoundToggle } from './audio/toggle';
 import { env, probeGpu } from './core/env';
@@ -11,7 +10,6 @@ import { StageColour } from './core/stage-colour';
 import { isLayerName, RenderLayers } from './core/layers';
 import { Pacer } from './core/pacing';
 import { Projection, onResize } from './core/resize';
-import { debugOverlay } from './debug/overlay';
 import { exposePack, exposeTiers, flags, gpuExtra } from './debug/parity';
 import { updateInteraction } from './input/interact';
 import { Pointer } from './input/pointer';
@@ -147,7 +145,7 @@ function boot(): void {
     tiers.frame(now, L.hold, stage.renderer.info.programs?.length ?? 0);
     loop.fade = tiers.fade;
   });
-  if (flags.debug) debugOverlay(tiers, layers, () => stage.renderer.getPixelRatio(), timer, pacer);
+  if (flags.debug) void import('./debug/overlay').then((m) => m.debugOverlay(tiers, layers, () => stage.renderer.getPixelRatio(), timer, pacer));
 
   // the loading line: the worlds' generation fills 90 %, the first rendered frame the rest
   const loader = new Loader($('loaderFill'), flags.parity);
@@ -168,4 +166,6 @@ function fallBack(err: unknown): void {
   throw err;
 }
 
-try { boot(); } catch (err) { fallBack(err); }
+// The stylesheet does not block the first paint (index.html carries the critical styles: the stage and
+// the loader); the experience starts once it applies.
+import('./styles/main.css').then(() => { try { boot(); } catch (err) { fallBack(err); } }, fallBack);

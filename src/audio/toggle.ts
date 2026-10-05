@@ -1,6 +1,9 @@
 import { exposeAudio, flags } from '../debug/parity';
 import { attr } from '../ui/copy';
-import { Sound } from './frame';
+import type { Sound } from './frame';
+
+/** The sound's code (engine, score, ambience) loads when the visitor shows they may want it. */
+const load = (): Promise<typeof import('./frame')> => import('./frame');
 
 const KEY = 'og-sound';
 const readPref = (): boolean => { try { return localStorage.getItem(KEY) === 'on'; } catch { return false; } };
@@ -21,7 +24,10 @@ export class SoundToggle {
   constructor(button: HTMLButtonElement) {
     this.button = button;
     button.textContent = attr(button, 'listen');
-    button.addEventListener('click', () => this.set(!this.on));
+    button.addEventListener('click', () => void this.set(!this.on));
+    // fetched on intent (a pointer over the button, focus, a touch), so the click that follows still
+    // counts as the gesture that starts the audio, and nobody who never asks for sound downloads it
+    for (const ev of ['pointerenter', 'focus', 'touchstart']) button.addEventListener(ev, () => void load(), { once: true, passive: true });
     document.addEventListener('visibilitychange', () => {
       const s = this.sound;
       if (!s) return;
@@ -29,7 +35,8 @@ export class SoundToggle {
       if (document.hidden) void ctx.suspend(); else if (s.on) void ctx.resume();
     });
     if (readPref()) {
-      const arm = (e: Event): void => { if (!button.contains(e.target as Node)) this.set(true); };
+      void load(); // they chose sound before: it will start on their first gesture
+      const arm = (e: Event): void => { if (!button.contains(e.target as Node)) void this.set(true); };
       addEventListener('pointerdown', arm); addEventListener('keydown', arm);
       this.disarm = () => { removeEventListener('pointerdown', arm); removeEventListener('keydown', arm); this.disarm = () => {}; };
     }
@@ -37,10 +44,11 @@ export class SoundToggle {
 
   get on(): boolean { return !!this.sound?.on; }
 
-  private set(on: boolean): void {
+  private async set(on: boolean): Promise<void> {
     this.disarm();
     const b = this.button;
     if (on && !this.sound) {
+      const { Sound } = await load();
       this.sound = Sound.create(flags.parity);
       if (!this.sound) { b.textContent = attr(b, 'unavailable'); return; }
       exposeAudio(this.sound);

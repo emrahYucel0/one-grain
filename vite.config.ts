@@ -11,6 +11,9 @@ const SITE: string = (JSON.parse(readFileSync(new URL('./site.config.json', impo
  * docs/deploy.md): the security headers, cache rules, and a CSP that allows only what the site uses,
  * with the hashes of index.html's two inline blocks (the class script and the critical styles).
  */
+/** The faces the first view shows (fontsource's Latin subsets): preloaded. */
+const FIRST_FONTS = ['archivo-latin-wdth-normal', 'newsreader-latin-opsz-normal', 'newsreader-latin-opsz-italic'];
+
 function site(): Plugin {
   let hashes = { script: [] as string[], style: [] as string[] };
   const sha = (s: string): string => `'sha256-${createHash('sha256').update(s).digest('base64')}'`;
@@ -18,8 +21,16 @@ function site(): Plugin {
     name: 'one-grain-site',
     transformIndexHtml: {
       order: 'post',
-      handler(html) {
-        const out = html.replaceAll('%SITE_URL%', SITE);
+      handler(html, ctx) {
+        let out = html.replaceAll('%SITE_URL%', SITE);
+        if (ctx.bundle) {
+          // the three faces the first view needs, found early; the stylesheet for visitors without JavaScript
+          const files = Object.keys(ctx.bundle);
+          const fonts = FIRST_FONTS.map((f) => files.find((n) => n.includes(f) && n.endsWith('.woff2'))).filter(Boolean);
+          const css = files.find((n) => n.endsWith('.css')); // the one stylesheet
+          const tags = [...fonts.map((f) => `<link rel="preload" href="./${f}" as="font" type="font/woff2" crossorigin>`), ...(css ? [`<noscript><link rel="stylesheet" href="./${css}"></noscript>`] : [])];
+          out = out.replace('</head>', `${tags.join('\n')}\n</head>`);
+        }
         hashes = {
           script: [...out.matchAll(/<script(?![^>]*\bsrc=)(?![^>]*application\/ld\+json)[^>]*>([\s\S]*?)<\/script>/g)].map((m) => sha(m[1]!)),
           style: [...out.matchAll(/<style[^>]*>([\s\S]*?)<\/style>/g)].map((m) => sha(m[1]!)),
