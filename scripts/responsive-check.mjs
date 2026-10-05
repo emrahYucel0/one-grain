@@ -11,9 +11,8 @@
 //  4. phones: a mobile browser bar coming in (height −100 px) rebuilds nothing: same drawing buffer,
 //     same scroll position, same story progress (no ScrollTrigger refresh, no jump)
 //     and turning the phone (width and height swapped) keeps the tier
-//  5. device classes: the tier picked for an Apple Silicon Mac (Chromium and Safari), an iPad, a
-//     4-core Mac, an Intel PC and an RTX PC, a phone either way up, a small tablet and a narrow
-//     desktop window (core/quality.ts with a stubbed navigator and screen)
+//  5. the pixel ratio each tier gets on a 4K screen at DPR 1 and a 1440p one at DPR 2 (the tier
+//     itself, picked from the device, is check:tiers')
 import { readFileSync } from 'node:fs';
 import { createServer } from 'vite';
 import { launch, watchConsole } from './lib/browser.mjs';
@@ -28,7 +27,6 @@ await vite.close();
 const dev = await startDev(5176);
 const browser = await launch();
 const logs = [], results = [];
-const IPHONE = 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) Version/17.0 Mobile/15E148 Safari/604.1';
 const check = (name, ok, detail) => { results.push(ok); console.log(`${ok ? 'PASS' : 'FAIL'}  ${name}  (${detail})`); };
 try {
   for (const vp of VIEWPORTS) {
@@ -99,32 +97,10 @@ try {
     }
     await ctx.close();
   }
-  // 5: device classes
+  // 5: the pixel ratio per tier (the tier itself is check:tiers')
   {
     const page = await (await browser.newContext({ viewport: { width: 1512, height: 982 } })).newPage();
     await page.goto(`${dev.origin}/reference/README-v23.md`); // any same-origin page will do
-    const cases = [
-      ['Mac, Apple M2 (Chromium), 8 cores', 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)', 0, 8, 'ANGLE (Apple, ANGLE Metal Renderer: Apple M2, Unspecified Version)', 'high'],
-      ['Mac, Apple GPU (Safari), 10 cores', 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) Version/17.0 Safari/605.1.15', 0, 10, 'Apple GPU', 'high'],
-      ['iPad (Mac user agent, touch), Apple GPU', 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) Version/17.0 Safari/605.1.15', 5, 8, 'Apple GPU', 'mid'],
-      ['Mac, Apple GPU, 4 cores', 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)', 0, 4, 'Apple GPU', 'mid'],
-      ['Windows, Intel UHD, 12 cores', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)', 0, 12, 'ANGLE (Intel, Intel(R) UHD Graphics Direct3D11)', 'mid'],
-      ['Windows, RTX 4070, 16 cores', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)', 0, 16, 'ANGLE (NVIDIA, NVIDIA GeForce RTX 4070 Direct3D11)', 'high'],
-      ['iPhone, landscape (screen 844×390)', IPHONE, 5, 6, 'Apple GPU', 'low', [844, 390]],
-      ['iPhone, portrait (screen 390×844)', IPHONE, 5, 6, 'Apple GPU', 'low', [390, 844]],
-      ['iPad mini, landscape (screen 1133×744)', 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) Version/17.0 Safari/605.1.15', 5, 8, 'Apple GPU', 'low', [1133, 744]],
-      ['Windows, Intel UHD, 700 px window on a 1920×1080 screen', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)', 0, 12, 'ANGLE (Intel, Intel(R) UHD Graphics Direct3D11)', 'mid', [1920, 1080], 700],
-    ];
-    for (const [name, ua, touch, cores, renderer, want, scr = [1512, 982], win = 1512] of cases) {
-      const got = await page.evaluate(async ([u, tp, c, r, [sw, sh], iw]) => {
-        const def = (proto, k, v) => Object.defineProperty(proto, k, { configurable: true, get: () => v });
-        def(Navigator.prototype, 'userAgent', u); def(Navigator.prototype, 'maxTouchPoints', tp); def(Navigator.prototype, 'hardwareConcurrency', c); def(Navigator.prototype, 'deviceMemory', 8);
-        def(Screen.prototype, 'width', sw); def(Screen.prototype, 'height', sh); Object.defineProperty(window, 'innerWidth', { configurable: true, get: () => iw });
-        const q = await import('/src/core/quality.ts');
-        return q.pickTier({ webgl2: true, performant: true, maxTextureSize: 16384, renderer: r }, null).name;
-      }, [ua, touch, cores, renderer, scr, win]);
-      check(`device class: ${name} → ${want}`, got === want, got);
-    }
     // the DPR floor: a 4K screen at DPR 1, and a 5K one at DPR 2
     for (const [w, h, dpr, tier, want] of [[3840, 2160, 1, 'high', 1], [3840, 2160, 1, 'mid', Math.sqrt(2.2e6 / (3840 * 2160))], [2560, 1440, 2, 'high', Math.sqrt(4.5e6 / (2560 * 1440))]]) {
       const got = await page.evaluate(async ([w, h, dpr, tier]) => {

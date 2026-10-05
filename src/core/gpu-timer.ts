@@ -4,9 +4,9 @@
  * driver marks as disjoint (power state change, context switch) are thrown away. Only one query
  * can run at a time, so passes are timed back to back, never nested.
  *
- * Without the extension, or when switched off (?notimer), begin/end cost nothing and only the CPU
- * frame interval is reported. Each whole frame's GPU time also goes to `onFrame` (the quality
- * monitor, core/quality.ts), so it runs on every visit, not only with ?perf or ?debug.
+ * A development tool: enabled only with ?perf or ?debug (main.ts). Otherwise, and without the
+ * extension, begin/end cost nothing and only the CPU frame interval is reported; a normal visit
+ * measures nothing and nothing it measures changes what the site does.
  */
 interface TimerExt { TIME_ELAPSED_EXT: number; GPU_DISJOINT_EXT: number }
 interface Pending { name: string; query: WebGLQuery; frame: number }
@@ -34,6 +34,8 @@ const SMOOTH = .1;
 
 export class GpuTimer {
   readonly gpu: boolean;
+  /** ?perf or ?debug: otherwise every call returns at once */
+  private readonly enabled: boolean;
   private readonly gl: WebGL2RenderingContext;
   private readonly ext: TimerExt | null;
   private readonly free: WebGLQuery[] = [];
@@ -45,11 +47,10 @@ export class GpuTimer {
   private frameNo = 0;
   private sample: (FrameSample & { frame: number; ok: boolean }) | null = null;
   private readonly recent: FrameSample[] = [];
-  /** called with each whole frame's GPU milliseconds as it resolves (frames marked disjoint are skipped) */
-  onFrame: ((ms: number) => void) | null = null;
 
   constructor(gl: WebGL2RenderingContext, enabled: boolean) {
     this.gl = gl;
+    this.enabled = enabled;
     this.ext = enabled ? (gl.getExtension('EXT_disjoint_timer_query_webgl2') as TimerExt | null) : null;
     this.gpu = !!this.ext;
   }
@@ -70,7 +71,9 @@ export class GpuTimer {
   }
 
   /** Once per frame: collect finished queries and the CPU frame interval. */
-  tick(now: number = performance.now()): void {
+  tick(now?: number): void {
+    if (!this.enabled) return;
+    now ??= performance.now();
     if (this.lastFrame >= 0) { const d = now - this.lastFrame; this.frameMs = this.frameMs ? this.frameMs + (d - this.frameMs) * SMOOTH : d; }
     this.lastFrame = now;
     this.frameNo++;
@@ -102,7 +105,6 @@ export class GpuTimer {
     const s = this.sample!;
     this.sample = null;
     if (!s.ok) return;
-    this.onFrame?.(s.total);
     this.recent.push({ total: s.total, passes: s.passes });
     if (this.recent.length > RECENT) this.recent.shift();
   }

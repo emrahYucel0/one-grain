@@ -10,7 +10,6 @@ import type { GrainCloud } from '../render/grains';
 import type { Pipeline } from '../render/pipeline';
 import type { GpuTimer } from './gpu-timer';
 import type { RenderLayers } from './layers';
-import type { Pacer } from './pacing';
 import type { HeroGrain } from '../render/hero';
 import type { FrameUniforms } from '../render/types';
 import type { GrainPack } from '../sim/pack';
@@ -36,10 +35,8 @@ export interface LoopDeps {
   stageColour: StageColour;
   pipeline: Pipeline;
   timer: GpuTimer;
-  /** what to draw: tier, downgrade, overrides (core/layers.ts) */
+  /** what to draw: the tier's layers and ?debug / ?off overrides (core/layers.ts) */
   layers: RenderLayers;
-  /** which refreshes render (core/pacing.ts) */
-  pacer: Pacer;
 }
 
 /** Per-frame hook for the parts that react to where the story is (UI, input, audio, quality). */
@@ -85,8 +82,6 @@ export class Loop {
   private readonly heroNdc = new Vector3();
   /** seconds since the final chapter was reached, -1 elsewhere (set by the ending, in the 'story' phase) */
   finalTime = -1;
-  /** extra canvas opacity factor (quality swaps) */
-  fade = 1;
   /** smoothed pointer, for camera parallax (set by input) */
   parallax: { x: number; y: number } = { x: 0, y: 0 };
 
@@ -102,13 +97,11 @@ export class Loop {
   start(): void {
     if (this.running) return;
     this.running = true;
-    // every refresh is offered; the pacer may skip rendering on some (scroll input runs on GSAP's own ticker)
+    // a frame on every refresh the browser offers: it shows them at the display's own pace
     const tick = (now: number): void => {
       requestAnimationFrame(tick);
-      if (!this.d.pacer.shouldRender(now)) return;
       this.frame();
-      this.d.pacer.rendered(now);
-      reportRender(now, this.d.pacer.lock);
+      reportRender(now);
     };
     requestAnimationFrame(tick);
   }
@@ -156,8 +149,8 @@ export class Loop {
     const grain = towards(wa.grain, wb.grain, S.eg);
     hero.setLight(info.heroLight, grain * projection.scale / Math.max(.1, stage.camera.position.distanceTo(S.hero)));
     for (const fn of this.listeners.scene) fn(info);
-    // reduced motion: worlds swap behind a quick fade instead of morphing; times any listener fade
-    const fade = (reduced ? 1 - Math.sin(Math.PI * L.t) : 1) * this.fade;
+    // reduced motion: worlds swap behind a quick fade instead of morphing
+    const fade = reduced ? 1 - Math.sin(Math.PI * L.t) : 1;
     const opacity = fade === 1 ? '1' : fade.toFixed(3);
     if (opacity !== this.canvasOpacity) { this.canvasOpacity = opacity; stage.renderer.domElement.style.opacity = opacity; }
 

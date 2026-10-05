@@ -1,171 +1,156 @@
-// Quality tiers and the adaptive downgrade (npm run check:tiers):
-//  1. a forced downgrade (?debug&forceDrop: the budget counts as blown after every warm-up) is
-//     queued while the story is mid-transition and nothing changes there;
-//  2. resting on a chapter, it walks the ladder in order, one step per warm-up: depth of field off,
-//     then shadows off, then fewer grains (the low tier's worlds, rebuilt and swapped in);
-//  3. the low tier starts without shadows and depth of field (v10 on small screens);
-//  4. the ?debug panel's toggles switch layers (the pass disappears from the GPU timings);
-//  5. auto mode (core/quality.ts FrameMonitor), with simulated loads: no step during the 8 s warm-up
-//     however slow the GPU; no step when only the frame interval is slow (a busy main thread: an
-//     external slowdown, our GPU time fine); a step down under GPU load and back up once the load is
-//     gone; after that up-and-down, no more steps up; without the GPU timer (?notimer) the frame
-//     interval decides, over three windows;
-//  6. the pacing lock in auto (the default), on synthetic refresh cadences: never where frames fit
-//     (60 Hz, 120 Hz, 144 Hz at one or two refreshes), only where 144 Hz frames mix two and three;
-//     and the page runs in auto unless ?pacing says otherwise;
+// Quality tiers (npm run check:tiers). The tier is chosen once at startup from the device and the GPU
+// the browser reports (core/quality.ts, names in core/gpus.ts) and never changes; nothing is measured.
+//  1. the device rules pick the expected tier for each case (phones, iPads, Android tablets, laptops,
+//     desktops, Apple Silicon, software renderers, texture limits), and ?tier= overrides them;
+//  2. a normal visit runs no timing code: no GPU timer queries, no timer extension, a frame drawn on
+//     every refresh the browser offers (no pacing), the context asked for 'high-performance';
+//  3. the tier never changes after the scene appears: the same tier and grain pack after scrolling
+//     through the whole story and resizing the window;
+//  4. the low tier draws no shadows and no depth of field;
+//  5. ?debug shows the tier, the rule that chose it and the GPU the browser reported, and its layer
+//     toggles work;
 //  and no console errors.
 import { createServer } from 'vite';
 import { launch, watchConsole } from './lib/browser.mjs';
 import { startDev } from './lib/servers.mjs';
 
 const vite = await createServer({ server: { middlewareMode: true }, appType: 'custom', logLevel: 'error' });
-const { transitionMidpoint, SNAP_POINTS } = await vite.ssrLoadModule('/src/timeline/segments.ts');
-const { TIERS } = await vite.ssrLoadModule('/src/core/quality.ts');
-const { lockFor } = await vite.ssrLoadModule('/src/core/pacing.ts');
+const { TIERS, pickTier } = await vite.ssrLoadModule('/src/core/quality.ts');
 await vite.close();
+
+const results = [];
+const check = (name, ok, detail) => { results.push(ok); console.log(`${ok ? 'PASS' : 'FAIL'}  ${name}  (${detail})`); };
+
+// 1: the device rules
+const UA = {
+  iphone7: 'Mozilla/5.0 (iPhone; CPU iPhone OS 15_8 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/15.6.6 Mobile/15E148 Safari/604.1',
+  iphone15: 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.5 Mobile/15E148 Safari/604.1',
+  mac: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.5 Safari/605.1.15',
+  macChrome: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0.0.0 Safari/537.36',
+  androidTablet: 'Mozilla/5.0 (Linux; Android 14; SM-X910) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0.0.0 Safari/537.36',
+  androidPhone: 'Mozilla/5.0 (Linux; Android 14; SM-S928B) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0.0.0 Mobile Safari/537.36',
+  windows: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0.0.0 Safari/537.36',
+};
+const caps = (renderer, extra = {}) => ({ webgl2: true, performant: true, maxTextureSize: 16384, renderer, astc: false, ...extra });
+const CASES = [
+  ['iPhone 7 / iOS 15', UA.iphone7, 5, caps('Apple GPU'), 'mid'],
+  ['iPhone 15', UA.iphone15, 5, caps('Apple GPU', { astc: true }), 'mid'],
+  ['iPad (desktop user agent + touch)', UA.mac, 5, caps('Apple GPU', { astc: true }), 'mid'],
+  ['high-end Android tablet (Adreno 740)', UA.androidTablet, 10, caps('ANGLE (Qualcomm, Adreno (TM) 740, OpenGL ES 3.2)'), 'high'],
+  ['high-end Android tablet (Mali-G715)', UA.androidTablet, 10, caps('Mali-G715-Immortalis MC11'), 'high'],
+  ['older Android tablet (Adreno 618)', UA.androidTablet, 10, caps('ANGLE (Qualcomm, Adreno (TM) 618, OpenGL ES 3.2)'), 'mid'],
+  ['Android phone with a high-end GPU (Adreno 750)', UA.androidPhone, 5, caps('ANGLE (Qualcomm, Adreno (TM) 750, OpenGL ES 3.2)'), 'mid'],
+  ['Intel UHD laptop', UA.windows, 0, caps('ANGLE (Intel, Intel(R) UHD Graphics 620 (0x00005917) Direct3D11 vs_5_0 ps_5_0, D3D11)'), 'mid'],
+  ['Windows touch laptop, Intel Iris Xe', UA.windows, 10, caps('ANGLE (Intel, Intel(R) Iris(R) Xe Graphics (0x00009A49) Direct3D11 vs_5_0 ps_5_0, D3D11)'), 'mid'],
+  ['AMD integrated (Radeon Graphics)', UA.windows, 0, caps('ANGLE (AMD, AMD Radeon(TM) Graphics (0x00001681) Direct3D11 vs_5_0 ps_5_0, D3D11)'), 'mid'],
+  ['RTX 4050 laptop', UA.windows, 0, caps('ANGLE (NVIDIA, NVIDIA GeForce RTX 4050 Laptop GPU (0x000028A1) Direct3D11 vs_5_0 ps_5_0, D3D11)'), 'high'],
+  ['AMD discrete (Radeon RX 7600)', UA.windows, 0, caps('ANGLE (AMD, AMD Radeon RX 7600 (0x00007480) Direct3D11 vs_5_0 ps_5_0, D3D11)'), 'high'],
+  ['Apple M1 Mac (Chromium)', UA.macChrome, 0, caps('ANGLE (Apple, ANGLE Metal Renderer: Apple M1, Unspecified Version)'), 'high'],
+  ['Apple M1 Mac (Safari: "Apple GPU", ASTC)', UA.mac, 0, caps('Apple GPU', { astc: true }), 'high'],
+  ['Intel Mac (Safari: "Apple GPU", no ASTC)', UA.mac, 0, caps('Apple GPU'), 'mid'],
+  ['SwiftShader', UA.windows, 0, caps('ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)'), 'low'],
+  ['Microsoft Basic Render Driver', UA.windows, 0, caps('ANGLE (Microsoft, Microsoft Basic Render Driver Direct3D11 vs_5_0 ps_5_0, D3D11)'), 'low'],
+  ['only a major-performance-caveat context', UA.windows, 0, caps('', { performant: false }), 'low'],
+  ['texture limit too small for mid (1024)', UA.windows, 0, caps('ANGLE (Intel, Intel(R) UHD Graphics Direct3D11)', { maxTextureSize: 1024 }), 'low'],
+  ['high-end GPU, texture limit too small for high (2048)', UA.windows, 0, caps('ANGLE (NVIDIA, NVIDIA GeForce RTX 4050 Laptop GPU Direct3D11)', { maxTextureSize: 2048 }), 'mid'],
+  ['texture limit too small even for low (512): text version', UA.windows, 0, caps('ANGLE (Intel, Intel(R) UHD Graphics Direct3D11)', { maxTextureSize: 512 }), null],
+];
+for (const [name, ua, touch, c, want] of CASES) {
+  const got = pickTier({ ua, touch }, c, null);
+  check(`device rule: ${name} → ${want ?? 'text version'}`, (got?.tier.name ?? null) === want, got ? `${got.tier.name}: ${got.rule}` : 'none fits');
+}
+for (const name of ['low', 'mid', 'high']) {
+  const got = pickTier({ ua: UA.iphone7, touch: 5 }, caps('Apple GPU'), name);
+  check(`?tier=${name} overrides the rules`, got.tier.name === name, got.rule);
+}
 
 const dev = await startDev(5179);
 const browser = await launch();
 const logs = [];
-const results = [];
-const check = (name, ok, detail) => { results.push(ok); console.log(`${ok ? 'PASS' : 'FAIL'}  ${name}  (${detail})`); };
-const open = async (query) => {
-  const page = await (await browser.newContext({ viewport: { width: 1440, height: 900 } })).newPage();
+const open = async (query, opts = {}) => {
+  const ctx = await browser.newContext({ viewport: { width: 1440, height: 900 }, ...opts });
+  // instrument WebGL before the page runs: timer queries, extensions asked for, context attributes,
+  // and whether every refresh draws (a draw call between two animation frames)
+  await ctx.addInitScript(() => {
+    const w = (window.__probe = { queries: 0, timerExt: 0, attrs: null, drawn: [] });
+    const P = WebGL2RenderingContext.prototype;
+    const wrap = (k, f) => { const o = P[k]; P[k] = function (...a) { f.apply(this, a); return o.apply(this, a); }; };
+    wrap('createQuery', () => { w.queries++; });
+    wrap('beginQuery', () => { w.queries++; });
+    wrap('getExtension', (n) => { if (/timer_query/i.test(n)) w.timerExt++; });
+    let drew = false;
+    wrap('drawArrays', () => { drew = true; }); wrap('drawElements', () => { drew = true; });
+    const getContext = HTMLCanvasElement.prototype.getContext;
+    HTMLCanvasElement.prototype.getContext = function (type, attrs) {
+      const gl = getContext.call(this, type, attrs);
+      if (type === 'webgl2' && gl && this.id === 'scene') w.attrs = attrs ?? null;
+      return gl;
+    };
+    const tick = () => { if (document.documentElement.classList.contains('ready')) w.drawn.push(drew); drew = false; requestAnimationFrame(tick); };
+    requestAnimationFrame(tick);
+  });
+  const page = await ctx.newPage();
   watchConsole(page, 'port', logs);
-  await page.goto(`${dev.origin}/?parity&debug&${query}`);
-  await page.waitForFunction(() => window.__PACK, null, { timeout: 90000 });
+  await page.goto(`${dev.origin}/${query}`);
+  await page.waitForFunction(() => document.documentElement.classList.contains('ready'), null, { timeout: 90000 });
   return page;
 };
-/** grains, the overlay's first line, and which layers the debug panel shows as on */
-const state = (page) => page.evaluate(() => ({
-  n: window.__PACK.n,
-  overlay: document.querySelector('pre')?.textContent.split('\n')[0] ?? '',
-  on: Object.fromEntries([...document.querySelectorAll('[role=group] button[aria-pressed]')].map((b) => [b.textContent, b.getAttribute('aria-pressed') === 'true'])),
-}));
 try {
-  // 1–2: the ladder
-  const page = await open('forceDrop&tier=mid');
-  const start = await state(page);
-  check('starts on the forced tier with every layer', start.n === TIERS.mid.n && Object.values(start.on).every(Boolean), `${start.n} grains, ${JSON.stringify(start.on)}`);
-
-  await page.evaluate((v) => { window.__V = v; window.__T = 10; }, transitionMidpoint(2));
-  await page.waitForTimeout(10500); // past the 8 s warm-up
-  const parked = await state(page);
-  check('first step queued while mid-transition, nothing applied', parked.n === TIERS.mid.n && parked.on['Depth of field'] && /dof off \(queued\)/.test(parked.overlay), `${parked.n} grains, "${parked.overlay}"`);
-
-  // rest on a chapter and watch the steps arrive
-  await page.evaluate(() => { window.__V = 0; });
-  const t0 = Date.now(), seen = {};
-  while (Date.now() - t0 < 30000 && !seen.grains) {
-    const s = await state(page), t = Date.now() - t0;
-    if (!s.on['Depth of field'] && seen.dof === undefined) seen.dof = t;
-    if (!s.on.Shadows && seen.shadows === undefined) seen.shadows = t;
-    if (s.n === TIERS.low.n && seen.grains === undefined) seen.grains = t;
-    await page.waitForTimeout(200);
-  }
-  const order = seen.dof !== undefined && seen.shadows > seen.dof && seen.grains > seen.shadows;
-  check('resting: depth of field, then shadows, then grains', order, `dof off at ${seen.dof} ms, shadows off at ${seen.shadows} ms, ${TIERS.low.n} grains at ${seen.grains} ms`);
-  await page.waitForTimeout(900);
-  const rested = await state(page);
-  check('bottom of the ladder: nothing more queued', rested.n === TIERS.low.n && !/queued/.test(rested.overlay), `"${rested.overlay}"`);
-  await page.context().close();
-
-  // 3: the low tier's layers
-  const low = await open('tier=low');
-  const l = await state(low);
-  check('low tier: no shadows, no depth of field, the rest on', l.n === TIERS.low.n && !l.on.Shadows && !l.on['Depth of field'] && l.on.Light && l.on.Bloom && l.on.Grade, JSON.stringify(l.on));
-  await low.context().close();
-
-  // 4: the panel's toggles
-  const p = await open('tier=mid');
-  await p.evaluate(() => { window.__V = 0; window.__T = 10; });
-  await p.waitForTimeout(1500);
-  const before = await p.evaluate(() => Object.keys(window.__gpu.recent.at(-1)?.passes ?? {}));
-  await p.getByRole('button', { name: 'Bloom' }).click();
-  await p.waitForTimeout(1500);
-  const after = await p.evaluate(() => ({ passes: Object.keys(window.__gpu.recent.at(-1)?.passes ?? {}), pressed: document.querySelector('[role=group] button[aria-pressed]:nth-child(4)').getAttribute('aria-pressed') }));
-  const gpu = before.length > 0;
-  check('debug panel: the Bloom toggle switches the bloom pass off', after.pressed === 'false' && (!gpu || (before.includes('bloom') && !after.passes.includes('bloom'))),
-    gpu ? `passes before: ${before.join(', ')}; after: ${after.passes.join(', ')}` : 'GPU timer unavailable: toggle state only');
-  await p.context().close();
-
-  // 5: auto mode
-  const HOLD = SNAP_POINTS[1];
-  const log = (pg) => pg.evaluate(() => window.__tiers.log.map((r) => ({ ...r })));
-  const until = async (pg, pred, ms) => { const t0 = Date.now(); while (Date.now() - t0 < ms) { const l = await log(pg); if (pred(l)) return { l, t: Date.now() - t0 }; await pg.waitForTimeout(250); } return { l: await log(pg), t: -1 }; };
-  const auto = async (query = '') => {
-    const pg = await open(query);
-    await pg.evaluate((v) => { window.__V = v; window.__T = 10; }, HOLD);
-    return { pg, packAt: await pg.evaluate(() => performance.now()) };
-  };
-  /** a busy main thread: every refresh spends `ms` before the frame (another app, a screen recorder) */
-  const burn = (pg, ms) => pg.evaluate((d) => { window.__burn = d; const f = () => { const t = performance.now(); while (performance.now() - t < window.__burn); if (window.__burn) requestAnimationFrame(f); }; requestAnimationFrame(f); }, ms);
+  // 2: a normal visit
   {
-    const { pg, packAt } = await auto();
-    const gpu = await pg.evaluate(() => window.__tiers.monitor.gpu);
-    if (!gpu) console.log('INFO  no GPU timer in this browser: the GPU-load cases below use ?notimer rules');
-    await pg.evaluate(() => { window.__GPU_EXTRA = 40; });
-    await pg.waitForTimeout(7000);
-    const early = await log(pg);
-    check('auto: no step during the warm-up, however slow the GPU', early.length === 0, `GPU +40 ms from the first frame; ${early.length} steps after 7 s`);
-    const down = await until(pg, (l) => l.length >= 1, 15000);
-    const first = down.l[0];
-    check('auto: GPU over budget steps down once warm', first?.dir === 'down' && first.what === 'dof off' && first.at * 1000 - packAt >= 8000,
-      first ? `${first.what} at ${((first.at * 1000 - packAt) / 1000).toFixed(1)} s after the worlds: ${first.reason}` : 'no step');
-    await pg.evaluate(() => { window.__GPU_EXTRA = 0; });
-    const up = await until(pg, (l) => l.length >= 2, 20000);
-    check('auto: back up once the load is gone (≈10 s at rest)', up.l[1]?.dir === 'up' && up.l[1].what === 'dof on', up.l[1] ? `${up.l[1].what} after ${(up.t / 1000).toFixed(1)} s: ${up.l[1].reason}` : 'no step up');
-    await pg.evaluate(() => { window.__GPU_EXTRA = 40; });
-    const again = await until(pg, (l) => l.length >= 3, 15000);
-    await pg.evaluate(() => { window.__GPU_EXTRA = 0; });
-    await pg.waitForTimeout(16000);
-    const settled = await log(pg), locked = await pg.evaluate(() => window.__tiers.upLocked);
-    check('auto: after an up and a down, no more steps up (no oscillation)', again.l[2]?.dir === 'down' && settled.length === 3 && locked,
-      settled.map((r) => `${r.dir} ${r.what}`).join(', ') + `; steps up ${locked ? 'off' : 'still on'} after 16 s without load`);
-    await pg.context().close();
-  }
-  {
-    const { pg } = await auto();
-    const gpu = await pg.evaluate(() => window.__tiers.monitor.gpu);
-    await burn(pg, 32);
-    await pg.waitForTimeout(18000);
-    const l = await log(pg), m = await pg.evaluate(() => ({ frame: window.__tiers.monitor.frame, gpu: window.__tiers.monitor.gpuMs, external: window.__tiers.monitor.external }));
-    await burn(pg, 0);
-    if (gpu) check('auto: slow frames with our GPU time fine (external) step nothing', l.length === 0 && m.external, `frame ${m.frame.toFixed(1)} ms, gpu ${m.gpu.toFixed(1)} ms, external ${m.external}, ${l.length} steps in 18 s`);
-    else console.log('INFO  external-load case skipped: no GPU timer, so the frame interval decides (next case)');
-    await pg.context().close();
-  }
-  {
-    const { pg, packAt } = await auto('notimer');
-    await burn(pg, 32);
-    const down = await until(pg, (l) => l.length >= 1, 25000);
-    await burn(pg, 0);
-    const first = down.l[0], after = first ? first.at * 1000 - packAt : 0;
-    check('?notimer: the frame interval steps down after three slow windows', first?.what === 'dof off' && /in 3 windows/.test(first.reason) && after >= 8000 + 3 * 2000,
-      first ? `${first.what} at ${(after / 1000).toFixed(1)} s after the worlds: ${first.reason}` : 'no step');
-    await pg.context().close();
+    const page = await open('');
+    await page.mouse.wheel(0, 900); await page.waitForTimeout(2500);
+    const p = await page.evaluate(() => ({ ...window.__probe, drawn: window.__probe.drawn.slice(10) }));
+    check('normal visit: no GPU timer queries, no timer extension asked for', p.queries === 0 && p.timerExt === 0, `${p.queries} queries, timer extension asked ${p.timerExt}×`);
+    const drawn = p.drawn.filter(Boolean).length;
+    check('normal visit: a frame is drawn on every refresh the browser offers (no pacing)', p.drawn.length > 60 && drawn >= p.drawn.length - 1, `${drawn} of ${p.drawn.length} refreshes drew`);
+    check("normal visit: the context asks for powerPreference 'high-performance'", p.attrs?.powerPreference === 'high-performance', JSON.stringify(p.attrs));
+    await page.context().close();
   }
 
-  // 6: the pacing lock
+  // 3: the tier never changes after the scene appears
   {
-    const jitter = (r, n, mults) => Array.from({ length: n }, (_, i) => r * mults[i % mults.length] + Math.sin(i * 12.9898) * .3);
-    const cases = [
-      ['60 Hz, frames fit one refresh', 16.67, [1], 0],
-      ['60 Hz, frames take two refreshes', 16.67, [2], 0],
-      ['60 Hz, one and two mixed', 16.67, [1, 2, 1], 0],
-      ['120 Hz, frames at 16.7 ms (two refreshes)', 8.33, [2], 0],
-      ['120 Hz, one and two mixed', 8.33, [1, 2], 0],
-      ['144 Hz, frames fit two refreshes', 6.94, [2], 0],
-      ['144 Hz, two and three mixed, mostly three', 6.94, [3, 2, 3, 3], 3],
-    ];
-    for (const [name, r, mults, want] of cases) {
-      const got = lockFor(jitter(r, 120, mults), r, 'auto');
-      check(`pacing auto: ${name} → ${want ? `every ${want}` : 'no lock'}`, got === want, got ? `every ${got}` : 'no lock');
+    const page = await open('?parity');
+    const first = await page.evaluate(() => ({ tier: window.__tier, pack: window.__PACK }));
+    await page.evaluate(() => { window.__packAtStart = window.__PACK; });
+    for (const f of [.25, .5, .75, 1, 0]) {
+      await page.evaluate((x) => scrollTo({ top: (document.documentElement.scrollHeight - innerHeight) * x }), f);
+      await page.waitForTimeout(1200);
     }
-    const pg = await open('');
-    const mode = await pg.evaluate(() => document.querySelector('pre').textContent.split('\n').find((l) => l.startsWith('pacing')));
-    check('pacing: auto is the default', /^pacing auto/.test(mode), mode);
-    await pg.context().close();
+    await page.setViewportSize({ width: 800, height: 1000 }); await page.waitForTimeout(800);
+    await page.setViewportSize({ width: 1440, height: 900 }); await page.waitForTimeout(800);
+    const after = await page.evaluate(() => ({ tier: window.__tier, same: window.__PACK === window.__packAtStart, n: window.__PACK.n }));
+    check('the tier never changes after the scene appears (whole story scrolled, window resized)', after.same && after.tier.name === first.tier.name && after.n === first.tier.n,
+      `${first.tier.name} (${first.tier.rule}), ${after.n} grains, same grain pack ${after.same}`);
+    await page.context().close();
+  }
+
+  // 4: the low tier's layers; 5: the debug panel
+  const layersOn = (page) => page.evaluate(() => Object.fromEntries([...document.querySelectorAll('[role=group] button[aria-pressed]')].map((b) => [b.textContent, b.getAttribute('aria-pressed') === 'true'])));
+  {
+    const page = await open('?parity&debug&tier=low');
+    await page.waitForSelector('.og-debug');
+    const on = await layersOn(page), n = await page.evaluate(() => window.__PACK.n);
+    check('low tier: no shadows, no depth of field, the rest on', n === TIERS.low.n && !on.Shadows && !on['Depth of field'] && on.Light && on.Bloom && on.Grade, JSON.stringify(on));
+    await page.context().close();
+  }
+  {
+    const page = await open('?parity&debug');
+    await page.waitForFunction(() => /fps \d/.test(document.querySelector('.og-debug')?.textContent ?? ''));
+    const text = await page.evaluate(() => document.querySelector('.og-debug').textContent);
+    const [l1, l2] = text.split('\n');
+    check('?debug: the tier and the rule that chose it', /^tier (low|mid|high): \S/.test(l1), l1);
+    check('?debug: the GPU the browser reported', /^gpu \S/.test(l2) && !/not reported/.test(l2), l2);
+    await page.evaluate(() => { window.__V = 0; window.__T = 10; });
+    await page.waitForTimeout(1500);
+    const before = await page.evaluate(() => Object.keys(window.__gpu.recent.at(-1)?.passes ?? {}));
+    await page.getByRole('button', { name: 'Bloom' }).click();
+    await page.waitForTimeout(1500);
+    const after = await page.evaluate(() => ({ passes: Object.keys(window.__gpu.recent.at(-1)?.passes ?? {}), pressed: document.querySelector('[role=group] button[aria-pressed]:nth-child(4)').getAttribute('aria-pressed') }));
+    const gpu = before.length > 0;
+    check('?debug: the Bloom toggle switches the bloom pass off', after.pressed === 'false' && (!gpu || (before.includes('bloom') && !after.passes.includes('bloom'))),
+      gpu ? `passes before: ${before.join(', ')}; after: ${after.passes.join(', ')}` : 'GPU timer unavailable: toggle state only');
+    await page.context().close();
   }
 
   const errors = logs.filter((x) => !x.harness);

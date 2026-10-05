@@ -2,15 +2,13 @@ import type { SoundFrame } from './audio/frame';
 import { SoundToggle } from './audio/toggle';
 import { env, probeGpu } from './core/env';
 import { Loop } from './core/loop';
-import { pickTier, pixelRatioFor } from './core/quality';
-import { TierManager } from './core/tiers';
+import { pickTier, pixelRatioFor, readDevice } from './core/quality';
 import { GpuTimer } from './core/gpu-timer';
 import { createStage } from './core/renderer';
 import { StageColour } from './core/stage-colour';
 import { isLayerName, RenderLayers } from './core/layers';
-import { Pacer } from './core/pacing';
 import { Projection, onResize } from './core/resize';
-import { exposePack, exposeTiers, flags, gpuExtra } from './debug/parity';
+import { exposePack, exposeTier, flags } from './debug/parity';
 import { updateInteraction } from './input/interact';
 import { Pointer } from './input/pointer';
 import { GrainCloud } from './render/grains';
@@ -50,11 +48,13 @@ function boot(): void {
   root.classList.add('gl');
   revealWhenFontsReady();
 
-  // stage
-  const picked = pickTier(gpu, flags.tier);
-  const tier = flags.grains ? { ...picked, n: flags.grains } : picked;
+  // stage: the tier is picked once, from the device and its GPU, and never changes (core/quality.ts)
+  const picked = pickTier(readDevice(), gpu, flags.tier);
+  if (!picked) { root.classList.add('nogl'); guard.fail(`the GPU's texture limit (${gpu.maxTextureSize}) cannot hold the grains`); return; }
+  const tier = flags.grains ? { ...picked.tier, n: flags.grains } : picked.tier;
   const dpr = pixelRatioFor(tier);
-  guard.log('tier', `${tier.name} · ${tier.n} grains · pixel ratio ${dpr.toFixed(2)}`);
+  guard.log('tier', `${tier.name} (${picked.rule}) · ${tier.n} grains · pixel ratio ${dpr.toFixed(2)}`);
+  exposeTier(tier, picked.rule);
   const stage = createStage($<HTMLCanvasElement>('scene'), dpr);
   if (guard.shown) {
     const gl = stage.renderer.getContext();
@@ -66,12 +66,12 @@ function boot(): void {
   if (flags.pointCap) grains.setPointMax(flags.pointCap);
   grains.setShadowSubset(flags.shadowStride, flags.shadowGrow);
   stage.overlay.add(...hero.objects);
-  const timer = new GpuTimer(stage.renderer.getContext() as WebGL2RenderingContext, !flags.noTimer);
+  // GPU timing is a development tool only (?perf, ?debug): a normal visit measures nothing
+  const timer = new GpuTimer(stage.renderer.getContext() as WebGL2RenderingContext, flags.perf || flags.debug);
   const projection = new Projection(stage, (s) => grains.setScale(s));
   // the pixel ratio follows the window: the tier's DPR cap and its pixel budget (core/quality.ts)
-  let activeTier = tier;
   const resize = (): void => {
-    const pr = pixelRatioFor(activeTier);
+    const pr = pixelRatioFor(tier);
     if (pr !== stage.renderer.getPixelRatio()) { stage.renderer.setPixelRatio(pr); hero.setPixelRatio(pr); }
     projection.fit();
   };
@@ -91,9 +91,7 @@ function boot(): void {
   const typeAxes = new TypeAxes($('chapter'), $('time'));
   const layers = new RenderLayers(tier.fx);
   for (const k of flags.off) if (isLayerName(k)) layers.override[k] = false;
-  const pacer = new Pacer(flags.pacing);
-  void pacer.measureRefresh(); // while the worlds build, nothing heavy draws (in every mode: ?debug shows it)
-  const loop = new Loop({ stage, grains, hero, timeline, hash, projection, typeAxes, stageColour: new StageColour(), pipeline, timer, layers, pacer });
+  const loop = new Loop({ stage, grains, hero, timeline, hash, projection, typeAxes, stageColour: new StageColour(), pipeline, timer, layers });
   const go = (i: number): void => timeline.goTo(i);
 
   // words and instruments
@@ -136,28 +134,10 @@ function boot(): void {
     record?.({ a, b, t, eg, tr, hold });
   });
 
-  // quality: step down if our frames stay over budget, back up once they have headroom (queued, applied only while resting)
   const sim = new SimClient(guard.log);
-  const tiers = new TierManager(tier, layers, {
-    auto: !flags.tier, forceDrop: flags.forceDrop,
-    build: (n) => sim.build(n),
-    swap: (pack, next) => {
-      pacer.reset(performance.now());
-      activeTier = next;
-      resize();
-      exposePack(pack);
-      loop.setPack(pack);
-    },
-  }, timer.gpu);
-  timer.onFrame = (ms) => tiers.monitor.gpuSample(ms + gpuExtra());
-  exposeTiers(tiers);
   let firstFrame = true;
-  loop.onFrame(({ L, now }) => {
-    if (firstFrame) { firstFrame = false; tiers.monitor.start(now); loader.done(); }
-    tiers.frame(now, L.hold, stage.renderer.info.programs?.length ?? 0);
-    loop.fade = tiers.fade;
-  });
-  if (flags.debug) void import('./debug/overlay').then((m) => m.debugOverlay(tiers, layers, () => stage.renderer.getPixelRatio(), timer, pacer));
+  loop.onFrame(() => { if (firstFrame) { firstFrame = false; loader.done(); } });
+  if (flags.debug) void import('./debug/overlay').then((m) => m.debugOverlay({ tier, rule: picked.rule, gpu: gpu.renderer }, layers, () => stage.renderer.getPixelRatio(), timer));
 
   // the loading line: the worlds' generation fills 90 %, the first rendered frame the rest
   const loader = new Loader($('loaderFill'), flags.parity);

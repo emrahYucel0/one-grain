@@ -1,5 +1,11 @@
 # Performance
 
+> **Phase 6d:** the runtime downgrade, its frame monitor and the frame-pacing lock described in the
+> older sections below are gone. The tier is now picked once from the device and never changes,
+> and a normal visit measures nothing (README, Quality tiers). GPU timing remains a development
+> tool (`?perf`, `?debug`, `npm run perf`, `npm run perf:frame`). The numbers below stay as the
+> record of what was measured.
+
 ## How it is measured
 
 `npm run perf [tier] [width] [height] [extra-query]` opens the built site in headed Chromium

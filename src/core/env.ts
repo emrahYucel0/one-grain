@@ -9,15 +9,18 @@ export interface GpuCaps {
   maxTextureSize: number;
   /** GPU description, if the browser shares one (empty otherwise) */
   renderer: string;
+  /** ASTC textures: on a Mac, Apple Silicon (Intel Macs' GPUs lack them; Safari names both "Apple GPU") */
+  astc: boolean;
 }
 
 export function probeGpu(): GpuCaps {
-  const caps: GpuCaps = { webgl2: false, performant: false, maxTextureSize: 0, renderer: '' };
+  const caps: GpuCaps = { webgl2: false, performant: false, maxTextureSize: 0, renderer: '', astc: false };
   const fast = tryContext(true);
   if (fast) {
     caps.webgl2 = caps.performant = true;
     caps.maxTextureSize = fast.getParameter(fast.MAX_TEXTURE_SIZE) as number;
     caps.renderer = rendererOf(fast);
+    caps.astc = fast.getSupportedExtensions()?.includes('WEBGL_compressed_texture_astc') ?? false;
     return caps;
   }
   const any = tryContext(false);
@@ -39,7 +42,8 @@ function rendererOf(gl: WebGL2RenderingContext): string {
 
 function tryContext(failIfMajorPerformanceCaveat: boolean): WebGL2RenderingContext | null {
   try {
-    return document.createElement('canvas').getContext('webgl2', { failIfMajorPerformanceCaveat });
+    // the same GPU the renderer will get (core/renderer.ts asks for it too)
+    return document.createElement('canvas').getContext('webgl2', { failIfMajorPerformanceCaveat, powerPreference: 'high-performance' });
   } catch {
     return null;
   }

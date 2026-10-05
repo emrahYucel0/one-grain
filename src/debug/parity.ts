@@ -1,7 +1,7 @@
 // URL switches for testing. None of them change anything unless present.
 //   ?parity          the harness drives progress (window.__V) and shader time (window.__T)
 //   ?tier=low|mid|high  force a quality tier
-//   ?debug           frame-time / tier overlay
+//   ?debug           the tier and the rule that chose it, the GPU, frame and GPU times (measured only here)
 //   ?nosnap          scrolling does not settle on chapters (to hold a position mid-transition)
 //   ?perf            time every render pass on the GPU and publish the timings as window.__gpu
 //   ?pointcap=N      largest grain in pixels (performance experiments)
@@ -9,15 +9,12 @@
 //   ?shadowstride=N  every N-th grain casts shadows (default 1 = all); &shadowgrow=F scales its disc
 //   ?dofres=N        depth of field at 1/N resolution (default 2 = half; 4 = quarter), measurements only
 //   ?shadowevery=N   at rest the shadow map refreshes every N-th frame (default 3; every 2nd in transitions), measurements only
-//   ?pacing=off|on|auto  frame pacing (core/pacing.ts; default auto; capture mode never paces)
-//   ?notimer         no GPU timer: the quality monitor falls back to frame intervals (core/quality.ts)
 //   ?capture         the submission video's offline render (src/capture/, scripts/capture.mjs): implies
 //                    ?parity and the high tier; the page runs on a virtual clock, one frame per step
 //   ?off=a,b         switch render layers off (light, shadows, dof, bloom, grade), for measurements
 //   with ?parity, window.__AT = { tr, t, lean } renders transition tr at t with that camera lean
 //   with ?parity, window.__LIVE = ms pins the display's live clock (it counts real time otherwise)
 //   with ?parity, window.__FT = s pins the seconds spent in the current hold (ring fade, final hold)
-//   with ?parity, window.__GPU_EXTRA = ms is added to every measured GPU frame (check:tiers' simulated load)
 import { Vector3, type Camera } from 'three';
 import type { GpuTimes } from '../core/gpu-timer';
 import type { GrainPack } from '../sim/pack';
@@ -34,11 +31,10 @@ declare global {
     __overdraw?: boolean;
     __LIVE?: number | null;
     __FT?: number | null;
-    __GPU_EXTRA?: number;
     /** ?capture: the virtual clock (ms) that performance.now() returns */
     __VNOW?: number;
-    /** ?parity: the tier manager (check:tiers reads its log and state) */
-    __tiers?: unknown;
+    /** ?parity: the tier picked at startup and the rule that chose it (check:tiers) */
+    __tier?: { name: string; n: number; rule: string };
     __renderT?: number[];
     /** ?parity: the sound, once created (the audio check reads its taps and counters) */
     __audio?: unknown;
@@ -46,8 +42,6 @@ declare global {
     __hero?: { x: number; y: number; z: number; visible: boolean };
     /** ?parity: the same grain projected after rendering, through the matrices the frame was drawn with */
     __heroRendered?: { x: number; y: number };
-    /** ?perf: the pacer's lock at each rendered frame (0 = none) */
-    __renderLock?: number[];
   }
 }
 
@@ -60,8 +54,6 @@ export const flags = {
   parity: params.has('parity') || capture,
   debug: params.has('debug'),
   tier: capture ? 'high' : params.get('tier'),
-  /** ?debug&forceDrop: pretend the frame budget is blown, to exercise the tier downgrade */
-  forceDrop: params.has('forceDrop'),
   noSnap: params.has('nosnap'),
   perf: params.has('perf'),
   pointCap: params.has('pointcap') ? Number(params.get('pointcap')) : null,
@@ -70,8 +62,6 @@ export const flags = {
   dofRes: Math.max(1, Number(params.get('dofres') ?? 2) | 0),
   shadowEvery: params.has('shadowevery') ? Math.max(1, Number(params.get('shadowevery')) | 0) : null,
   shadowGrow: Number(params.get('shadowgrow') ?? 1),
-  noTimer: params.has('notimer'),
-  pacing: ((m) => (m === 'on' || m === 'off' ? m : 'auto'))(params.get('pacing')) as 'off' | 'on' | 'auto',
   off: new Set((params.get('off') ?? '').split(',').filter(Boolean)),
 };
 
@@ -111,21 +101,18 @@ export function reportHeroRendered(hero: Vector3, camera: Camera): void {
   window.__heroRendered = { x: p.x, y: p.y };
 }
 
-/** ?parity: milliseconds added to every measured GPU frame (simulated load for check:tiers). */
-export const gpuExtra = (): number => (flags.parity && typeof window.__GPU_EXTRA === 'number' ? window.__GPU_EXTRA : 0);
-
-/** ?parity: expose the tier manager for check:tiers. */
-export function exposeTiers(tiers: unknown): void { if (flags.parity) window.__tiers = tiers; }
+/** ?parity: the tier picked at startup, for check:tiers. */
+export function exposeTier(tier: { name: string; n: number }, rule: string): void { if (flags.parity) window.__tier = { name: tier.name, n: tier.n, rule }; }
 
 /** ?parity: expose the sound for the audio check. */
 export function exposeAudio(sound: unknown): void { if (flags.parity) window.__audio = sound; }
 
-/** ?perf: the rAF timestamp of every rendered frame (the pacer may skip refreshes), for the cadence. */
-export function reportRender(t: number, lock: number): void {
+/** ?perf: the rAF timestamp of every rendered frame, for the cadence. */
+export function reportRender(t: number): void {
   if (!flags.perf) return;
-  const a = (window.__renderT ??= []), l = (window.__renderLock ??= []);
-  a.push(t); l.push(lock);
-  if (a.length > 20000) { a.splice(0, 10000); l.splice(0, 10000); }
+  const a = (window.__renderT ??= []);
+  a.push(t);
+  if (a.length > 20000) a.splice(0, 10000);
 }
 
 export function reportGpu(timer: { times(): GpuTimes }): void {

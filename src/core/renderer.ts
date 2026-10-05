@@ -14,7 +14,8 @@ export interface Stage {
 }
 
 export function createStage(canvas: HTMLCanvasElement, pixelRatio: number): Stage {
-  const renderer = new WebGLRenderer({ canvas, antialias: true });
+  // high-performance: on laptops with two GPUs, ask for the discrete one
+  const renderer = new WebGLRenderer({ canvas, antialias: true, powerPreference: 'high-performance' });
   renderer.outputColorSpace = LinearSRGBColorSpace;
   renderer.debug.checkShaderErrors = import.meta.env.DEV;
   renderer.setPixelRatio(pixelRatio);

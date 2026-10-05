@@ -1,21 +1,23 @@
 import type { GpuTimer } from '../core/gpu-timer';
 import { LAYER_NAMES, type LayerName, type RenderLayers } from '../core/layers';
-import type { Pacer } from '../core/pacing';
-import type { TierManager } from '../core/tiers';
+import type { Tier } from '../core/quality';
 
 const LABELS: Record<LayerName, string> = { light: 'Light', shadows: 'Shadows', dof: 'Depth of field', bloom: 'Bloom', grade: 'Grade' };
 
+/** What chose the tier: shown first, since the tier never changes after startup. */
+export interface TierInfo { tier: Tier; rule: string; gpu: string }
+
 /**
- * ?debug: a corner panel. A readout of tier, effects, grain count, pixel ratio, frame time and GPU
- * time per pass (live, smoothed, plus the raw medians of whole frames and of shadow-refresh frames),
- * the quality monitor's last window and every quality step with its reason and numbers, and a
- * toggle per render layer. A toggle overrides tier and downgrade until reset. Not part of the
- * experience.
+ * ?debug: a corner panel. The tier, the rule that chose it and the GPU the browser reported; effects,
+ * grain count, pixel ratio; frame rate and GPU time per pass (live, smoothed, plus the raw medians of
+ * whole frames and of shadow-refresh frames), measured only here; and a toggle per render layer that
+ * overrides the tier until reset. Not part of the experience: nothing measured here changes the site.
  */
-export function debugOverlay(tiers: TierManager, layers: RenderLayers, pixelRatio: () => number, timer: GpuTimer, pacer: Pacer): void {
+export function debugOverlay(info: TierInfo, layers: RenderLayers, pixelRatio: () => number, timer: GpuTimer): void {
   const panel = document.createElement('div');
   panel.style.cssText = 'position:fixed;left:8px;top:8px;z-index:9;display:flex;flex-direction:column;gap:6px;align-items:flex-start;font:12px/1.4 ui-monospace,monospace';
   const el = document.createElement('pre');
+  el.className = 'og-debug';
   el.setAttribute('aria-hidden', 'true');
   el.style.cssText = 'margin:0;padding:6px 8px;background:rgba(0,0,0,.65);color:#fff;pointer-events:none;border-radius:4px';
   const group = document.createElement('div');
@@ -39,7 +41,7 @@ export function debugOverlay(tiers: TierManager, layers: RenderLayers, pixelRati
       b.style.background = on ? '#ece3d3' : 'rgba(0,0,0,.65)';
       b.style.color = on ? '#111' : '#fff';
       b.style.borderStyle = forced ? 'dashed' : 'solid';
-      b.title = forced ? 'overridden (Reset returns it to the tier)' : 'set by the tier and the downgrade';
+      b.title = forced ? 'overridden (Reset returns it to the tier)' : 'set by the tier';
     }
   };
   panel.append(el, group);
@@ -54,24 +56,15 @@ export function debugOverlay(tiers: TierManager, layers: RenderLayers, pixelRati
   requestAnimationFrame(tick);
   sync();
   setInterval(() => {
-    const m = tiers.monitor, now = performance.now();
     const fx = LAYER_NAMES.filter((k) => layers.on(k)).join(' ') || 'none';
-    const state = !m.warm(now) ? 'warming up' : m.external ? 'slow frames, own GPU time fine: external, no step' : 'watching';
-    el.textContent = `tier ${tiers.tier.name}${tiers.next ? ` → ${tiers.next} (queued)` : ''} · effects ${fx}
+    el.textContent = `tier ${info.tier.name}: ${info.rule}
 ` +
-      `grains ${tiers.tier.n.toLocaleString('en-US')} · dpr ${pixelRatio().toFixed(2)}
+      `gpu ${info.gpu || 'not reported'}
 ` +
-      `fps ${frames.length} · window: frame ${m.frame > 0 ? m.frame.toFixed(1) + ' ms' : '…'} · gpu ${Number.isNaN(m.gpuMs) ? (m.gpu ? '…' : 'no timer') : m.gpuMs.toFixed(1) + ' ms'} · ${state}${tiers.upLocked ? ' · steps up off' : ''}` +
-      tiers.log.map((r) => `
-  ${r.at.toFixed(1)} s ${r.dir === 'down' ? '↓' : '↑'} ${r.what}: ${r.reason} (frame ${r.frame} ms${r.gpu === null ? '' : `, gpu ${r.gpu} ms`})`).join('') +
-      pacingLine(pacer) + gpuLines(timer);
-    sync(); // the downgrade may have switched a layer off
+      `grains ${info.tier.n.toLocaleString('en-US')} · dpr ${pixelRatio().toFixed(2)} · effects ${fx}
+` +
+      `fps ${frames.length}` + gpuLines(timer);
   }, 500);
-}
-
-function pacingLine(pacer: Pacer): string {
-  const s = pacer.state;
-  return `\npacing ${s.mode}${s.refresh ? ` · refresh ${s.refresh.toFixed(2)} ms` : ' · refresh unknown'}${s.lock ? ` · locked to every ${s.lock}` : ''}${s.probing ? ' (probing)' : ''}`;
 }
 
 function gpuLines(timer: GpuTimer): string {

@@ -38,11 +38,11 @@ npm run lint
 | `npm run check:reverse` | Scrolling backwards through drift, break, separate and grow renders exactly what scrolling forwards does |
 | `npm run check:seams` | No transition leaves a trace on a resting chapter: the previous transition at t = 1 and the next at t = 0 render byte-identical frames, equal to the hold |
 | `npm run check:fonts` | No layout shift when the web fonts arrive (on the built site, fonts held back 1.5 s), and the wdth axis really renders |
-| `npm run check:tiers` | The downgrade is queued mid-transition, applied only while resting, in order (depth of field, shadows, grains); the low tier's layers; the debug panel's toggles; with simulated loads: no step during the warm-up, none for an external slowdown, back up once the load is gone, no oscillation, and the three-window rule without the GPU timer |
+| `npm run check:tiers` | The device rules pick the expected tier (iPhone 7 on iOS 15 and iPhone 15 → mid, iPad → mid, high-end / older Android tablet → high / mid, Intel UHD laptop → mid, RTX 4050 → high, Apple M1 Mac → high, SwiftShader → low, a texture limit too small for mid → low, too small for low → text version) and `?tier=` overrides them; a normal visit runs no timing code (no GPU timer queries, a frame on every refresh, `powerPreference: 'high-performance'`); the tier never changes after the scene appears; the low tier's layers; `?debug` shows the rule and the GPU; its toggles work |
 | `npm run check:console` | Zero console warnings or errors in dev and build, Chromium and Firefox |
 | `npm run check:a11y` | axe WCAG 2.2 AA, the WCAG 2.2 checks (target size, reflow at 320 px, text spacing, focus order and visibility, status once), the motion button, keyboard chapter steps, status line, focus ring, reduced motion, no-WebGL2 and no-JS fallbacks |
 | `npm run check:load` | First load, dev and production: the first paint (script held back) hides the article and shows only the stage, brand and loading line; so does every frame until the scene arrives; the line fills forward; no layout shift; reduced motion without fades. Screenshots → `parity/load/` |
-| `npm run check:responsive` | Across 14 viewports: the hero ring on the grain at every hold (≤ 2 px), 44 px touch targets, the pixel budget, a mobile browser bar changing nothing, and the tier picked per device class |
+| `npm run check:responsive` | Across 14 viewports: the hero ring on the grain at every hold (≤ 2 px), 44 px touch targets, the pixel budget, a mobile browser bar changing nothing, turning a phone keeping the tier, and the pixel ratio per tier |
 | `npm run responsive [label]` | Contact sheets of the built site at every hold across phones, tablets and desktops → `docs/responsive/<label>/` |
 | `npm run check:audio` | Sound: nothing before the visitor asks; the button clickable at 900×560 and 1440×700; exact silence in the "One day," cut and after the final landing (and sound again after scrolling back); ambience above the music where it should be; peaks below −6 dBFS; off within 0.5 s; hidden tab suspends; the remembered choice; no console noise both ways |
 | `npm run check:contrast` | Real contrast behind every text block (the text drawn, then hidden, the background under it measured) at every chapter hold and the loading screen, at 390×844, 1440×900 and 2560×1440: the worst 5 % of pixels at AA at least → `docs/a11y/contrast.md` |
@@ -220,8 +220,7 @@ video offline, one frame at a time, from the built site in capture mode (`?captu
   `press`, so the parting reads at small sizes), and the chip, whose switches light up. It steers the camera's pointer parallax at half strength.
 - **Deterministic.** The page runs on a virtual clock that the script advances 1/60 s per frame
   (`performance.now()`, the shader clock and film grain, the live clock, the ring, the ending); CSS
-  transitions and the clock's punch are moved to the same clock. High tier, every effect on, no
-  downgrade, no pacing. Two renders of the same frames decode to identical pictures.
+  transitions and the clock's punch are moved to the same clock. High tier, every effect on. Two renders of the same frames decode to identical pictures.
 - **Read back** from the compositor (`Page.captureScreenshot`), so the HUD and the words are in the
   picture, and piped to ffmpeg: H.264 (CRF 14, yuv420p), 60 fps.
 - **Sound**, rendered offline on an `OfflineAudioContext` (48 kHz) from the story state of every
@@ -278,12 +277,31 @@ Without WebGL2 or without JavaScript, the article is the page.
 
 | Tier | Grains per world | DPR cap | Pixel budget | Layers | Chosen when |
 |---|---|---|---|---|---|
-| low | 36 000 | 1.25 | 1.5 MP | no shadows, no depth of field | a screen whose shorter side is under 760 px (phones and small tablets, either way up), a software or "major performance caveat" GPU, or the texture would not fit |
-| mid | 90 000 | 1.4 | 2.2 MP | all | default (v10's desktop setting; the parity baseline) |
-| high | 160 000 | 1.75 | 4.5 MP, never below DPR 1 | all | a discrete GPU with at least 8 cores and enough memory, or Apple Silicon on a Mac (not an iPad) with at least 8 cores |
+| low | 36 000 | 1.25 | 1.5 MP | no shadows, no depth of field | only where mid cannot run: a software renderer (SwiftShader, llvmpipe, Microsoft Basic Render Driver…), a browser that offers only a "major performance caveat" context, or a texture limit too small for mid's grains |
+| mid | 90 000 | 1.4 | 2.2 MP | all | phones, iPads, tablets, and laptops and desktops with integrated or unrecognised GPUs (v10's desktop setting; the parity baseline) |
+| high | 160 000 | 1.75 | 4.5 MP, never below DPR 1 | all | laptops and desktops with a discrete GPU or Apple Silicon; Android tablets whose GPU is a recent high-end family |
 
-The tier is picked once per visit: turning a phone or resizing the window never changes it; only the
-frame-time watchdog steps it down. The drawing buffer is the window × the screen's DPR, capped by the tier's DPR cap and by its pixel
+**Picked once, never measured.** The tier is chosen at startup from what the device is and the GPU
+the browser reports (`core/quality.ts`; the GPU name lists are in `core/gpus.ts`), and never changes:
+no runtime downgrade or recovery, no calibration, no frame pacing, no GPU timer in a normal visit. The
+browser shows frames at the display's own pace.
+
+- **Phones:** mid, always.
+- **Tablets:** mid. Android tablets whose GPU is a recent high-end family (Adreno 730 and up, Mali-G710
+  and up, Immortalis, Xclipse) get high. iPads (a Mac user agent with touch points) stay mid.
+- **Laptops and desktops:** high with a discrete GPU (NVIDIA, Radeon RX / Pro, Intel Arc A-series) or
+  Apple Silicon (named "Apple M…", or Safari's "Apple GPU" on a Mac with ASTC textures, which Intel
+  Macs lack). Otherwise mid. On a laptop with two GPUs the one the browser reports decides; the
+  context asks for `powerPreference: 'high-performance'`.
+- **Low** only where mid cannot run, as in the table. If even low's grains do not fit the GPU's
+  texture limit, the startup guard shows the text version.
+- `?tier=low|mid|high` overrides the rules. `?debug` shows the tier, the rule that chose it and the
+  GPU the browser reported; its frame rate and GPU times (`?perf`, `npm run perf`) are measured for
+  development only and change nothing.
+- **Support:** tuned for devices from about 2019 on. Older devices either run or get the text
+  version; the build targets Safari/iOS 15 and up.
+
+Turning a phone or resizing the window never changes the tier. The drawing buffer is the window × the screen's DPR, capped by the tier's DPR cap and by its pixel
 budget, so 4K and Retina screens cannot multiply the cost (on high the budget never takes it below
 DPR 1; on low and mid it may). It follows the window on every real
 resize; height-only changes under 120 px (mobile browser bars) change nothing, and the canvas is
@@ -293,37 +311,8 @@ the rest of the camera) says where: 0 keeps the 2:1 frame's bottom edge (crops f
 its top edge (crops from the bottom), .5 crops evenly. At 2:1 and below nothing changes.
 
 The layers and pixel-ratio caps follow v10: post costs per pixel. Layers are light, shadows,
-depth of field, bloom and grade (vignette and film grain); `core/layers.ts` combines the tier,
-the downgrade and overrides.
-
-`core/quality.ts` judges 2 s windows of the frame interval and, where the GPU timer exists
-(`EXT_disjoint_timer_query_webgl2`, on every visit), of our own GPU time per frame. The budget is
-25 ms.
-
-- **Warm-up.** Nothing is judged for 8 s after the first rendered frame, nor for 3 s after a step or
-  a tab switch. A window that overlaps grain generation, a shader compile or a pack upload is
-  thrown away.
-- **Down.** With the timer: our GPU time over budget in two windows in a row. Long frame intervals
-  while our GPU time is within budget are an external slowdown (another app, a screen recorder):
-  fewer grains would not help, so nothing changes. Without the timer: the frame interval over
-  budget in three windows in a row.
-- **Up.** Resting on a chapter, comfortably under budget (GPU under 65 %, or without the timer the
-  frame interval under 75 %) for 10 s: the last step down is undone. After a step up that is
-  followed by a step down, it stops stepping up for the session.
-
-The steps down, queued in `core/tiers.ts`:
-
-1. depth of field off;
-2. shadows off;
-3. fewer grains: the next tier's worlds and pixel ratio.
-
-Steps up undo them in reverse.
-
-- A step is applied only while the visitor rests on a chapter, behind a 250 ms canvas dip.
-  Nothing changes mid-transition.
-- New worlds are built in the worker, also only while resting.
-- `?debug` shows the tier, the effects on, the monitor's last window, and every step with its
-  reason and numbers.
+depth of field, bloom and grade (vignette and film grain); `core/layers.ts` combines the tier and
+the overrides (`?off=`, the `?debug` toggles).
 
 Phase 1 measurement with `npm run perf`, headed Chromium, Intel UHD Graphics (i5-12450H laptop,
 144 Hz panel):
@@ -386,15 +375,12 @@ Everything is synthesised with Web Audio (no files), ported from `reference/v23-
 
 | Switch | Effect |
 |---|---|
-| `?tier=low\|mid\|high` | Force a tier (also turns off the automatic drop) |
-| `?debug` | Corner panel: tier, effects, grains, DPR, fps, the quality monitor's last window and every step with its reason and numbers, GPU time per pass and per frame (live), and a toggle per render layer (overrides tier and downgrade until Reset) |
+| `?tier=low\|mid\|high` | Force a tier instead of the device rules |
+| `?debug` | Corner panel: the tier, the rule that chose it and the GPU the browser reported; effects, grains, DPR, fps, GPU time per pass and per frame (live, measured only here), and a toggle per render layer (overrides the tier until Reset). Also the startup guard's on-screen report from the first moment (index.html) |
 | `?capture` | Capture mode for `npm run capture`: implies `?parity` and the high tier; the page runs on a virtual clock, one frame per `window.__capture.step()` |
-| `?notimer` | No GPU timer: the quality monitor judges frame intervals only (three windows) |
-| `?debug&forceDrop` | Act as if the frame budget stayed blown, to watch the downgrade walk its steps |
 | `?perf` | Time every render pass on the GPU (`window.__gpu`, with the last 240 raw frames) |
 | `?off=a,b` | Switch render layers off (light, shadows, dof, bloom, grade), for measurements |
 | `?grains=N` · `?pointcap=N` · `?shadowstride=N` | Measurements: grains per world, largest grain in pixels, every N-th grain casts shadows (default 1: all) |
-| `?pacing=off\|on\|auto` | Frame pacing (`core/pacing.ts`, default auto): lock rendering to every n-th refresh when frames mostly take three or more and some come faster; never where frames fit (docs/perf.md) |
 | `?parity` | Let a harness drive progress (`window.__V`) and shader time (`window.__T`), or render a transition point directly (`window.__AT = { tr, t, lean }`); pin the display's live clock (`window.__LIVE`, ms) and the seconds spent in the current hold (`window.__FT`: ring fade, final hold); the rendered progress is published as `window.__progress` |
 | `?nosnap` | Scrolling does not settle on chapters, so a position mid-transition can be held |
 | `#magma` … `#now` | Open at that chapter |
