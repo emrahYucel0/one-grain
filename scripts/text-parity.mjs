@@ -10,8 +10,11 @@ import { referenceFile, routeReference } from './lib/reference.mjs';
 import { startDev } from './lib/servers.mjs';
 
 const TEXT_REFERENCE = 'v15';
-/** Intentional changes since the reference, applied to its page (docs/parity-notes.md). None at present. */
-const INTENTIONAL = [];
+/** Intentional changes since the reference, applied to its page (docs/parity-notes.md, Phase 6c content corrections). */
+const INTENTIONAL = [
+  ["label: '≈ 2–4 months'", "label: '≈ 6 months'"],
+  ["it grows upward from a single seed.", "it is drawn upward from a single seed."],
+];
 /** The reference publishes the progress each frame rendered, after its words and clock are set (as the port's __progress). */
 const HOOKS = [['    fxTick();\n  }', '    fxTick(); window.__progress = state.v;\n  }']];
 

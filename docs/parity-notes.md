@@ -29,6 +29,16 @@ was verified and how, and what was not.
 The reference is never edited. The harness serves a patched copy with three hooks: progress
 override, time override, and exposing the built texture (`scripts/lib/reference.mjs`).
 
+## Phase 6c: content corrections (verified against sources)
+
+- **Chip clock:** "≈ 2–4 months" → "≈ 6 months". A fab cycle takes about 12 weeks and assembly and
+  test about 6 more, after the polysilicon, the crystal and the wafers have been made.
+- **Crystal:** "it grows upward from a single seed" → "it is drawn upward from a single seed". In
+  Czochralski growth the seed is pulled up and the crystal grows at its lower end.
+
+`check:text` applies both to the v15 reference as intentional changes, so the copy is still
+compared word for word everywhere else.
+
 ## Phase 6a: responsive changes beyond the reference
 
 - **Top scrim.** A subtle gradient in the stage colour behind the HUD on every chapter (70 %, fading
