@@ -18,11 +18,13 @@ serve it over HTTPS. Nothing runs on the server.
 |---|---|---|
 | `index.html` | The page, with the critical CSS and the class script inline | `no-cache` (revalidate every visit) |
 | `assets/*` | Scripts, the stylesheet, the worker and fonts, all with content hashes in their names | 1 year, `immutable` |
-| `favicon.svg`, `favicon-32.png`, `apple-touch-icon.png`, `icon-192.png`, `icon-512.png`, `og-image.jpg`, `site.webmanifest` | Icons and the sharing image. Their names have no hash. | The host's default, or about a day |
+| `favicon.svg`, `favicon-32.png`, `apple-touch-icon.png`, `icon-192.png`, `icon-512.png`, `og-image.jpg`, `site.webmanifest` | Icons, manifest and the sharing image. Their names have no hash. | 1 day |
 | `robots.txt`, `sitemap.xml` | Generated from `site.config.json` | The host's default |
 | `_headers` | The rules below, in Netlify / Cloudflare Pages format | (not served) |
 
-`index.html` must always revalidate. Each build changes the hashed file names it points to,
+The icons need a cache lifetime of their own: without one, Chromium fetches the favicon again from
+the network whenever the address changes within the page (the story writes the chapter into the
+URL hash). `index.html` must always revalidate. Each build changes the hashed file names it points to,
 and an old cached copy would point to files that no longer exist.
 
 ## Required
@@ -55,6 +57,9 @@ and an old cached copy would point to files that no longer exist.
   Cache-Control: no-cache
 /assets/*
   Cache-Control: public, max-age=31536000, immutable
+/favicon.svg
+  Cache-Control: public, max-age=86400
+… (the same for favicon-32.png, apple-touch-icon.png, icon-192.png, icon-512.png, site.webmanifest, og-image.jpg)
 ```
 
 On Netlify and Cloudflare Pages, `_headers` works as it is. Other hosts need the same rules in

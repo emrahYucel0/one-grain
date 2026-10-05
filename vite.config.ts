@@ -14,6 +14,13 @@ const SITE: string = (JSON.parse(readFileSync(new URL('./site.config.json', impo
  */
 const TARGETS = ['chrome100', 'edge100', 'firefox100', 'safari15', 'ios15'];
 
+/**
+ * public/'s icons, manifest and sharing image: unhashed names, so a day's cache rather than a year's.
+ * Without one, Chromium fetches the favicon again from the network on every same-document navigation
+ * (the story writes the chapter into the URL hash).
+ */
+const ICONS = ['favicon.svg', 'favicon-32.png', 'apple-touch-icon.png', 'icon-192.png', 'icon-512.png', 'site.webmanifest', 'og-image.jpg'];
+
 /** main.css's web font faces (Archivo; Newsreader roman and italic), subset in src/fonts/ (npm run fonts). */
 const WEB_FACES = 3;
 
@@ -81,7 +88,7 @@ function site(): Plugin {
   Cache-Control: no-cache
 /assets/*
   Cache-Control: public, max-age=31536000, immutable
-`);
+${ICONS.map((f) => `/${f}\n  Cache-Control: public, max-age=86400\n`).join('')}`);
     },
   };
 }

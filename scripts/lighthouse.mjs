@@ -1,7 +1,7 @@
 // Lighthouse and the network (npm run lighthouse): the production build served as a host would
 // (scripts/serve.mjs: Brotli, the _headers CSP and cache rules).
 //  1. A browser visit at 1440×900 and at 390×844 (touch): no console messages, no CSP violations,
-//     no response of 400 or more, and only the requests the first view uses (the page, its scripts,
+//     no response of 400 or more, nothing requested twice, and only the requests the first view uses (the page, its scripts,
 //     the stylesheet, the worker, the three font faces, the icon); every request is listed.
 //  2. Lighthouse 12 (installed on demand by npx), mobile and desktop presets: the four category
 //     scores, LCP, CLS, TBT, FCP, and the bytes per resource type.
@@ -45,6 +45,8 @@ try {
       check(`${name}: no CSP violations`, csp.length === 0, csp.join(' | ') || 'none');
       check(`${name}: no 404s (no response of 400 or more)`, bad.length === 0, bad.join(' | ') || `${requests.length} requests`);
       const unused = requests.filter((r) => !EXPECTED.some((e) => e.test(r.url)));
+      const urls = requests.map((r) => r.url), twice = [...new Set(urls.filter((u, i) => urls.indexOf(u) !== i))];
+      check(`${name}: nothing requested twice`, twice.length === 0, twice.map((u) => u.replace(server.origin, '')).join(', ') || 'none');
       check(`${name}: only the requests the first view uses`, unused.length === 0, unused.map((r) => r.url.replace(server.origin, '')).join(', ') || requests.map((r) => r.url.replace(server.origin, '').replace(/-[\w-]{8}\./, '.')).join(', '));
       if (name === '1440×900') network = requests;
       await ctx.close();

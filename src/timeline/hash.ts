@@ -26,6 +26,11 @@ export class HashRouter {
   update(hold: number): void {
     if (hold < 0) return;
     const h = `#${WORLDS[hold]!.slug}`;
-    if (h !== this.last) { this.last = h; history.replaceState(null, '', h); }
+    if (h === this.last) return;
+    // the opening chapter on arrival leaves the address alone: a first visit keeps the plain URL, and the
+    // browser is not sent fetching the favicon again for a same-document navigation before anyone scrolls
+    const opening = !this.last && hold === 0 && !location.hash;
+    this.last = h;
+    if (!opening) history.replaceState(null, '', h);
   }
 }
