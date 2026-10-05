@@ -9,7 +9,8 @@
 // window without recording frames, renders the sound and puts it into every finished
 // capture/out/one-grain-<W>x<H>.mp4 (the picture is copied, not re-encoded): for a new seed.
 // The picture is rendered in chunks of --chunk frames (1500), each in a fresh browser that first
-// steps the earlier frames in a small window, then joined without re-encoding.
+// steps the earlier frames without drawing, then joined without re-encoding. A chunk is tried up
+// to three times; a rerun after a failure keeps the chunks already finished.
 // --list prints the path's timeline and exits.
 // ffmpeg: $FFMPEG, else the ffmpeg-static dev dependency, else ffmpeg on the PATH.
 import { spawn } from 'node:child_process';
@@ -137,7 +138,11 @@ async function session(from, to, part, sound) {
     return Buffer.from(await page.evaluate(([f, seed]) => window.__capture.sound(f, seed), [fps, path.seed]), 'base64');
   } finally { await browser.close().catch(() => {}); }
 }
-const attempt = async (...a) => { try { return await session(...a); } catch (e) { console.log(`  retrying: ${e.message}`); return session(...a); } };
+const attempt = async (...a) => {
+  for (let k = 0; ; k++) {
+    try { return await session(...a); } catch (e) { if (k >= 2) throw e; console.log(`  retrying: ${e.message}`); }
+  }
+};
 
 try {
   const t0 = Date.now();
@@ -156,8 +161,10 @@ try {
     // the picture, chunk by chunk, each in a fresh browser; then joined without re-encoding
     const parts = [];
     for (let from = first; from < last; from += CHUNK) {
-      const part = `${name}.part${parts.length}.mp4`;
-      await attempt(from, Math.min(last, from + CHUNK), part, false);
+      const part = `${name}.part${parts.length}.mp4`, marker = `${part}.done`;
+      // a rerun after a failure keeps the chunks already finished (same path, same chunk size)
+      if (existsSync(marker) && (await readFile(marker, 'utf8')) === `${from}-${Math.min(last, from + CHUNK)}`) console.log(`  frames ${from}–${Math.min(last, from + CHUNK)}: kept from the last run`);
+      else { await attempt(from, Math.min(last, from + CHUNK), part, false); await writeFile(marker, `${from}-${Math.min(last, from + CHUNK)}`); }
       parts.push(part);
       const done = Math.min(last, from + CHUNK) - first, per = (Date.now() - t0) / done;
       console.log(`  ${done}/${last - first} frames · ${((last - first - done) * per / 60000).toFixed(1)} min left`);
@@ -166,7 +173,7 @@ try {
     await run(['-f', 'concat', '-safe', '0', '-i', `${name}.parts.txt`, '-c', 'copy', `${name}.video.mp4`]).done;
     console.log(`video: ${last - first} frames in ${((Date.now() - t0) / 60000).toFixed(1)} min`);
     await run(['-i', `${name}.video.mp4`, '-ss', String(first / fps), '-i', `${name}.wav`, '-map', '0:v', '-map', '1:a', '-c:v', 'copy', '-c:a', 'aac', '-b:a', '320k', '-shortest', '-movflags', '+faststart', `${name}.mp4`]).done;
-    for (const f of [...parts, `${name}.parts.txt`, `${name}.video.mp4`]) await rm(f, { force: true });
+    for (const f of [...parts, ...parts.map((x) => `${x}.done`), `${name}.parts.txt`, `${name}.video.mp4`]) await rm(f, { force: true, maxRetries: 10, retryDelay: 500 }); // Windows may hold a file a moment longer (EBUSY)
     console.log(`→ ${name}.mp4 (the sound alone: ${name}.wav)`);
   }
 } finally { await server.close(); }
