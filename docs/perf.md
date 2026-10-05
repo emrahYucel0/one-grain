@@ -640,7 +640,7 @@ The drawing buffer is capped by total pixels per tier (low 1.5 MP, mid 2.2 MP, h
 
 Details and the design questions: docs/responsive/README.md.
 
-## Phase 6a: mid-tier headroom (measured, not adopted)
+## Phase 6a: mid-tier headroom (shadows every 3rd frame at rest adopted; DOF stays at half resolution)
 
 `?debug` on this laptop showed GPU frames of 13.7–19.3 ms at mid. Two options, behind measurement
 switches only (`?dofres=4`, `?shadowevery=3`; the defaults are unchanged): depth of field at
@@ -684,3 +684,6 @@ position over two rounds, 3 s of raw GPU frames each (`EXT_disjoint_timer_query_
   whatever the setting.
 - The 13.7–19.3 ms seen in `?debug` includes transitions and the light and furnace holds; at these
   four holds the GPU frame is 12–14.5 ms here.
+- **Decision:** shadows refresh every 3rd frame at rest by default (`render/shadow.ts` SHADOW_EVERY;
+  every other frame while the story moves); depth of field stays at half resolution. `?shadowevery`
+  and `?dofres` remain for measurements.

@@ -8,7 +8,7 @@
 //   ?grains=N        grains per world instead of the tier's count (performance experiments)
 //   ?shadowstride=N  every N-th grain casts shadows (default 1 = all); &shadowgrow=F scales its disc
 //   ?dofres=N        depth of field at 1/N resolution (default 2 = half; 4 = quarter), measurements only
-//   ?shadowevery=N   at rest the shadow map refreshes every N-th frame (default 2; every 2nd in transitions), measurements only
+//   ?shadowevery=N   at rest the shadow map refreshes every N-th frame (default 3; every 2nd in transitions), measurements only
 //   ?pacing=off|on|auto  frame pacing (core/pacing.ts; default auto; capture mode never paces)
 //   ?notimer         no GPU timer: the quality monitor falls back to frame intervals (core/quality.ts)
 //   ?capture         the submission video's offline render (src/capture/, scripts/capture.mjs): implies
@@ -68,7 +68,7 @@ export const flags = {
   grains: params.has('grains') ? Number(params.get('grains')) : null,
   shadowStride: Number(params.get('shadowstride') ?? 1),
   dofRes: Math.max(1, Number(params.get('dofres') ?? 2) | 0),
-  shadowEvery: Math.max(1, Number(params.get('shadowevery') ?? 2) | 0),
+  shadowEvery: params.has('shadowevery') ? Math.max(1, Number(params.get('shadowevery')) | 0) : null,
   shadowGrow: Number(params.get('shadowgrow') ?? 1),
   noTimer: params.has('notimer'),
   pacing: ((m) => (m === 'on' || m === 'off' ? m : 'auto'))(params.get('pacing')) as 'off' | 'on' | 'auto',

@@ -3,11 +3,14 @@ import { DepthTexture, Matrix4, OrthographicCamera, Scene, WebGLRenderTarget, ty
 /** Shadow map resolution (v10). */
 export const SHADOW_SIZE = 1024;
 
+/** How often the shadow map refreshes: every n-th frame at rest and while moving (Phase 6a: 3 at rest; docs/perf.md). */
+export const SHADOW_EVERY = { rest: 3, moving: 2 } as const;
+
 /**
  * The key light's shadow map (v10): an orthographic depth view along the key light, framed around
  * what the camera looks at. Grains are drawn into it as discs (the grain shader's SHADOW variant).
- * Matter moves slowly at rest, so the map refreshes every other frame (and on the first frame after
- * it was off).
+ * Matter moves slowly, so the map refreshes every third frame at rest and every other frame while
+ * the story moves (SHADOW_EVERY), and on the first frame after it was off.
  */
 export class ShadowMap {
   readonly target = new WebGLRenderTarget(SHADOW_SIZE, SHADOW_SIZE, { depthBuffer: true });

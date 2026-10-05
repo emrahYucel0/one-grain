@@ -9,7 +9,7 @@ export interface PipelineFrame {
   overlay: Scene;
   camera: Camera;
   shadows: boolean;
-  /** refresh the shadow map every n-th frame (2; ?shadowevery measures 3 at rest) */
+  /** refresh the shadow map every n-th frame (render/shadow.ts SHADOW_EVERY) */
   shadowEvery?: number;
   /** the stage colour, linear: the HDR target is cleared to it */
   clear: Vector3;
@@ -20,7 +20,7 @@ export interface PipelineFrame {
 
 /**
  * The frame's render passes, in order, each timed on the GPU (core/gpu-timer.ts):
- *   shadow     the key light's shadow map (every other frame, see render/shadow.ts)
+ *   shadow     the key light's shadow map (every 3rd frame at rest, every other while moving; render/shadow.ts)
  *   grains     the grain cloud, into the HDR target
  *   hero       the grain the story follows, drawn over everything (no clear in between)
  *   bloom, dof, composite   the post chain (render/post.ts)
