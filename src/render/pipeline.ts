@@ -29,10 +29,16 @@ export class Pipeline {
   private readonly renderer: WebGLRenderer;
   private readonly timer: GpuTimer;
   readonly shadow = new ShadowMap();
-  private readonly post = new PostChain();
+  private readonly post: PostChain;
+  /** whether the post chain renders to half-float targets (render/post.ts) */
+  readonly hdr: boolean;
   private readonly clear = new Color();
 
-  constructor(renderer: WebGLRenderer, timer: GpuTimer) { this.renderer = renderer; this.timer = timer; }
+  constructor(renderer: WebGLRenderer, timer: GpuTimer) {
+    this.renderer = renderer; this.timer = timer;
+    this.hdr = renderer.extensions.has('EXT_color_buffer_float') || renderer.extensions.has('EXT_color_buffer_half_float');
+    this.post = new PostChain(this.hdr);
+  }
 
   /**
    * Compile every program the first frame needs (the grains and their shadow variant, the overlay,

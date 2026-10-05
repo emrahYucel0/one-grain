@@ -3,8 +3,8 @@
 //   npm run check:console     (builds first)
 //
 // Drives the page the way a visitor would: real scrolling through every hold and transition
-// midpoint, chapter links, the sound toggle, a resize. Runs in Chromium (real GPU) and Firefox.
-import { firefox } from 'playwright';
+// midpoint, chapter links, the sound toggle, a resize. Runs in Chromium (real GPU), Firefox and WebKit.
+import { firefox, webkit } from 'playwright';
 import { createServer } from 'vite';
 import { launch } from './lib/browser.mjs';
 import { startDev, startPreview } from './lib/servers.mjs';
@@ -16,7 +16,7 @@ await vite.close();
 const stops = [];
 SNAP_POINTS.forEach((v, i) => { stops.push(v); if (i < SNAP_POINTS.length - 1) stops.push(transitionMidpoint(i)); });
 
-const engines = [['chromium', () => launch()], ['firefox', () => firefox.launch()]];
+const engines = [['chromium', () => launch()], ['firefox', () => firefox.launch()], ['webkit', () => webkit.launch()]];
 const targets = [['dev', () => startDev(5193)], ['build', () => startPreview(5192)]];
 const report = [];
 

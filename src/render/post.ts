@@ -1,6 +1,6 @@
 import { flags } from '../debug/parity';
 import {
-  DepthTexture, GLSL3, HalfFloatType, LinearFilter, Mesh, OrthographicCamera, PlaneGeometry, Scene, ShaderMaterial, Vector2, WebGLRenderTarget,
+  DepthTexture, GLSL3, HalfFloatType, LinearFilter, UnsignedByteType, Mesh, OrthographicCamera, PlaneGeometry, Scene, ShaderMaterial, Vector2, WebGLRenderTarget,
   type Camera, type IUniform, type Texture, type WebGLRenderer,
 } from 'three';
 import type { GpuTimer } from '../core/gpu-timer';
@@ -39,7 +39,6 @@ class FullscreenPass {
   }
 }
 
-const half = { type: HalfFloatType, depthBuffer: false, minFilter: LinearFilter, magFilter: LinearFilter } as const;
 
 /**
  * The HDR post chain (v10). The scene renders into a half-float target with a depth texture; then
@@ -66,8 +65,15 @@ export class PostChain {
   private readonly composite: FullscreenPass;
   private readonly size = new Vector2();
 
-  constructor() {
-    this.scene = new WebGLRenderTarget(1, 1, { type: HalfFloatType, depthBuffer: true });
+  /**
+   * `hdr`: half-float targets, so highlights above 1 survive into the bloom. Where the GPU cannot render
+   * to them (neither EXT_color_buffer_float nor EXT_color_buffer_half_float, as on some iOS 15 devices),
+   * 8-bit targets instead of a black screen: the picture stays, the bloom only takes what is under 1.
+   */
+  constructor(hdr = true) {
+    const type = hdr ? HalfFloatType : UnsignedByteType;
+    const half = { type, depthBuffer: false, minFilter: LinearFilter, magFilter: LinearFilter } as const;
+    this.scene = new WebGLRenderTarget(1, 1, { type, depthBuffer: true });
     this.scene.depthTexture = new DepthTexture(1, 1);
     this.bloomA = new WebGLRenderTarget(1, 1, half); this.bloomA2 = new WebGLRenderTarget(1, 1, half);
     this.bloomB = new WebGLRenderTarget(1, 1, half); this.bloomB2 = new WebGLRenderTarget(1, 1, half);

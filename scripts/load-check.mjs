@@ -5,10 +5,21 @@
 //     no light pixel outside the brand and the line;
 //  3. the line only moves forward and is full when the scene arrives; no layout shift (CLS 0) up to
 //     1.5 s after it;
-//  4. reduced motion: the line fills without a transition and the loader is gone at once.
-// Screenshots of the first paint, the loading state and the scene's arrival go to parity/load/.
+//  4. reduced motion: the line fills without a transition and the loader is gone at once;
+//  5. under mobile throttling (Lighthouse's mobile: 4x CPU, slow 4G, a phone viewport) the first
+//     contentful paint comes at once and is the brand, styled by the HTML alone (index.html);
+//  6. WebKit: the same first paint (the brand painted, the article hidden), the scene arriving, and
+//     no console warnings or errors;
+//  7. the startup guard (index.html), production, Chromium and WebKit, each failure forced: a script
+//     that does not load, startup throwing, no WebGL2, a texture limit too small even for low, the
+//     worker and the main-thread build both failing, loading stalled: each reveals the article and
+//     the note, with the reason in the ?debug report. Degraded but running: the worker alone failing
+//     (built on the main thread), no half-float render targets (8-bit post).
+// Screenshots of the first paint, the loading state, the scene's arrival and each fallback go to
+// parity/load/.
 import { mkdir, writeFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
+import { webkit } from 'playwright';
 import { PNG } from 'pngjs';
 import { build } from 'vite';
 import { launch, watchConsole } from './lib/browser.mjs';
@@ -32,8 +43,36 @@ const lightOutside = (img, boxes, scale) => {
   }
   return n;
 };
+/** Light pixels inside a box (CSS px, scaled to the image): the brand painted. */
+const lightInside = (img, b, scale) => {
+  let n = 0;
+  for (let y = Math.max(0, Math.floor(b.top * scale)); y < Math.min(img.height, b.bottom * scale); y++) for (let x = Math.max(0, Math.floor(b.left * scale)); x < Math.min(img.width, b.right * scale); x++) {
+    const i = (y * img.width + x) * 4;
+    if (Math.max(img.data[i], img.data[i + 1], img.data[i + 2]) > 110) n++;
+  }
+  return n;
+};
 /** The brand and the line, where the loader puts them. */
 const loaderBoxes = (page) => page.evaluate(() => ['.loader .brand', '.loader-line'].map((s) => { const r = document.querySelector(s).getBoundingClientRect(); return { left: r.left, top: r.top, right: r.right, bottom: r.bottom }; }));
+/** Forced startup failures (section 7): init scripts run before the page; routes are production chunk names. */
+const GUARD_CASES = [
+  { id: 'script', name: 'a script does not load (three.js)', routes: [['**/assets/three-*.js', 'abort']], expect: 'fallback', reason: /script did not load/ },
+  { id: 'throw', name: 'startup throws (creating the renderer)', expect: 'fallback', reason: /FALLBACK/,
+    init: () => { const g = HTMLCanvasElement.prototype.getContext; HTMLCanvasElement.prototype.getContext = function (t, a) { if (this.id === 'scene') throw new Error('forced startup failure'); return g.call(this, t, a); }; } },
+  { id: 'nogl', name: 'no WebGL2', expect: 'fallback', reason: /no WebGL2/,
+    init: () => { const g = HTMLCanvasElement.prototype.getContext; HTMLCanvasElement.prototype.getContext = function (t, a) { return t === 'webgl2' ? null : g.call(this, t, a); }; } },
+  { id: 'limits', name: 'a texture limit too small even for low', expect: 'fallback', reason: /texture limit/,
+    init: () => { const p = WebGL2RenderingContext.prototype, g = p.getParameter; p.getParameter = function (k) { return k === 0x0D33 ? 512 : g.call(this, k); }; } },
+  { id: 'build', name: 'the worker and the main-thread build both fail to load', routes: [['**/assets/sim.worker-*.js', 'abort'], ['**/assets/build-*.js', 'abort']], expect: 'fallback', reason: /FALLBACK/ },
+  { id: 'stall', name: 'loading stalls (the worker never answers)', routes: [['**/assets/sim.worker-*.js', 'hang']], expect: 'fallback', reason: /no progress for 8 s/ },
+  { id: 'worker', name: 'the worker alone fails to load', routes: [['**/assets/sim.worker-*.js', 'abort']], expect: 'scene', reason: /worker|building here/ },
+  { id: 'halffloat', name: 'no half-float render targets', expect: 'scene', reason: /half-float/,
+    init: () => {
+      const p = WebGL2RenderingContext.prototype, ge = p.getExtension, gs = p.getSupportedExtensions, hide = /^EXT_color_buffer_(half_)?float$/;
+      p.getExtension = function (n) { return hide.test(n) ? null : ge.call(this, n); };
+      p.getSupportedExtensions = function () { return (gs.call(this) ?? []).filter((n) => !hide.test(n)); };
+    } },
+];
 const watch = () => {
   // before any script of the page: when html.ready arrives, the loader's fill over time, layout shifts
   window.__load = { readyAt: 0, firstPaint: 0, fills: [], cls: 0 };
@@ -44,6 +83,33 @@ const watch = () => {
   const poll = () => { const f = document.getElementById('loaderFill'); if (f) window.__load.fills.push(+(f.style.getPropertyValue('--load') || 0)); if (!window.__load.readyAt) requestAnimationFrame(poll); };
   requestAnimationFrame(poll);
 };
+
+/** One forced failure: the fallback with its reason, or (degraded cases) the scene still arriving. */
+async function guardCase(b, engine, srv, c) {
+  const ctx = await b.newContext({ viewport: { width: 390, height: 844 } });
+  if (c.init) await ctx.addInitScript(c.init);
+  const page = await ctx.newPage();
+  for (const [pattern, how] of c.routes ?? []) await page.route(pattern, (r) => (how === 'abort' ? r.abort() : undefined)); // 'hang': never answered
+  await page.goto(`${srv.origin}/?debug`).catch(() => {});
+  const want = c.expect === 'fallback' ? 'failed' : 'ready';
+  const ok = await page.waitForFunction((k) => document.documentElement.classList.contains(k), want, { timeout: 20000 }).then(() => true, () => false);
+  if (ok && want === 'ready') await page.waitForTimeout(800);
+  const st = await page.evaluate(() => {
+    const cs = (sel) => getComputedStyle(document.querySelector(sel)), story = document.getElementById('story').getBoundingClientRect();
+    return { cls: document.documentElement.className, note: cs('.fallback-note').display, story: story.width > 200 && story.height > 400, canvas: cs('#scene').display, loader: cs('#loader').display, report: document.querySelector('.og-errors')?.textContent ?? '' };
+  }).catch((e) => ({ err: e.message, report: '' }));
+  const shot = await page.screenshot({ path: fileURLToPath(new URL(`guard-${engine}-${c.id}.png`, OUT)) }).catch(() => null);
+  const line = st.report.split('\n').find((l) => (c.expect === 'fallback' ? /FALLBACK/ : c.reason).test(l))?.replace(/^\s*[\d.]+ s\s+/, '') ?? '';
+  if (c.expect === 'fallback') {
+    check(`guard (${engine}): ${c.name} → the article and the note`, ok && st.note === 'block' && st.story && st.canvas === 'none' && st.loader === 'none' && c.reason.test(st.report),
+      ok ? `${line || 'no reason shown'}; note ${st.note}, article shown ${st.story}, canvas ${st.canvas}` : `no fallback within 20 s (${st.cls ?? st.err})`);
+  } else {
+    const img = shot ? PNG.sync.read(shot) : null, lit = img ? lightOutside(img, [], img.width / 390) : 0;
+    check(`guard (${engine}): ${c.name} → the scene still arrives`, ok && st.note === 'none' && lit > 500 && c.reason.test(st.report),
+      ok ? `${line || 'not reported'}; ${lit} light pixels drawn` : `no scene within 20 s (${st.cls ?? st.err})`);
+  }
+  await ctx.close();
+}
 
 try {
   for (const [mode, start, script] of [['dev', startDev, '**/src/main.ts'], ['prod', startPreview, '**/assets/*.js']]) {
@@ -56,9 +122,10 @@ try {
       await page.waitForTimeout(700);
       const shot = await page.screenshot({ path: fileURLToPath(new URL(`first-paint-${mode}.png`, OUT)) });
       const state = await page.evaluate(() => { const r = document.getElementById('story').getBoundingClientRect(), cs = getComputedStyle(document.getElementById('story')); return { w: r.width, h: r.height, clip: cs.clipPath, ready: document.documentElement.classList.contains('ready') }; });
-      const boxes = await loaderBoxes(page), light = lightOutside(PNG.sync.read(shot), boxes, 1);
+      const boxes = await loaderBoxes(page), img = PNG.sync.read(shot), light = lightOutside(img, boxes, 1), brand = lightInside(img, boxes[0], 1);
       check(`${mode}: first paint (script held back): the article is hidden`, state.w <= 1 && state.h <= 1 && !state.ready, `article box ${state.w}×${state.h}, clip ${state.clip}`);
       check(`${mode}: first paint: nothing but the stage, the brand and the line`, light === 0, `${light} light pixels elsewhere`);
+      check(`${mode}: first paint (script held back): the brand's text is painted`, brand > 40, `${brand} light pixels in the brand`);
       await nav; await page.context().close();
     }
     // 2–3: every painted frame until the scene arrives
@@ -110,6 +177,55 @@ try {
       const after = await page.evaluate(() => new Promise((r) => requestAnimationFrame(() => r(getComputedStyle(document.getElementById('loader')).opacity))));
       check('reduced motion: the line fills without animation, the loader goes at once', during === '0s' && after === '0', `fill transition ${during}, loader opacity a frame after ready ${after}`);
       await ctx.close();
+    }
+    // 5: mobile throttling
+    {
+      const ctx = await browser.newContext({ viewport: { width: 412, height: 823 }, deviceScaleFactor: 1.75, isMobile: true, hasTouch: true });
+      const page = await ctx.newPage();
+      const cdp = await ctx.newCDPSession(page);
+      await cdp.send('Emulation.setCPUThrottlingRate', { rate: 4 });
+      await cdp.send('Network.enable');
+      await cdp.send('Network.emulateNetworkConditions', { offline: false, latency: 150, downloadThroughput: 1.6e6 / 8 * .9, uploadThroughput: 750e3 / 8 * .9 });
+      await page.goto(srv.origin + '/', { waitUntil: 'commit' });
+      await page.waitForFunction(() => performance.getEntriesByName('first-contentful-paint').length > 0, null, { timeout: 60000 });
+      const r = await page.evaluate(() => {
+        const b = document.querySelector('.loader .brand'), cs = getComputedStyle(b), box = b.getBoundingClientRect();
+        return { fcp: performance.getEntriesByName('first-contentful-paint')[0].startTime, vis: cs.visibility, op: cs.opacity, w: box.width, text: b.textContent, ready: document.documentElement.classList.contains('ready') };
+      });
+      await page.screenshot({ path: fileURLToPath(new URL(`throttled-fcp-${mode}.png`, OUT)) });
+      check(`${mode}: mobile throttling (4x CPU, slow 4G): the first contentful paint is the brand, at once`, r.fcp < 4000 && r.vis === 'visible' && +r.op === 1 && r.w > 20 && !r.ready,
+        `FCP ${(r.fcp / 1000).toFixed(2)} s, "${r.text}" ${r.vis}, opacity ${r.op}, ${r.w.toFixed(0)} px wide, scene not yet there`);
+      await ctx.close();
+    }
+    // 6: WebKit
+    {
+      const wk = await webkit.launch();
+      try {
+        const page = await (await wk.newContext({ viewport: { width: 1440, height: 900 } })).newPage();
+        watchConsole(page, `${mode} webkit`, logs);
+        await page.route(script, async (r) => { await new Promise((ok) => setTimeout(ok, 1500)); await r.continue(); });
+        const nav = page.goto(srv.origin + '/').catch(() => {});
+        await page.waitForTimeout(700);
+        const shot = await page.screenshot({ path: fileURLToPath(new URL(`first-paint-${mode}-webkit.png`, OUT)) });
+        const hidden = await page.evaluate(() => document.getElementById('story').getBoundingClientRect().width <= 1);
+        const boxes = await loaderBoxes(page), img = PNG.sync.read(shot), scale = img.width / 1440;
+        const brand = lightInside(img, boxes[0], scale), light = lightOutside(img, boxes, scale);
+        check(`${mode}: WebKit first paint: the brand painted, nothing else, the article hidden`, brand > 40 && light === 0 && hidden, `${brand} light pixels in the brand, ${light} elsewhere, article hidden ${hidden}`);
+        await nav;
+        const arrived = await page.waitForFunction(() => document.documentElement.classList.contains('ready'), null, { timeout: 120000 }).then(() => true, () => false);
+        await page.waitForTimeout(1000);
+        check(`${mode}: WebKit: the scene arrives`, arrived, arrived ? 'html.ready' : 'not within 120 s');
+        await page.context().close();
+      } finally { await wk.close(); }
+    }
+    // 7: the startup guard's failure paths (production)
+    if (mode === 'prod') {
+      for (const [engine, open] of [['chromium', () => launch()], ['webkit', () => webkit.launch()]]) {
+        const b = await open();
+        try {
+          for (const c of GUARD_CASES) await guardCase(b, engine, srv, c);
+        } finally { await b.close(); }
+      }
     }
     await srv.close();
   }

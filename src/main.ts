@@ -83,6 +83,7 @@ function boot(): void {
   const hash = new HashRouter(timeline);
   bindChapterKeys(timeline);
   const pipeline = new Pipeline(stage.renderer, timer);
+  if (!pipeline.hdr) guard.log('no half-float render targets', 'post runs on 8-bit targets');
   grains.attachShadow(pipeline.shadow);
   // Every program compiles in parallel off the main thread (KHR_parallel_shader_compile) while the worlds
   // are built, instead of inside the first frame, where a slow CPU would wait for every link in one long
