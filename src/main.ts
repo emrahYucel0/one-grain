@@ -79,7 +79,7 @@ function boot(): void {
   resize();
 
   // story position
-  const timeline = new ScrollTimeline($('track'), { snap: !flags.noSnap });
+  const timeline = new ScrollTimeline($('scroll-length'), { snap: !flags.noSnap });
   onResize(() => { resize(); timeline.refresh(); });
   const hash = new HashRouter(timeline);
   bindChapterKeys(timeline);

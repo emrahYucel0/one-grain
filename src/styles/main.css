@@ -52,7 +52,7 @@ html{scroll-padding-top:env(safe-area-inset-top,0px)}
 *,*::before,*::after{box-sizing:border-box}
 body{margin:0;background:var(--stage);color:var(--ink);font-family:var(--sans);font-size:1.0625rem;line-height:1.5;-webkit-font-smoothing:antialiased}
 #scene{position:fixed;top:0;left:0;width:100%;height:100vh;height:100lvh;display:block;z-index:0}
-#track{height:2000vh}
+#scroll-length{height:2000vh}
 .cut{position:fixed;inset:0;z-index:4;background:#06090a;color:#ece3d3;display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none}
 .cut p{margin:0;font-weight:800;font-stretch:125%;font-size:clamp(2.4rem,7vw,6rem)}
 .hint{margin-top:.6rem !important;color:var(--ink) !important;font-size:.9rem}
@@ -182,7 +182,7 @@ html{scrollbar-width:none}html::-webkit-scrollbar{display:none}
 .chapter.final:not(.sig) p:not(.micro){opacity:0}
 
 /* The experience only exists once WebGL2 is confirmed (main.ts adds .gl). */
-html:not(.gl) :is(#scene,.scrim,.marker,.hud,.intro,.story,.timeline,.cut,#track){display:none}
+html:not(.gl) :is(#scene,.scrim,.marker,.hud,.intro,.story,.timeline,.cut,#scroll-length){display:none}
 
 /* Its text waits for the web fonts (at most a few seconds), so nothing visible reflows when they arrive. */
 html.fonts-pending :is(.hud,.intro,.story,.timeline,.cut,.marker){visibility:hidden}

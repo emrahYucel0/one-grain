@@ -107,7 +107,7 @@ html.js:not(.ready):not(.nogl) :is(.hud,.intro,.story,.timeline,.marker,.cut){vi
 .loader-line{position:absolute;left:50%;top:50%;width:min(14rem,40vw);height:1px;margin-left:max(-7rem,-20vw);background:rgba(236,227,211,.22);overflow:hidden}
 .loader-line i{display:block;height:100%;background:#ece3d3;transform:scaleX(var(--load,0));transform-origin:left}
 html:not(.js) .loader,html.nogl .loader{display:none}
-html.nogl :is(#scene,.scrim,.marker,.hud,.intro,.story,.timeline,.cut,#track){display:none}
+html.nogl :is(#scene,.scrim,.marker,.hud,.intro,.story,.timeline,.cut,#scroll-length){display:none}
 html.nogl #story{max-width:40rem;margin:0 auto;padding:2rem 1.25rem 4rem;font:1.0625rem/1.5 "Newsreader Variable",Georgia,serif}
 .fallback-note{display:none}
 html.nogl #story .fallback-note{display:block;margin:0 0 2.5rem;font-style:italic;opacity:.8}
@@ -239,6 +239,6 @@ html.nogl #story .fallback-note{display:block;margin:0 0 2.5rem;font-style:itali
   </div>
 </main>
 
-<div id="track" aria-hidden="true"></div>
+<div id="scroll-length" aria-hidden="true"></div>
 </body>
 </html>
