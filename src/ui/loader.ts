@@ -1,8 +1,9 @@
 import { guard } from './guard';
 
 /**
- * The loading moment (index.html .loader, styles/main.css): a thin line filled by the worker's
- * progress, then html.ready once the first frame is on screen, which fades the loader away.
+ * The loading moment (index.html: the intro's title is the first screen, the .loader the stage
+ * behind it): a thin line under the title filled by the worker's progress, then html.ready once the
+ * first frame is on screen, which fades the loader and the line away; the title stays.
  */
 export class Loader {
   private readonly fill: HTMLElement;
@@ -26,7 +27,12 @@ export class Loader {
     this.progress(1);
     guard.ready();
     const root = document.documentElement;
-    if (this.instant) { this.fill.closest<HTMLElement>('.loader')!.style.transition = 'none'; root.classList.add('ready'); return; }
+    if (this.instant) {
+      // the loader and the progress line (under the intro's title) go at once
+      for (const el of [document.getElementById('loader'), this.fill.parentElement]) if (el) el.style.transition = 'none';
+      root.classList.add('ready');
+      return;
+    }
     requestAnimationFrame(() => root.classList.add('ready'));
   }
 }

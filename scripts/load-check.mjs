@@ -1,13 +1,16 @@
 // First load (npm run check:load), in dev (styles injected by the script) and on the production build:
 //  1. the first paint, with the page's script held back 1.5 s: the article is visually hidden and
-//     nothing but the stage, the brand and the loading line is painted;
+//     nothing but the first screen is painted: the stage, the brand, the intro's title and its line,
+//     and the loading line under them (index.html); the title is painted;
 //  2. every frame painted from navigation until the scene arrives (CDP screencast): before html.ready,
-//     no light pixel outside the brand and the line;
+//     no light pixel outside the first screen;
 //  3. the line only moves forward and is full when the scene arrives; no layout shift (CLS 0) up to
 //     1.5 s after it;
 //  4. reduced motion: the line fills without a transition and the loader is gone at once;
 //  5. under mobile throttling (Lighthouse's mobile: 4x CPU, slow 4G, a phone viewport) the first
-//     contentful paint comes at once and is the brand, styled by the HTML alone (index.html);
+//     contentful paint comes at once with the intro's title, styled by the HTML alone (index.html);
+//     the largest contentful paint: on a desktop window the title block at the first paint, after the
+//     scene and the chapter text have arrived (on a phone, reported);
 //  6. WebKit: the same first paint (the brand painted, the article hidden), the scene arriving, and
 //     no console warnings or errors;
 //  7. the startup guard (index.html), production, Chromium and WebKit, each failure forced: a script
@@ -30,7 +33,7 @@ await mkdir(OUT, { recursive: true });
 await build({ logLevel: 'error' });
 const browser = await launch();
 const logs = [], results = [];
-const check = (name, ok, detail) => { results.push(ok); console.log(`${ok ? 'PASS' : 'FAIL'}  ${name}  (${detail})`); };
+const check = (name, ok, detail) => { if (ok !== null) results.push(ok); console.log(`${ok === null ? 'INFO' : ok ? 'PASS' : 'FAIL'}  ${name}  (${detail})`); };
 
 /** Light pixels (any channel above 110) outside the given boxes (CSS px, scaled to the image). */
 const lightOutside = (img, boxes, scale) => {
@@ -52,8 +55,8 @@ const lightInside = (img, b, scale) => {
   }
   return n;
 };
-/** The brand and the line, where the loader puts them. */
-const loaderBoxes = (page) => page.evaluate(() => ['.loader .brand', '.loader-line'].map((s) => { const r = document.querySelector(s).getBoundingClientRect(); return { left: r.left, top: r.top, right: r.right, bottom: r.bottom }; }));
+/** The first screen: the brand, the intro's title and its line, the loading line. */
+const loaderBoxes = (page) => page.evaluate(() => ['.loader .brand', '.intro-head', '.intro .loader-line'].map((s) => { const r = document.querySelector(s).getBoundingClientRect(); return { left: r.left, top: r.top, right: r.right, bottom: r.bottom }; }));
 /** Forced startup failures (section 7): init scripts run before the page; routes are production chunk names. */
 const GUARD_CASES = [
   { id: 'script', name: 'a script does not load (three.js)', routes: [['**/assets/three-*.js', 'abort']], expect: 'fallback', reason: /script did not load/ },
@@ -73,6 +76,17 @@ const GUARD_CASES = [
       p.getSupportedExtensions = function () { return (gs.call(this) ?? []).filter((n) => !hide.test(n)); };
     } },
 ];
+/** Every largest-contentful-paint candidate, from before any script of the page. */
+const watchLcp = () => new PerformanceObserver((l) => { for (const e of l.getEntries()) (window.__lcp ??= []).push({ el: e.element?.className || e.element?.tagName, t: e.startTime, size: e.size }); }).observe({ type: 'largest-contentful-paint', buffered: true });
+/** The last candidate once the scene and the chapter text are on screen (2 s after html.ready). */
+async function finalLcp(page, raw = false) {
+  await page.waitForFunction(() => document.documentElement.classList.contains('ready'), null, { timeout: 120000 });
+  await page.waitForTimeout(2000);
+  const { lcp, fcp } = await page.evaluate(() => ({ lcp: window.__lcp ?? [], fcp: performance.getEntriesByName('first-contentful-paint')[0]?.startTime ?? -1 }));
+  const last = lcp.at(-1) ?? { el: 'none', t: -1, size: 0 };
+  const text = `${last.el} at ${Math.round(last.t)} ms (${Math.round(last.size)} px²), first paint ${Math.round(fcp)} ms; candidates ${lcp.map((c) => `${c.el} ${Math.round(c.t)} ms ${Math.round(c.size)} px²`).join(', ')}`;
+  return raw ? { ...last, fcp, text } : text;
+}
 const watch = () => {
   // before any script of the page: when html.ready arrives, the loader's fill over time, layout shifts
   window.__load = { readyAt: 0, firstPaint: 0, fills: [], cls: 0 };
@@ -122,10 +136,10 @@ try {
       await page.waitForTimeout(700);
       const shot = await page.screenshot({ path: fileURLToPath(new URL(`first-paint-${mode}.png`, OUT)) });
       const state = await page.evaluate(() => { const r = document.getElementById('story').getBoundingClientRect(), cs = getComputedStyle(document.getElementById('story')); return { w: r.width, h: r.height, clip: cs.clipPath, ready: document.documentElement.classList.contains('ready') }; });
-      const boxes = await loaderBoxes(page), img = PNG.sync.read(shot), light = lightOutside(img, boxes, 1), brand = lightInside(img, boxes[0], 1);
+      const boxes = await loaderBoxes(page), img = PNG.sync.read(shot), light = lightOutside(img, boxes, 1), title = lightInside(img, boxes[1], 1);
       check(`${mode}: first paint (script held back): the article is hidden`, state.w <= 1 && state.h <= 1 && !state.ready, `article box ${state.w}×${state.h}, clip ${state.clip}`);
-      check(`${mode}: first paint: nothing but the stage, the brand and the line`, light === 0, `${light} light pixels elsewhere`);
-      check(`${mode}: first paint (script held back): the brand's text is painted`, brand > 40, `${brand} light pixels in the brand`);
+      check(`${mode}: first paint: nothing but the first screen (stage, brand, title and its line, loading line)`, light === 0, `${light} light pixels elsewhere`);
+      check(`${mode}: first paint (script held back): the intro's title is painted`, title > 400, `${title} light pixels in the title block`);
       await nav; await page.context().close();
     }
     // 2–3: every painted frame until the scene arrives
@@ -154,7 +168,7 @@ try {
       let worst = 0, worstAt = -1;
       before.forEach((f, i) => { if (f.light > worst) { worst = f.light; worstAt = i; } });
       if (worstAt >= 0 && worst > 5) await writeFile(new URL(`worst-${mode}.png`, OUT), Buffer.from(before[worstAt].data, 'base64'));
-      check(`${mode}: every frame until the scene arrives shows only the stage, the brand and the line`, before.length > 0 && worst <= 5, `${before.length} frames before ready (half size), at most ${worst} light pixels elsewhere${worstAt >= 0 ? ` (frame ${worstAt})` : ''}`);
+      check(`${mode}: every frame until the scene arrives shows only the first screen`, before.length > 0 && worst <= 5, `${before.length} frames before ready (half size), at most ${worst} light pixels elsewhere${worstAt >= 0 ? ` (frame ${worstAt})` : ''}`);
       const forward = load.fills.every((v, i) => i === 0 || v >= load.fills[i - 1]), last = load.fills.at(-1) ?? 0, mid = load.fills.filter((v) => v > .1 && v < .9).length;
       check(`${mode}: the line fills forward with the worker's progress, full on arrival`, forward && last === 1 && mid > 0, `${load.fills.length} samples, ${mid} between 10 and 90 %, last ${last}`);
       check(`${mode}: no layout shift until 1.5 s after the scene arrives`, load.cls < .001, `CLS ${load.cls.toFixed(4)}`);
@@ -186,15 +200,28 @@ try {
       await cdp.send('Emulation.setCPUThrottlingRate', { rate: 4 });
       await cdp.send('Network.enable');
       await cdp.send('Network.emulateNetworkConditions', { offline: false, latency: 150, downloadThroughput: 1.6e6 / 8 * .9, uploadThroughput: 750e3 / 8 * .9 });
+      await ctx.addInitScript(watchLcp);
       await page.goto(srv.origin + '/', { waitUntil: 'commit' });
       await page.waitForFunction(() => performance.getEntriesByName('first-contentful-paint').length > 0, null, { timeout: 60000 });
       const r = await page.evaluate(() => {
-        const b = document.querySelector('.loader .brand'), cs = getComputedStyle(b), box = b.getBoundingClientRect();
+        const b = document.querySelector('.intro-title'), cs = getComputedStyle(b), box = b.getBoundingClientRect();
         return { fcp: performance.getEntriesByName('first-contentful-paint')[0].startTime, vis: cs.visibility, op: cs.opacity, w: box.width, text: b.textContent, ready: document.documentElement.classList.contains('ready') };
       });
       await page.screenshot({ path: fileURLToPath(new URL(`throttled-fcp-${mode}.png`, OUT)) });
-      check(`${mode}: mobile throttling (4x CPU, slow 4G): the first contentful paint is the brand, at once`, r.fcp < 4000 && r.vis === 'visible' && +r.op === 1 && r.w > 20 && !r.ready,
+      check(`${mode}: mobile throttling (4x CPU, slow 4G): the first contentful paint comes at once, with the intro's title`, r.fcp < 4000 && r.vis === 'visible' && +r.op === 1 && r.w > 100 && !r.ready,
         `FCP ${(r.fcp / 1000).toFixed(2)} s, "${r.text}" ${r.vis}, opacity ${r.op}, ${r.w.toFixed(0)} px wide, scene not yet there`);
+      const phone = await finalLcp(page);
+      check(`${mode}: the largest contentful paint at 412×823 (Lighthouse's phone), after the scene arrives`, null, phone);
+      await ctx.close();
+    }
+    // 5b: the largest contentful paint on a desktop window: the title block, at the first paint
+    {
+      const ctx = await browser.newContext({ viewport: { width: 1440, height: 900 } });
+      await ctx.addInitScript(watchLcp);
+      const page = await ctx.newPage();
+      await page.goto(srv.origin + '/');
+      const r = await finalLcp(page, true);
+      check(`${mode}: largest contentful paint at 1440×900: the intro's title block, at the first paint`, r.el === 'intro-head' && Math.abs(r.t - r.fcp) < 50, r.text);
       await ctx.close();
     }
     // 6: WebKit
@@ -209,8 +236,8 @@ try {
         const shot = await page.screenshot({ path: fileURLToPath(new URL(`first-paint-${mode}-webkit.png`, OUT)) });
         const hidden = await page.evaluate(() => document.getElementById('story').getBoundingClientRect().width <= 1);
         const boxes = await loaderBoxes(page), img = PNG.sync.read(shot), scale = img.width / 1440;
-        const brand = lightInside(img, boxes[0], scale), light = lightOutside(img, boxes, scale);
-        check(`${mode}: WebKit first paint: the brand painted, nothing else, the article hidden`, brand > 40 && light === 0 && hidden, `${brand} light pixels in the brand, ${light} elsewhere, article hidden ${hidden}`);
+        const title = lightInside(img, boxes[1], scale), light = lightOutside(img, boxes, scale);
+        check(`${mode}: WebKit first paint: the title painted, nothing outside the first screen, the article hidden`, title > 400 && light === 0 && hidden, `${title} light pixels in the title block, ${light} elsewhere, article hidden ${hidden}`);
         await nav;
         const arrived = await page.waitForFunction(() => document.documentElement.classList.contains('ready'), null, { timeout: 120000 }).then(() => true, () => false);
         await page.waitForTimeout(1000);

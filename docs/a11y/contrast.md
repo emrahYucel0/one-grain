@@ -6,7 +6,7 @@ AAA for body text and titles where the design allows, AA for everything else; la
 24 px, or 18.67 px bold.
 
 - 406 measurements, 0 below AA, 0 body or title blocks below AAA.
-- Lowest against their AA threshold: 390×844 wafer sound 5.37; 1440×900 again unit 5.48; 1440×900 coast rail label 5.58; 2560×1440 coast rail label 5.65; 1440×900 quarry sound 5.75; 2560×1440 again unit 5.79; 390×844 now micro / footnote 5.79; 2560×1440 coast rail label 5.79.
+- Lowest against their AA threshold: 390×844 wafer sound 5.37; 1440×900 again unit 5.48; 1440×900 coast rail label 5.58; 2560×1440 coast rail label 5.65; 1440×900 quarry sound 5.75; 390×844 quarry sound 5.76; 2560×1440 again unit 5.79; 390×844 now micro / footnote 5.79.
 
 | Viewport | At | Block | Contrast | Size | Level |
 |---|---|---|---|---|---|
@@ -17,7 +17,7 @@ AAA for body text and titles where the design allows, AA for everything else; la
 | 390×844 | magma | sound | 6.37 | normal | AA |
 | 390×844 | magma | motion | 14.29 | normal | AAA |
 | 390×844 | magma | intro title | 12.38 | large | AAA |
-| 390×844 | magma | intro hint | 7.45 | normal | AAA |
+| 390×844 | magma | intro hint | 7.78 | normal | AAA |
 | 390×844 | magma | title | 6.18 | large | AAA |
 | 390×844 | magma | body | 8.44 | normal | AAA |
 | 390×844 | granite | brand | 13.76 | normal | AAA |
@@ -27,11 +27,11 @@ AAA for body text and titles where the design allows, AA for everything else; la
 | 390×844 | granite | motion | 14.28 | normal | AAA |
 | 390×844 | granite | title | 9.60 | large | AAA |
 | 390×844 | granite | body | 10.68 | normal | AAA |
-| 390×844 | river | brand | 12.24 | normal | AAA |
-| 390×844 | river | clock | 13.23 | normal | AAA |
-| 390×844 | river | unit | 6.00 | normal | AA |
-| 390×844 | river | sound | 6.12 | normal | AA |
-| 390×844 | river | motion | 14.26 | normal | AAA |
+| 390×844 | river | brand | 11.94 | normal | AAA |
+| 390×844 | river | clock | 13.63 | normal | AAA |
+| 390×844 | river | unit | 6.01 | normal | AA |
+| 390×844 | river | sound | 6.29 | normal | AA |
+| 390×844 | river | motion | 14.22 | normal | AAA |
 | 390×844 | river | title | 13.64 | large | AAA |
 | 390×844 | river | body | 11.97 | normal | AAA |
 | 390×844 | coast | brand | 13.76 | normal | AAA |
@@ -39,8 +39,8 @@ AAA for body text and titles where the design allows, AA for everything else; la
 | 390×844 | coast | unit | 6.04 | normal | AA |
 | 390×844 | coast | sound | 6.37 | normal | AA |
 | 390×844 | coast | motion | 14.29 | normal | AAA |
-| 390×844 | coast | title | 10.65 | large | AAA |
-| 390×844 | coast | body | 11.36 | normal | AAA |
+| 390×844 | coast | title | 11.20 | large | AAA |
+| 390×844 | coast | body | 11.25 | normal | AAA |
 | 390×844 | desert | brand | 13.76 | normal | AAA |
 | 390×844 | desert | clock | 13.92 | normal | AAA |
 | 390×844 | desert | unit | 6.04 | normal | AA |
@@ -55,12 +55,12 @@ AAA for body text and titles where the design allows, AA for everything else; la
 | 390×844 | again | motion | 14.02 | normal | AAA |
 | 390×844 | again | title | 8.70 | large | AAA |
 | 390×844 | again | body | 10.11 | normal | AAA |
-| 390×844 | quarry | brand | 10.55 | normal | AAA |
-| 390×844 | quarry | clock | 13.82 | large | AAA |
-| 390×844 | quarry | unit | 5.83 | normal | AA |
-| 390×844 | quarry | sound | 5.91 | normal | AA |
+| 390×844 | quarry | brand | 9.44 | normal | AAA |
+| 390×844 | quarry | clock | 14.12 | large | AAA |
+| 390×844 | quarry | unit | 6.01 | normal | AA |
+| 390×844 | quarry | sound | 5.76 | normal | AA |
 | 390×844 | quarry | motion | 14.09 | normal | AAA |
-| 390×844 | quarry | title | 8.92 | large | AAA |
+| 390×844 | quarry | title | 9.06 | large | AAA |
 | 390×844 | quarry | body | 10.43 | normal | AAA |
 | 390×844 | furnace | brand | 12.91 | normal | AAA |
 | 390×844 | furnace | clock | 13.96 | large | AAA |
@@ -99,14 +99,14 @@ AAA for body text and titles where the design allows, AA for everything else; la
 | 390×844 | chip | title | 11.12 | large | AAA |
 | 390×844 | chip | body | 10.73 | normal | AAA |
 | 390×844 | chip | micro / footnote | 6.22 | normal | AA |
-| 390×844 | display | brand | 15.04 | normal | AAA |
-| 390×844 | display | clock | 13.80 | large | AAA |
-| 390×844 | display | unit | 5.98 | normal | AA |
-| 390×844 | display | sound | 6.29 | normal | AA |
-| 390×844 | display | motion | 15.19 | normal | AAA |
-| 390×844 | display | title | 9.91 | large | AAA |
-| 390×844 | display | body | 11.10 | normal | AAA |
-| 390×844 | display | micro / footnote | 6.26 | normal | AA |
+| 390×844 | display | brand | 12.34 | normal | AAA |
+| 390×844 | display | clock | 13.73 | large | AAA |
+| 390×844 | display | unit | 5.93 | normal | AA |
+| 390×844 | display | sound | 6.53 | normal | AA |
+| 390×844 | display | motion | 15.22 | normal | AAA |
+| 390×844 | display | title | 9.33 | large | AAA |
+| 390×844 | display | body | 10.57 | normal | AAA |
+| 390×844 | display | micro / footnote | 6.22 | normal | AA |
 | 390×844 | now | brand | 8.49 | normal | AAA |
 | 390×844 | now | clock | 12.64 | large | AAA |
 | 390×844 | now | sound | 6.17 | normal | AA |
@@ -120,8 +120,8 @@ AAA for body text and titles where the design allows, AA for everything else; la
 | 1440×900 | magma | unit | 6.01 | normal | AA |
 | 1440×900 | magma | sound | 6.36 | normal | AA |
 | 1440×900 | magma | motion | 14.28 | normal | AAA |
-| 1440×900 | magma | intro title | 11.31 | large | AAA |
-| 1440×900 | magma | intro hint | 7.04 | normal | AAA |
+| 1440×900 | magma | intro title | 11.33 | large | AAA |
+| 1440×900 | magma | intro hint | 7.47 | normal | AAA |
 | 1440×900 | magma | title | 6.98 | large | AAA |
 | 1440×900 | magma | body | 9.47 | normal | AAA |
 | 1440×900 | magma | rail label | 6.35 | normal | AA |
@@ -260,7 +260,7 @@ AAA for body text and titles where the design allows, AA for everything else; la
 | 1440×900 | now | sound | 5.80 | normal | AA |
 | 1440×900 | now | motion | 14.35 | normal | AAA |
 | 1440×900 | now | title | 4.53 | large | AAA |
-| 1440×900 | now | body | 9.60 | normal | AAA |
+| 1440×900 | now | body | 9.59 | normal | AAA |
 | 1440×900 | now | micro / footnote | 5.99 | normal | AA |
 | 1440×900 | now | rail label | 6.29 | normal | AA |
 | 1440×900 | now | rail label | 6.30 | normal | AA |
@@ -272,7 +272,7 @@ AAA for body text and titles where the design allows, AA for everything else; la
 | 2560×1440 | magma | sound | 6.42 | normal | AA |
 | 2560×1440 | magma | motion | 14.29 | normal | AAA |
 | 2560×1440 | magma | intro title | 12.24 | large | AAA |
-| 2560×1440 | magma | intro hint | 7.42 | normal | AAA |
+| 2560×1440 | magma | intro hint | 7.79 | normal | AAA |
 | 2560×1440 | magma | title | 9.94 | large | AAA |
 | 2560×1440 | magma | body | 11.14 | normal | AAA |
 | 2560×1440 | magma | rail label | 6.35 | normal | AA |
@@ -396,7 +396,7 @@ AAA for body text and titles where the design allows, AA for everything else; la
 | 2560×1440 | chip | rail label | 6.60 | normal | AA |
 | 2560×1440 | chip | rail label | 6.55 | normal | AA |
 | 2560×1440 | display | brand | 15.15 | normal | AAA |
-| 2560×1440 | display | clock | 14.08 | large | AAA |
+| 2560×1440 | display | clock | 13.96 | large | AAA |
 | 2560×1440 | display | unit | 6.07 | normal | AA |
 | 2560×1440 | display | sound | 6.71 | normal | AA |
 | 2560×1440 | display | motion | 15.27 | normal | AAA |
@@ -411,7 +411,7 @@ AAA for body text and titles where the design allows, AA for everything else; la
 | 2560×1440 | now | sound | 6.45 | normal | AA |
 | 2560×1440 | now | motion | 14.48 | normal | AAA |
 | 2560×1440 | now | title | 6.94 | large | AAA |
-| 2560×1440 | now | body | 11.23 | normal | AAA |
+| 2560×1440 | now | body | 11.22 | normal | AAA |
 | 2560×1440 | now | micro / footnote | 6.15 | normal | AA |
 | 2560×1440 | now | rail label | 6.18 | normal | AA |
 | 2560×1440 | now | rail label | 6.24 | normal | AA |
