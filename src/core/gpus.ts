@@ -2,6 +2,13 @@
 // renderer (WEBGL_debug_renderer_info, or RENDERER where the browser answers it directly). One place
 // to keep current: a new chip family only needs a pattern here.
 
+/**
+ * What privacy settings report instead of the GPU: nothing, the browser's generic name (Firefox's
+ * resistFingerprinting says "Mozilla"), or a stock placeholder. A randomised name matches none of the
+ * families below either. Both mean: not known, so mid.
+ */
+export const HIDDEN = /^(|webkit webgl|webkit|mozilla|generic renderer|unknown|disabled|not available|renderer)$/i;
+
 /** Software renderers: no GPU at all. The only case for the low tier besides texture limits. */
 export const SOFTWARE = /swiftshader|llvmpipe|softpipe|lavapipe|microsoft basic render|basic render driver|software rasterizer|mesa offscreen/i;
 

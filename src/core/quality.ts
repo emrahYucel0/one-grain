@@ -1,5 +1,5 @@
 import type { GpuCaps } from './env';
-import { APPLE_GPU, APPLE_SILICON, DISCRETE, HIGH_END_TABLET, SOFTWARE } from './gpus';
+import { APPLE_GPU, APPLE_SILICON, DISCRETE, HIDDEN, HIGH_END_TABLET, SOFTWARE } from './gpus';
 import type { LayerSet } from './layers';
 
 export type TierName = 'low' | 'mid' | 'high';
@@ -69,7 +69,8 @@ export interface Picked { tier: Tier; rule: string }
  * afterwards; nothing is measured. Phones: mid. Tablets: mid; Android tablets with a recent high-end
  * GPU: high (iPads stay mid). Desktops and laptops: high with a discrete GPU or Apple Silicon, mid
  * otherwise (on hybrid laptops the GPU the browser reports decides). Low only where mid cannot run:
- * a software renderer, or a texture limit too small for mid's grain pack. Null when even low's pack
+ * a software renderer, or a texture limit too small for mid's grain pack. A GPU name hidden or
+ * randomised by a privacy setting: mid. Null when even low's pack
  * does not fit: the article is the page. The GPU name lists are in core/gpus.ts.
  */
 export function pickTier(device: Device, caps: GpuCaps, forced: string | null): Picked | null {
@@ -79,6 +80,7 @@ export function pickTier(device: Device, caps: GpuCaps, forced: string | null): 
   if (SOFTWARE.test(caps.renderer)) { name = 'low'; rule = `software renderer (${gpu})`; }
   else if (!caps.performant) { name = 'low'; rule = 'the browser offers only a software context (failIfMajorPerformanceCaveat)'; }
   else if (kind === 'phone') { name = 'mid'; rule = 'phone'; }
+  else if (HIDDEN.test(caps.renderer.trim())) { name = 'mid'; rule = `GPU not reported (${caps.renderer ? `"${caps.renderer}"` : 'hidden'}): a privacy setting`; }
   else if (kind === 'tablet') {
     if (ipad) { name = 'mid'; rule = 'iPad'; }
     else if (android && HIGH_END_TABLET.test(caps.renderer)) { name = 'high'; rule = `Android tablet, high-end GPU (${gpu})`; }
