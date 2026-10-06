@@ -4,6 +4,9 @@
   "version": "0.1.0",
   "type": "module",
   "description": "One Grain: a scroll-driven WebGL story of a single grain of sand.",
+  "license": "SEE LICENSE IN LICENSE",
+  "author": "Emrah Yücel (https://yucelemrah.com)",
+  "homepage": "https://onegrain.world",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
