@@ -1,24 +1,27 @@
 # One Grain
 
-A scroll-driven WebGL story about one grain of sand, from magma to the screen you are reading
-it on. Fifteen worlds, each a cloud of grains computed on the GPU; scrolling carries the same
-grains from one world to the next.
+An interactive journey of one grain of sand over 300 million years, from magma to now.
+By Emrah Yücel · **[onegrain.world](https://onegrain.world)**
 
-By Emrah Yücel. Fifteen chapters in three acts (Nature, Industry, Now) follow one grain of quartz: out
-of magma and granite, down a river to the coast and the desert, then round again; from a quarry
-into the furnace, through purification, a crystal, a wafer, light and a chip, to the display,
-and finally to the sand on the reader's own screen. The whole story is also a plain article in the page,
-so it can be read without WebGL, without JavaScript or with a screen reader.
+[![Quartz crystals rising from glowing magma, under the title One Grain](public/og-image.jpg)](https://onegrain.world)
 
-The behavioural spec is `reference/blockout-v8.html` (Phase 3: typography, art direction through
-confinement, stage colour per act, reworked drift, break and grow, the final dramaturgy). Earlier
-phases ported `blockout-v5.html` and `v6`, which are kept alongside. The port keeps its exact
-transition endpoints (a transition reproduces its two worlds exactly at t = 0 and 1). Phase 1 ported `blockout-v5.html`, which is kept alongside. `npm run parity`
-writes the evidence to `parity/` (only the reference captures in `parity/ref/` are tracked; the
-port's captures, the diff masks, `index.html` and `checklist.md` are per-run output), and `docs/parity-notes.md` lists everything that is not identical,
-with the reason, including the one intentional change beyond v6.
+A scroll-driven WebGL piece: fifteen worlds, each a cloud of grains computed on the GPU, and
+scrolling carries the same grains from one world to the next.
 
-## Quick start
+## Run it
+
+```sh
+npm install
+npm run dev      # http://localhost:5173
+npm run build    # the static site in dist/
+```
+
+Node 20 or later (the site is built on 24). Every change is held to a set of checks, typecheck and
+lint on each commit, then `npm run check:*`, `parity` and `lighthouse`: see
+[Commands and checks](#commands-and-checks). The tooling is MIT; the work itself is all rights
+reserved ([LICENSE](LICENSE)).
+
+## Commands and checks
 
 ```sh
 npm install
@@ -257,6 +260,12 @@ video offline, one frame at a time, from the built site in capture mode (`?captu
 
 ## Content
 
+Fifteen chapters in three acts (Nature, Industry, Now) follow one grain of quartz: out
+of magma and granite, down a river to the coast and the desert, then round again; from a quarry
+into the furnace, through purification, a crystal, a wafer, light and a chip, to the display,
+and finally to the sand on the reader's own screen. The whole story is also a plain article in the page,
+so it can be read without WebGL, without JavaScript or with a screen reader.
+
 All words live in `index.html`:
 
 - **Chapters** are semantic `<section data-slug>` elements grouped by act. JS reads them with
@@ -391,6 +400,21 @@ Everything is synthesised with Web Audio (no files), ported from `reference/v23-
 | `?nosafe` | No hero safe area: the camera as composed for 16:9, for comparison (`camera/safe-area.ts`) |
 | `#magma` … `#now` | Open at that chapter |
 
+## History
+
+One Grain was built in phases, each porting a browser prototype; the prototypes are kept in
+`reference/`. `blockout-v5.html` and `v6` came first; `blockout-v8.html` brought the typography,
+art direction through confinement, a stage colour per act, the reworked drift, break and grow,
+and the final dramaturgy; `v10-lit.html` and `v15-lit.html` the lighting, the look of each world
+and the new final; `v23-sound.html` the sound. The port keeps every transition's exact endpoints
+(a transition reproduces its two worlds exactly at t = 0 and 1).
+
+`npm run parity` writes the evidence to `parity/` (only the reference captures in `parity/ref/`
+are tracked; the port's captures, the diff masks, `index.html` and `checklist.md` are per-run
+output). `docs/parity-notes.md` records the phases, their decisions and every place the port
+differs from the references, with the reason; the measurements are in `docs/perf.md`,
+`docs/lighthouse.md` and `docs/live.md`.
+
 ## Credits
 
 - Author: **Emrah Yücel**.
@@ -400,3 +424,6 @@ Everything is synthesised with Web Audio (no files), ported from `reference/v23-
 - [three.js](https://threejs.org) (MIT) for rendering and [GSAP](https://gsap.com) with
   ScrollTrigger (GreenSock standard license, free to use) for the scroll timeline.
 - The sound is synthesised in the browser and uses no recordings.
+- Licence: the tooling (`scripts/`, `.githooks/`, `vite.config.ts`, `eslint.config.js`) is MIT; the
+  work (`src/`, `index.html`, `public/`, `docs/`, `reference/`, `capture/`) is all rights reserved;
+  the font subsets are under the SIL OFL 1.1 (`src/fonts/OFL.txt`). See [LICENSE](LICENSE).
