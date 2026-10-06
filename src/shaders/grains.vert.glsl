@@ -37,7 +37,7 @@ void main(){
   vec3 R = vec3(h1(position.x), h1(position.x + 71.3), h1(position.x + 13.7));
   vec3 p, c, n;
   float e, arc, sz, fl, tn, spec;
-  Mods m = Mods(1., 0., 0., 0., 0.);
+  Mods m = Mods(1., 0., 0., 0., 0., 0.);
   if (uRest != 0) {
     // at rest (t = 0 or 1): one world, one position fetch, one normal fetch, no transition. Every
     // transition lands exactly on its worlds at its ends (exact ends), so this is the full path's
@@ -87,6 +87,14 @@ void main(){
   c = mix(c, vec3(1., .48, .16) * (1.1 + .3 * R.x), m.heat * .75);
   c = mix(c, vec3(.95, .97, 1.), m.whiten * .8);
   c = mix(c, vec3(.18, .14, .12), m.darken * .85);
+  // incandescence: the colour of heat itself, dull red through orange to white-hot, taking over from
+  // the lit colour (which dims as it does), so a pale grain never passes through a pastel pink
+  if (m.burn > 0.) {
+    vec3 hot = m.burn < .5 ? mix(vec3(.72, .22, .04), vec3(1., .42, .08), m.burn * 2.) : mix(vec3(1., .42, .08), vec3(1., .8, .52), m.burn * 2. - 1.);
+    float k = smoothstep(0., .35, m.burn);
+    c = mix(c * (1. - .6 * k), hot * (1.05 + .25 * R.x), k);
+    em += m.burn * 1.9;
+  }
   em += m.heat * 2.2 + m.whiten * .5;
   if (fl < .5) em += blend(uGlowA, uGlowB, e); // the world's inner glow for its base material (magma's quartz)
   c *= 1. + arc * .25;

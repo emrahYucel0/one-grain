@@ -29,6 +29,18 @@ was verified and how, and what was not.
 The reference is never edited. The harness serves a patched copy with three hooks: progress
 override, time override, and exposing the built texture (`scripts/lib/reference.mjs`).
 
+## Phase 6d: melting silicon glows, it does not turn pink (beyond the reference)
+
+In purity → crystal (style 20) the references heat the rods by mixing their lit colour towards
+orange (`mix(c, orange, heat * .75)`, the same as the furnace). A pale silver rod mixed part of the
+way towards orange is a pastel salmon-pink (RGB 207, 168, 145 at t = .2). The melt now has its own
+incandescence (`Mods.burn`, `shaders/grains.vert.glsl`): the colour of heat itself, dull red-orange →
+orange → white-hot, taking over from the lit colour as that dims, so the rods go grey → ember
+streaks → orange → a white-hot pool, then cool as the crystal rises. The furnace (style 18) and the
+vapour (style 19) keep their colours. Both holds have no melt, so the seams, the reverse scrub and
+the rest positions are unchanged; parity's purity → crystal positions were already an intentional
+difference (the Phase 2 reframe) and stay so (11–12 %).
+
 ## Phase 6c: content corrections (verified against sources)
 
 - **Chip clock:** "≈ 2–4 months" → "≈ 6 months". A fab cycle takes about 12 weeks and assembly and

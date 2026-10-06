@@ -15,12 +15,13 @@ struct Mods {
   float whiten; // 0..1 towards purified white
   float darken; // 0..1 towards impurity brown-black
   float fade;   // 0..1 the emitted light going out: saturation and emission drop (style 21)
+  float burn;   // 0..1 incandescence (style 20's melting silicon): dull red, orange, white-hot
 };
 
 vec3 travel(vec4 A, vec4 B, vec3 pa, vec3 pb, vec3 R, out float e, out float arc, out Mods m){
   vec3 p;
   arc = 0.;
-  m = Mods(1., 0., 0., 0., 0.);
+  m = Mods(1., 0., 0., 0., 0., 0.);
   if (uStyle == 5) { e = step(.5, uT); return blend(pa, pb, e); } // cut
   float dd, w = .6;
   if (uStyle == 2 || uStyle == 9) { dd = clamp(dot(pa - uHeroA, uDir) / uSpread + .5, 0., 1.); if (uStyle == 9) w = .9; }
@@ -105,7 +106,7 @@ vec3 travel(vec4 A, vec4 B, vec3 pa, vec3 pb, vec3 R, out float e, out float arc
       e = max(melt * .49, inC);
       m.whiten = inC * (1. - inC) * 3.2;   // the crystallisation front glows as grains lock in
     } else { float k = smoothstep(.3, .7, uT); p = blend(molten, pb, k); e = max(melt * .49, k); inC = k; }
-    arc = hump(uT, 3.14159) * .4 * uMotion; m.heat = melt * (1. - inC) * .85;
+    arc = hump(uT, 3.14159) * .4 * uMotion; m.burn = melt * (1. - inC);
   }
   else if (uStyle == 21) { // become: the light goes out, the glass vanishes, sub-pixel clusters loosen and spread into the area they lit
     float fa = floor(A.w + .001), sub = step(8.5, fa) * step(fa, 9.5);
