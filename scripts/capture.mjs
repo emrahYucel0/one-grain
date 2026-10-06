@@ -13,7 +13,9 @@
 // to three times; a rerun after a failure keeps the chunks already finished.
 // --list prints the path's timeline and exits. For clips and stills: --clean hides every word and
 // the HUD (the picture alone), --scale N renders at N× the size (scale it down afterwards), --no-sound
-// skips the sound (a silent picture), --name NAME writes capture/out/NAME.mp4 (scripts/fwa-clips.mjs).
+// skips the sound (a silent picture), --name NAME writes capture/out/NAME.mp4 (scripts/fwa-clips.mjs),
+// --move SLUG renders the move leaving that chapter with --around S seconds of its holds on either side.
+// A path's "pace" times a move by [seconds, transition t] keys (monotone cubic) instead of one eased sweep.
 // ffmpeg: $FFMPEG, else the ffmpeg-static dev dependency, else ffmpeg on the PATH.
 import { spawn } from 'node:child_process';
 import { existsSync } from 'node:fs';
@@ -28,7 +30,9 @@ const opt = (k, d) => { const i = args.indexOf(k); return i >= 0 ? args[i + 1] :
 const soundOnly = args.includes('--sound-only');
 const [W, H] = soundOnly ? [640, 360] : (args.find((a) => /^\d+x\d+$/.test(a)) ?? '1920x1080').split('x').map(Number);
 const PATH = opt('--path', 'capture/path.json');
-const range = opt('--seconds', null)?.split('-').map(Number) ?? null;
+let range = opt('--seconds', null)?.split('-').map(Number) ?? null;
+// --move SLUG: render the move leaving that chapter, with --around seconds of its holds on either side
+const MOVE = opt('--move', null), AROUND = +opt('--around', .5);
 const clean = args.includes('--clean'), noSound = args.includes('--no-sound'), SCALE = +opt('--scale', 1), NAME = opt('--name', null);
 /** --clean: the picture alone (no title, chapter text, clock, brand, buttons, rail or ring) */
 const CLEAN = '.story,.time,.hud .brand,.intro,.controls,.timeline,.marker{display:none !important}';
@@ -51,10 +55,22 @@ const run = (argv, stdin = 'ignore') => {
 // the timeline: the story progress at every frame
 const path = JSON.parse(await readFile(PATH, 'utf8'));
 const vite = await createServer({ server: { middlewareMode: true }, appType: 'custom', logLevel: 'error' });
-const { SNAP_POINTS, TOTAL, transitionMidpoint } = await vite.ssrLoadModule('/src/timeline/segments.ts');
+const { SEGMENTS, SNAP_POINTS, TOTAL, transitionMidpoint } = await vite.ssrLoadModule('/src/timeline/segments.ts');
 const { WORLDS } = await vite.ssrLoadModule('/src/story/worlds.ts');
 await vite.close();
 const ease = (x) => (x < .5 ? 2 * x * x : 1 - (-2 * x + 2) ** 2 / 2); // the scroll snap's power2.inOut
+/** story progress at a point of transition i */
+const trV = (i, t) => { const g = SEGMENTS.find((x) => x.type === 'tr' && x.i === i); return (g.start + t * g.len) / TOTAL; };
+/** monotone cubic (Fritsch–Carlson) through [time, value] keys: speed changes smoothly, never overshoots */
+const monotone = (keys, x) => {
+  const n = keys.length, X = keys.map((k) => k[0]), Y = keys.map((k) => k[1]);
+  const d = X.slice(1).map((x1, i) => (Y[i + 1] - Y[i]) / (x1 - X[i]));
+  const m = Y.map((_, i) => (i === 0 ? d[0] : i === n - 1 ? d[n - 2] : d[i - 1] * d[i] <= 0 ? 0 : (d[i - 1] + d[i]) / 2));
+  for (let i = 0; i < n - 1; i++) { if (!d[i]) { m[i] = m[i + 1] = 0; continue; } const a = m[i] / d[i], b = m[i + 1] / d[i], h = a * a + b * b; if (h > 9) { const tau = 3 / Math.sqrt(h); m[i] = tau * a * d[i]; m[i + 1] = tau * b * d[i]; } }
+  let i = 0; while (i < n - 2 && x > X[i + 1]) i++;
+  const h = X[i + 1] - X[i], u = Math.min(1, Math.max(0, (x - X[i]) / h)), u2 = u * u, u3 = u2 * u;
+  return (2 * u3 - 3 * u2 + 1) * Y[i] + (u3 - 2 * u2 + u) * h * m[i] + (-2 * u3 + 3 * u2) * Y[i + 1] + (u3 - u2) * h * m[i + 1];
+};
 // segments: rest on a chapter (hold), move between progress values (eased), or rest mid-transition
 const segs = [];
 WORLDS.forEach((w, i) => {
@@ -62,7 +78,15 @@ WORLDS.forEach((w, i) => {
   segs.push({ d: i === 0 ? path.intro : end ? path.final : path.holds?.[w.slug] ?? path.hold, a: SNAP_POINTS[i], b: SNAP_POINTS[i], hold: w.slug });
   if (end) return;
   const d = path.moves?.[w.slug] ?? (SNAP_POINTS[i + 1] - SNAP_POINTS[i]) * TOTAL * path.scroll, rest = path.rests?.[w.slug];
-  if (!rest) { segs.push({ d, a: SNAP_POINTS[i], b: SNAP_POINTS[i + 1] }); return; }
+  // 'pace': the move timed by [seconds, transition t] keys instead of one eased sweep ('end': the next chapter)
+  const pace = path.pace?.[w.slug];
+  if (pace) {
+    const keys = [[0, SNAP_POINTS[i]]];
+    for (const [s, t] of pace) keys.push([keys.at(-1)[0] + s, t === 'end' ? SNAP_POINTS[i + 1] : trV(i, t)]);
+    segs.push({ d: keys.at(-1)[0], a: SNAP_POINTS[i], b: SNAP_POINTS[i + 1], keys, move: w.slug });
+    return;
+  }
+  if (!rest) { segs.push({ d, a: SNAP_POINTS[i], b: SNAP_POINTS[i + 1], move: w.slug }); return; }
   const mid = transitionMidpoint(i); // e.g. the "One day," card, fully shown around the cut's middle
   segs.push({ d: d / 2, a: SNAP_POINTS[i], b: mid }, { d: rest, a: mid, b: mid }, { d: d / 2, a: mid, b: SNAP_POINTS[i + 1] });
 });
@@ -82,7 +106,7 @@ const stateAt = (sec) => {
     if (t <= s.d) {
       const cursor = s.hold ? cursorAt(path.cursor?.[s.hold], t) : null;
       if (cursor) cursor.press = (path.press?.[s.hold] ?? []).some(([a, b]) => t >= a && t <= b);
-      return { v: s.a === s.b ? s.a : s.a + (s.b - s.a) * ease(t / s.d), cursor };
+      return { v: s.keys ? monotone(s.keys, t) : s.a === s.b ? s.a : s.a + (s.b - s.a) * ease(t / s.d), cursor };
     }
     t -= s.d;
   }
@@ -92,6 +116,11 @@ if (args.includes('--list')) { // the timeline, to pick excerpts or teaser momen
   let t = 0;
   for (const g of segs) { console.log(`${t.toFixed(2).padStart(7)}–${(t + g.d).toFixed(2).padStart(7)} s  ${g.hold ? `hold ${g.hold}` : g.a === g.b ? 'rest mid-transition' : 'move'}`); t += g.d; }
   process.exit(0);
+}
+if (MOVE) { // the move leaving MOVE, with AROUND seconds of hold on either side
+  let at = 0;
+  for (const g of segs) { if (g.move === MOVE) { range = [at - AROUND, at + g.d + AROUND]; break; } at += g.d; }
+  if (!range) throw new Error(`--move ${MOVE}: no move leaves that chapter`);
 }
 const first = range ? Math.round(range[0] * fps) : 0, last = range ? Math.min(count, Math.round(range[1] * fps)) : count;
 console.log(`${W}×${H} · ${total.toFixed(1)} s · ${count} frames at ${fps} fps${range ? ` · rendering frames ${first}–${last}` : ''} · ffmpeg: ${ffmpeg}`);
