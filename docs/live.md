@@ -1,10 +1,10 @@
 # The live site (npm run check:live)
 
-https://onegrain.world/, checked 2026-10-06 07:30 UTC.
+https://onegrain.world/, checked 2026-10-06 09:16 UTC.
 
 | Area | Check | Result | Detail |
 |---|---|---|---|
-| deploy | the live site serves this build | ✓ | assets/index-BvsdgrVV.js |
+| deploy | the live site serves this build | ✓ | assets/index-BWL5nY2E.js |
 | headers | content-security-policy | ✓ | as in dist/_headers |
 | headers | strict-transport-security | ✓ | as in dist/_headers |
 | headers | x-content-type-options | ✓ | as in dist/_headers |
@@ -17,8 +17,8 @@ https://onegrain.world/, checked 2026-10-06 07:30 UTC.
 | headers | assets/main.css: Cache-Control | ✓ | 200, public, max-age=31536000, immutable |
 | headers | favicon.svg: Cache-Control | ✓ | 200, public, max-age=86400 |
 | compression | /: Brotli | ✓ | br |
-| compression | assets/index-BvsdgrVV.js: Brotli | ✓ | br |
-| compression | assets/main-wZ8JRZgv.css: Brotli | ✓ | br |
+| compression | assets/index-BWL5nY2E.js: Brotli | ✓ | br |
+| compression | assets/main-BkpPuXis.css: Brotli | ✓ | br |
 | redirects | http → https | ✓ | 301 → https://onegrain.world/ |
 | redirects | www.onegrain.world → https://onegrain.world (path and query kept) | ✓ | 301 → https://onegrain.world/some/path?x=1 |
 | redirects | one-grain.pages.dev: X-Robots-Tag noindex | ✓ | 200, noindex (resolved through 1.1.1.1) |
@@ -43,7 +43,7 @@ https://onegrain.world/, checked 2026-10-06 07:30 UTC.
 | WebKit | no CSP violations | ✓ | none |
 | WebKit | injected by the edge: the analytics beacon once, nothing else | ✓ | beacon ×1 |
 | WebKit | the beacon reports (/cdn-cgi/rum) | ✓ | POST onegrain.world/cdn-cgi/rum 204 |
-| Lighthouse | mobile | ✓ | performance 69 · accessibility 100 · best practices 100 · SEO 100 · LCP 4.4 s · CLS 0 · TBT 350 ms |
+| Lighthouse | mobile | ✓ | performance 78 · accessibility 100 · best practices 100 · SEO 100 · LCP 2.6 s · CLS 0 · TBT 470 ms |
 | Lighthouse | mobile: binary audits not passed | info | valid-source-maps |
-| Lighthouse | desktop | ✓ | performance 96 · accessibility 100 · best practices 100 · SEO 100 · LCP 0.8 s · CLS 0 · TBT 20 ms |
+| Lighthouse | desktop | ✓ | performance 99 · accessibility 100 · best practices 100 · SEO 100 · LCP 0.8 s · CLS 0 · TBT 30 ms |
 | Lighthouse | desktop: binary audits not passed | info | valid-source-maps |
