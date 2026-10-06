@@ -9,8 +9,9 @@
 //  4. reduced motion: the line fills without a transition and the loader is gone at once;
 //  5. under mobile throttling (Lighthouse's mobile: 4x CPU, slow 4G, a phone viewport) the first
 //     contentful paint comes at once with the intro's title, styled by the HTML alone (index.html);
-//     the largest contentful paint: on a desktop window the title block at the first paint, after the
-//     scene and the chapter text have arrived (on a phone, reported);
+//     the largest contentful paint is the title block at the first paint, after the scene has arrived,
+//     on a phone (where the opening chapter's words wait for the first scroll) and on a desktop window;
+//     on the phone, the first scroll brings the words in as the title fades;
 //  6. WebKit: the same first paint (the brand painted, the article hidden), the scene arriving, and
 //     no console warnings or errors;
 //  7. the startup guard (index.html), production, Chromium and WebKit, each failure forced: a script
@@ -194,7 +195,9 @@ try {
     }
     // 5: mobile throttling
     {
-      const ctx = await browser.newContext({ viewport: { width: 412, height: 823 }, deviceScaleFactor: 1.75, isMobile: true, hasTouch: true });
+      // a phone as Lighthouse's mobile run presents itself (the user agent is what the device rules read)
+      const ctx = await browser.newContext({ viewport: { width: 412, height: 823 }, deviceScaleFactor: 1.75, isMobile: true, hasTouch: true,
+        userAgent: 'Mozilla/5.0 (Linux; Android 11; moto g power (2022)) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0.0.0 Mobile Safari/537.36' });
       const page = await ctx.newPage();
       const cdp = await ctx.newCDPSession(page);
       await cdp.send('Emulation.setCPUThrottlingRate', { rate: 4 });
@@ -210,8 +213,14 @@ try {
       await page.screenshot({ path: fileURLToPath(new URL(`throttled-fcp-${mode}.png`, OUT)) });
       check(`${mode}: mobile throttling (4x CPU, slow 4G): the first contentful paint comes at once, with the intro's title`, r.fcp < 4000 && r.vis === 'visible' && +r.op === 1 && r.w > 100 && !r.ready,
         `FCP ${(r.fcp / 1000).toFixed(2)} s, "${r.text}" ${r.vis}, opacity ${r.op}, ${r.w.toFixed(0)} px wide, scene not yet there`);
-      const phone = await finalLcp(page);
-      check(`${mode}: the largest contentful paint at 412×823 (Lighthouse's phone), after the scene arrives`, null, phone);
+      const phone = await finalLcp(page, true);
+      check(`${mode}: largest contentful paint at 412×823 (Lighthouse's phone): the intro's title block, at the first paint`, phone.el === 'intro-head' && Math.abs(phone.t - phone.fcp) < 50, phone.text);
+      const before = await page.evaluate(() => +getComputedStyle(document.getElementById('chapter')).opacity);
+      await page.mouse.wheel(0, 500);
+      await page.waitForFunction(() => +getComputedStyle(document.getElementById('chapter')).opacity > .5, null, { timeout: 15000 }).catch(() => {});
+      const after = await page.evaluate(() => ({ text: +getComputedStyle(document.getElementById('chapter')).opacity, intro: +getComputedStyle(document.getElementById('intro')).opacity, title: document.querySelector('#chapter h2').textContent }));
+      check(`${mode}: on a phone the opening chapter's words wait for the first scroll, then come in as the title fades`, before === 0 && after.text > .5 && after.intro < 1,
+        `chapter text opacity ${before} before, ${after.text.toFixed(2)} after (${after.title}); title ${after.intro.toFixed(2)}`);
       await ctx.close();
     }
     // 5b: the largest contentful paint on a desktop window: the title block, at the first paint

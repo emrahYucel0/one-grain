@@ -13,6 +13,24 @@ export function chapterOpacity(tr: TransitionDef, t: number): number {
   return tr.cam === 'cut' ? (t < .5 ? 1 - ss(0, .3, t) : ss(.7, 1, t)) : (t < .5 ? 1 - ss(0, .2, t) : ss(.8, 1, t));
 }
 
+/** Where the title card has faded completely (story progress). */
+const INTRO_END = .02;
+
+/**
+ * Phones: the opening chapter's words wait for the first scroll and come in as the title fades (the
+ * title is the first screen, and the largest thing on it). A multiplier for the chapter text's opacity
+ * while the opening chapter is shown: the title's fade mirrored, until the story has passed it once;
+ * from then on 1. Elsewhere (desktops, tablets), always 1.
+ */
+export class Opening {
+  private open: boolean;
+  constructor(phone: boolean) { this.open = !phone; }
+  factor(v: number, chapter: number): number {
+    if (v >= INTRO_END) this.open = true;
+    return this.open || chapter !== 0 ? 1 : ss(0, INTRO_END, v);
+  }
+}
+
 /** The title card: fades away over the first 2 % of the story; its hint changes once sand is ready. */
 export class Intro {
   private readonly el: HTMLElement;
@@ -21,7 +39,7 @@ export class Intro {
   ready(): void { this.hint.textContent = attr(this.hint, 'ready'); }
   private opacity = '';
   update(v: number): void {
-    const opacity = (1 - ss(0, .02, v)).toFixed(2);
+    const opacity = (1 - ss(0, INTRO_END, v)).toFixed(2);
     if (opacity !== this.opacity) { this.opacity = opacity; this.el.style.opacity = opacity; }
   }
 }

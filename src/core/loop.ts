@@ -20,7 +20,7 @@ import type { ScrollTimeline } from '../timeline/scroll';
 import { locate, locateAt, type Located } from '../timeline/segments';
 import { FixedClock } from './clock';
 import { env } from './env';
-import { chapterOpacity } from '../ui/overlays';
+import { chapterOpacity, type Opening } from '../ui/overlays';
 import type { TextBlock } from '../ui/text-block';
 import type { TypeAxes } from '../ui/type-axes';
 import type { Stage } from './renderer';
@@ -42,6 +42,8 @@ export interface LoopDeps {
   layers: RenderLayers;
   /** the chapter's text block and the HUD's scrim on screen: where the hero grain must not sit */
   textBlock: TextBlock;
+  /** phones: the opening chapter's words wait for the first scroll (ui/overlays.ts) */
+  opening: Opening;
 }
 
 /** Per-frame hook for the parts that react to where the story is (UI, input, audio, quality). */
@@ -65,6 +67,8 @@ export interface FrameInfo {
   heroLight: number;
   now: number;
   dt: number;
+  /** the chapter text's opacity as the transition sets it, times the opening's gate on phones */
+  textOpacity: number;
 }
 
 /**
@@ -127,7 +131,8 @@ export class Loop {
     const S = shot(tr, a, b, t, this.heroes, L.lean, reduced);
     const wa = WORLDS[a]!, wb = WORLDS[b]!, ca = CONFINEMENT[a]!, cb = CONFINEMENT[b]!;
     const heroVisible = !(tr.cam === 'cut' && t > .2 && t < .8);
-    const info: FrameInfo = { v, L, t, eg: S.eg, hero: S.hero, heroVisible, heroLight: 1, now: performance.now(), dt };
+    const textOpacity = chapterOpacity(tr, t) * this.d.opening.factor(v, t < .5 ? a : b);
+    const info: FrameInfo = { v, L, t, eg: S.eg, hero: S.hero, heroVisible, heroLight: 1, now: performance.now(), dt, textOpacity };
     for (const fn of this.listeners.story) fn(info);
     // the final hold (v15): the grain hovers, loses its light (3–5.6 s), then lands among the others
     // (5–6.4 s, a soft ease); under reduced motion it simply becomes matte in place
@@ -151,7 +156,7 @@ export class Loop {
     frameShot(stage.camera, S, reduced ? null : this.parallax, towards(wa.wideAnchor, wb.wideAnchor, S.eg));
     // narrow screens: turn just enough to keep the hero grain on screen and clear of the words
     const tb = this.d.textBlock;
-    if (!flags.noSafe) keepInSafeArea(stage.camera, S.hero, { x: SAFE.x, bottom: -SAFE.y, top: tb.top, text: tb.box, textWeight: chapterOpacity(tr, t) });
+    if (!flags.noSafe) keepInSafeArea(stage.camera, S.hero, { x: SAFE.x, bottom: -SAFE.y, top: tb.top, text: tb.box, textWeight: textOpacity });
     const hp = this.heroNdc.copy(S.hero).project(stage.camera);
     reportHero(hp.x, hp.y, hp.z, heroVisible);
     const grain = towards(wa.grain, wb.grain, S.eg);

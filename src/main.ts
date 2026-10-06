@@ -2,7 +2,7 @@ import type { SoundFrame } from './audio/frame';
 import { SoundToggle } from './audio/toggle';
 import { env, probeGpu } from './core/env';
 import { Loop } from './core/loop';
-import { pickTier, pixelRatioFor, readDevice } from './core/quality';
+import { deviceKind, pickTier, pixelRatioFor, readDevice } from './core/quality';
 import { GpuTimer } from './core/gpu-timer';
 import { createStage } from './core/renderer';
 import { StageColour } from './core/stage-colour';
@@ -32,7 +32,7 @@ import { HeroMarker } from './ui/marker';
 import { MotionToggle } from './ui/motion';
 import { TimelineNav } from './ui/nav';
 import { TypeAxes } from './ui/type-axes';
-import { Ending, Intro, chapterOpacity, cutOpacity } from './ui/overlays';
+import { Ending, Intro, Opening, cutOpacity } from './ui/overlays';
 
 const root = document.documentElement;
 const $ = <T extends HTMLElement = HTMLElement>(id: string): T => document.getElementById(id) as T;
@@ -93,8 +93,10 @@ function boot(): void {
   const typeAxes = new TypeAxes($('chapter'), $('time'));
   const layers = new RenderLayers(tier.fx);
   for (const k of flags.off) if (isLayerName(k)) layers.override[k] = false;
+  // phones: the title alone on the first screen; the opening chapter's words come with the first scroll
+  const opening = new Opening(deviceKind(readDevice()).kind === 'phone');
   const textBlock = new TextBlock($('chapter'), stage.renderer.domElement, document.querySelector<HTMLElement>('.scrim-top'));
-  const loop = new Loop({ stage, grains, hero, timeline, hash, projection, typeAxes, stageColour: new StageColour(), pipeline, timer, layers, textBlock });
+  const loop = new Loop({ stage, grains, hero, timeline, hash, projection, typeAxes, stageColour: new StageColour(), pipeline, timer, layers, textBlock, opening });
   const go = (i: number): void => timeline.goTo(i);
 
   // words and instruments
@@ -119,12 +121,12 @@ function boot(): void {
 
   loop.onFrame(({ L, now }) => { loop.finalTime = ending.update(L.hold === LAST, now); }, 'story');
   loop.onFrame(() => { pointer.smooth(); loop.parallax = { x: pointer.sx, y: pointer.sy }; }, 'camera');
-  loop.onFrame(({ v, L, t, eg, hero: heroPos, heroVisible, heroLight, now }) => {
+  loop.onFrame(({ v, L, t, eg, hero: heroPos, heroVisible, heroLight, now, textOpacity }) => {
     const { a, b, tr, hold } = L;
     updateInteraction(loop.interaction, pointer, { hold, reduced: env.reduced, heroes: loop.heroes, camera: stage.camera, now });
     if (chapter.show(t < .5 ? a : b)) nav.setCurrent(chapter.current);
     nav.setProgress(v);
-    const op = chapterOpacity(tr, t);
+    const op = textOpacity;
     chapter.setOpacity(op);
     typeAxes.showTitle(op > 0);
     clock.update(a, b, clockProgress(tr, t, eg), t, tr);
