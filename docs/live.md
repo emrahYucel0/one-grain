@@ -1,6 +1,6 @@
 # The live site (npm run check:live)
 
-https://onegrain.world/, checked 2026-10-06 07:16 UTC.
+https://onegrain.world/, checked 2026-10-06 07:30 UTC.
 
 | Area | Check | Result | Detail |
 |---|---|---|---|
@@ -20,8 +20,8 @@ https://onegrain.world/, checked 2026-10-06 07:16 UTC.
 | compression | assets/index-BvsdgrVV.js: Brotli | ✓ | br |
 | compression | assets/main-wZ8JRZgv.css: Brotli | ✓ | br |
 | redirects | http → https | ✓ | 301 → https://onegrain.world/ |
-| redirects | www.onegrain.world → https://onegrain.world (path and query kept) | ✗ | 200 → none |
-| redirects | one-grain.pages.dev: X-Robots-Tag noindex | info | does not resolve: pass the project’s pages.dev address as the second argument |
+| redirects | www.onegrain.world → https://onegrain.world (path and query kept) | ✓ | 301 → https://onegrain.world/some/path?x=1 |
+| redirects | one-grain.pages.dev: X-Robots-Tag noindex | ✓ | 200, noindex (resolved through 1.1.1.1) |
 | card | og:image https://onegrain.world/og-image.jpg | ✓ | 200, image/jpeg, 1200×630, 76 kB |
 | card | twitter:image is the same picture | ✓ | https://onegrain.world/og-image.jpg |
 | icons | favicon.svg | ✓ | 200, image/svg+xml |
@@ -43,7 +43,7 @@ https://onegrain.world/, checked 2026-10-06 07:16 UTC.
 | WebKit | no CSP violations | ✓ | none |
 | WebKit | injected by the edge: the analytics beacon once, nothing else | ✓ | beacon ×1 |
 | WebKit | the beacon reports (/cdn-cgi/rum) | ✓ | POST onegrain.world/cdn-cgi/rum 204 |
-| Lighthouse | mobile | ✓ | performance 73 · accessibility 100 · best practices 100 · SEO 100 · LCP 4.6 s · CLS 0 · TBT 250 ms |
+| Lighthouse | mobile | ✓ | performance 69 · accessibility 100 · best practices 100 · SEO 100 · LCP 4.4 s · CLS 0 · TBT 350 ms |
 | Lighthouse | mobile: binary audits not passed | info | valid-source-maps |
-| Lighthouse | desktop | ✓ | performance 96 · accessibility 100 · best practices 100 · SEO 100 · LCP 1.0 s · CLS 0 · TBT 20 ms |
+| Lighthouse | desktop | ✓ | performance 96 · accessibility 100 · best practices 100 · SEO 100 · LCP 0.8 s · CLS 0 · TBT 20 ms |
 | Lighthouse | desktop: binary audits not passed | info | valid-source-maps |

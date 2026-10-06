@@ -10,8 +10,11 @@
 //  4. the sharing card (og:image: 200, a 1200×630 JPEG) and the icons resolve;
 //  5. Lighthouse 12, mobile and desktop.
 // Writes docs/live.md. A second argument names the project's *.pages.dev address (default
-// https://one-grain.pages.dev/), checked for noindex when it resolves.
+// https://one-grain.pages.dev/), checked for noindex; where the local resolver does not know it (some
+// ISPs' DNS), it is resolved through 1.1.1.1.
 import { spawn } from 'node:child_process';
+import { Resolver } from 'node:dns/promises';
+import { get as httpsGet } from 'node:https';
 import { readFile, stat, writeFile, mkdir } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
 import { firefox, webkit } from 'playwright';
@@ -24,6 +27,19 @@ const PAGES = process.argv[3] ?? 'https://one-grain.pages.dev/';
 const rows = [];
 const check = (area, name, ok, detail) => { rows.push([area, name, ok, detail]); console.log(`${ok === null ? 'INFO' : ok ? 'PASS' : 'FAIL'}  ${area}: ${name}  (${detail})`); };
 const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0.0.0 Safari/537.36';
+/** A GET resolved through 1.1.1.1 (IPv4, retried, else IPv6), for names the local resolver lacks. */
+function getVia1111(url) {
+  const r = new Resolver(); r.setServers(['1.1.1.1', '1.0.0.1']);
+  const resolve = async (host) => {
+    for (let i = 0; i < 3; i++) { const a = await r.resolve4(host).catch(() => []); if (a.length) return [a, 4]; }
+    return [await r.resolve6(host), 6];
+  };
+  const lookup = (host, opts, cb) => { resolve(host).then(([a, family]) => (opts?.all ? cb(null, a.map((address) => ({ address, family }))) : cb(null, a[0], family)), cb); };
+  return new Promise((ok, fail) => httpsGet(url, { lookup, headers: { 'User-Agent': UA } }, (res) => {
+    res.resume();
+    ok({ status: res.statusCode, headers: { get: (k) => res.headers[k.toLowerCase()] ?? null }, via: '1.1.1.1' });
+  }).on('error', fail));
+}
 const get = (url, opts = {}) => fetch(url, { redirect: 'manual', ...opts, headers: { 'User-Agent': UA, 'Accept-Encoding': 'br, gzip', ...(opts.headers ?? {}) } });
 
 // 0: the live site serves this checkout's build
@@ -62,8 +78,8 @@ for (const path of ['', entry, css]) {
   check('redirects', 'http → https', [301, 302, 307, 308].includes(r.status) && r.headers.get('location')?.startsWith(`https://${HOST}/`), `${r.status} → ${r.headers.get('location') ?? 'none'}`);
   const w = await get(`https://www.${HOST}/some/path?x=1`).catch((e) => ({ status: `unreachable (${e.cause?.code ?? e.message})`, headers: new Headers() }));
   check('redirects', `www.${HOST} → ${ORIGIN} (path and query kept)`, w.status === 301 && w.headers.get('location') === `${ORIGIN}/some/path?x=1`, `${w.status} → ${w.headers.get('location') ?? 'none'}`);
-  const p = await get(PAGES).catch(() => null);
-  if (p) check('redirects', `${new URL(PAGES).host}: X-Robots-Tag noindex`, p.headers.get('x-robots-tag') === 'noindex', `${p.status}, ${p.headers.get('x-robots-tag') ?? 'none'}`);
+  const p = await get(PAGES).catch(() => getVia1111(PAGES)).catch(() => null);
+  if (p) check('redirects', `${new URL(PAGES).host}: X-Robots-Tag noindex`, p.headers.get('x-robots-tag') === 'noindex', `${p.status}, ${p.headers.get('x-robots-tag') ?? 'none'}${p.via ? ` (resolved through ${p.via})` : ''}`);
   else check('redirects', `${new URL(PAGES).host}: X-Robots-Tag noindex`, null, 'does not resolve: pass the project’s pages.dev address as the second argument');
 }
 
