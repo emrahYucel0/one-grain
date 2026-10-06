@@ -60,9 +60,11 @@ and an old cached copy would point to files that no longer exist.
 /favicon.svg
   Cache-Control: public, max-age=86400
 … (the same for favicon-32.png, apple-touch-icon.png, icon-192.png, icon-512.png, site.webmanifest, og-image.jpg)
+https://:project.pages.dev/*
+  X-Robots-Tag: noindex
 ```
 
-On Netlify and Cloudflare Pages, `_headers` works as it is. Other hosts need the same rules in
+On Cloudflare Pages (below) and Netlify, `_headers` works as it is. Other hosts need the same rules in
 their own configuration. Take the CSP from the `_headers` of the build you deploy, not from this
 page.
 
@@ -99,10 +101,97 @@ If you add an analytics script or an embed, add its origin to the matching direc
   both if it is meant to be embedded, for example on a competition page.
 - `Cross-Origin-Opener-Policy: same-origin`.
 
-## Host examples
+## Cloudflare Pages (onegrain.world)
 
-**Netlify / Cloudflare Pages.** Set the build command to `npm run build` and the output
-directory to `dist`. `_headers` is applied as it is.
+The site is hosted on Cloudflare Pages, built from the private GitHub repository
+`emrahYucel0/one-grain` on every push to `main`.
+
+### Build settings
+
+| Setting | Value |
+|---|---|
+| Framework preset | None |
+| Build command | `npm run build` |
+| Build output directory | `dist` |
+| Root directory | (empty: the repository root) |
+| Node version | 24, from `.node-version` in the repository (no environment variable needed) |
+| Environment variables | none |
+| Production branch | `main` |
+
+Pages runs `npm clean-install` from `package-lock.json`, then the build command. In a clean clone that
+takes about 20 s to install and 3 s to build, and the output is identical to a local build. With
+Node 24 comes npm 11, which skips install scripts nobody approved: the `ffmpeg-static` download
+(needed only for `npm run capture`) does not run there.
+
+`_headers` is not a file in the repository. `npm run build` writes it into `dist/`, because the CSP
+carries the hashes of the inline blocks in `index.html`, which change whenever those blocks change.
+Pages applies `dist/_headers` as it is (the format is Cloudflare's). Its last rule adds
+`X-Robots-Tag: noindex` to the project's own `*.pages.dev` address, so only onegrain.world is
+indexed. HTTPS and Brotli are Cloudflare's: nothing to set.
+
+### Step by step
+
+These steps need the Cloudflare account that will hold the site, with onegrain.world added to it as
+a zone. A custom domain at the root of a domain (an apex domain) needs the domain's DNS on
+Cloudflare. If onegrain.world is registered elsewhere, first add it in the dashboard (**Add a
+domain**) and change its nameservers at the registrar to the two Cloudflare shows. It is ready when
+the zone shows **Active**.
+
+**1. Create the project and connect the repository**
+
+1. In the Cloudflare dashboard, open **Workers & Pages** and choose **Create**. On the **Pages**
+   tab, choose **Import an existing Git repository**.
+2. Choose **GitHub**, then **Connect GitHub** (or **Add account** if another one is connected
+   already). GitHub opens the installation of the **Cloudflare Workers and Pages** app.
+3. Under **Repository access**, choose **Only select repositories** and pick
+   `emrahYucel0/one-grain`. Do not choose *All repositories*. Choose **Install & Authorize**.
+   To change this later: GitHub → Settings → Applications → Installed GitHub Apps →
+   **Cloudflare Workers and Pages** → Configure.
+4. Back in Cloudflare, select `one-grain` and choose **Begin setup**.
+5. Project name: `one-grain`. This gives the address `one-grain.pages.dev`. Production branch:
+   `main`.
+6. Enter the build settings from the table above, then choose **Save and Deploy**. The first build
+   takes about a minute. When it is done, open `https://one-grain.pages.dev/` to check it.
+
+**2. Add the domains**
+
+1. In the project, open **Custom domains** → **Set up a custom domain**, enter `onegrain.world`,
+   then **Continue** and **Activate domain**. Cloudflare creates the DNS record itself because the
+   zone is on Cloudflare. It shows **Active** once the certificate is issued, usually within a
+   few minutes.
+2. Repeat for `www.onegrain.world`, so the www name gets a certificate and a DNS record.
+
+**3. Redirect www to onegrain.world**
+
+1. Open the **onegrain.world** zone (not the Pages project): **Rules** → **Overview** →
+   **Create rule** → **Redirect Rule**. Or use the template **Redirect from WWW to root**.
+2. Name it `www to root`. Under *If incoming requests match*, choose **Custom filter expression**:
+   *Hostname* · *equals* · `www.onegrain.world`.
+3. Under *Then*: **Dynamic**, expression `concat("https://onegrain.world", http.request.uri.path)`,
+   status code **301**, and tick **Preserve query string**. Choose **Deploy**.
+4. Check: `https://www.onegrain.world/anything?x=1` should answer 301 with
+   `Location: https://onegrain.world/anything?x=1`.
+
+**4. Zone settings to keep as they are, or check**
+
+- **SSL/TLS → Edge Certificates → Always Use HTTPS**: on.
+- Keep these **off**: anything that changes the page or injects scripts would be blocked by the
+  CSP and would show a console error.
+  - **Web Analytics** with automatic setup (Pages project → Metrics; it injects a script);
+  - **Rocket Loader**;
+  - **Email Address Obfuscation** (Scrape Shield). The page has no addresses, but it is safer off.
+  - If analytics are wanted later, add the script to `index.html` and its origin to the CSP
+    (`vite.config.ts`). Then run `npm run lighthouse`, which reports violations.
+- **Preview deployments**: every other branch gets its own `*.one-grain.pages.dev` address.
+  They are kept out of search results by the noindex rule. They can be limited under
+  **Settings → Builds & deployments → Preview branches** if unwanted.
+
+After the first deploy, go through *After deploying* below with the real URL.
+
+## Other hosts
+
+**Netlify.** Set the build command to `npm run build` and the output directory to `dist`. `_headers`
+is applied as it is.
 
 **nginx:**
 

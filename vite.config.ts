@@ -74,6 +74,8 @@ function site(): Plugin {
         "img-src 'self'", "font-src 'self'", "connect-src 'self'", "worker-src 'self'", "manifest-src 'self'",
         "base-uri 'self'", "form-action 'none'", "frame-ancestors 'none'", 'upgrade-insecure-requests',
       ].join('; ');
+      // the last rule keeps Cloudflare Pages' own address for the project (*.pages.dev) out of search
+      // results, so only the custom domain is indexed (a host-qualified pattern: other hosts ignore it)
       writeFileSync(join(opts.dir!, '_headers'), `/*
   Content-Security-Policy: ${csp}
   Strict-Transport-Security: max-age=63072000; includeSubDomains
@@ -88,7 +90,9 @@ function site(): Plugin {
   Cache-Control: no-cache
 /assets/*
   Cache-Control: public, max-age=31536000, immutable
-${ICONS.map((f) => `/${f}\n  Cache-Control: public, max-age=86400\n`).join('')}`);
+${ICONS.map((f) => `/${f}\n  Cache-Control: public, max-age=86400\n`).join('')}https://:project.pages.dev/*
+  X-Robots-Tag: noindex
+`);
     },
   };
 }
