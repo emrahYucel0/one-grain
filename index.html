@@ -4,6 +4,8 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="color-scheme" content="dark">
+<!-- dark by design: Dark Reader leaves the page alone -->
+<meta name="darkreader-lock">
 <title>One Grain</title>
 <meta name="description" content="One grain of sand, 300 million years: an interactive journey from magma to now.">
 <link rel="canonical" href="%SITE_URL%">
@@ -117,14 +119,17 @@ html.nogl #story .fallback-note{display:block;margin:0 0 2.5rem;font-style:itali
 <script type="module" src="/src/main.ts"></script>
 </head>
 <body>
-<div class="loader" id="loader" aria-hidden="true"><div class="brand">One Grain</div><span class="loader-line"><i id="loaderFill"></i></span></div>
+<div class="loader" id="loader" aria-hidden="true" translate="no"><div class="brand">One Grain</div><span class="loader-line"><i id="loaderFill"></i></span></div>
 <canvas id="scene" aria-hidden="true"></canvas>
 <div class="scrim" aria-hidden="true"></div>
 <div class="scrim scrim-top" aria-hidden="true"></div>
 <div class="scrim scrim-right" aria-hidden="true"></div>
 <div class="marker" id="marker" aria-hidden="true"><span id="markerLabel">this grain</span></div>
 
-<header class="hud">
+<!-- translate="no": the HUD (brand, clock and its units, buttons) and the rail are updated by the
+     script every frame or on every change; a page translator rewriting them would fight those updates.
+     The chapter text stays translatable. -->
+<header class="hud" translate="no">
   <div class="brand" aria-hidden="true">One Grain</div>
   <div class="hud-side">
     <div class="time u-years" id="time" aria-hidden="true"
@@ -139,14 +144,14 @@ html.nogl #story .fallback-note{display:block;margin:0 0 2.5rem;font-style:itali
 </header>
 
 <div class="intro" id="intro" aria-hidden="true">
-  <p class="intro-title">One Grain</p>
+  <p class="intro-title" translate="no">One Grain</p>
   <p id="introHint" data-ready="Scroll to follow it.">Gathering sand…</p>
 </div>
 
 <div class="story" aria-hidden="true">
   <div class="chapter" id="chapter"><h2></h2><p></p><p class="micro" id="micro"></p><p class="hint" id="hint"></p></div>
 </div>
-<nav class="timeline" id="timeline" aria-label="Chapters" data-go="Go to {title}" data-go-final="Go to the end"></nav>
+<nav class="timeline" id="timeline" translate="no" aria-label="Chapters" data-go="Go to {title}" data-go-final="Go to the end"></nav>
 
 <div class="cut" id="cut" aria-hidden="true"><p>One day,</p></div>
 <p class="sr-only" id="status" role="status" data-format="{title}. {act}, chapter {n} of {total}."></p>
