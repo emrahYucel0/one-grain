@@ -54,7 +54,9 @@ export class SimClient {
   private async buildHere(id: number): Promise<void> {
     const p = this.pending.get(id);
     if (!p) return;
-    const { buildPack } = await import('./build');
+    // the build module failing to load is our own startup failing: the caller falls back to the article
+    let buildPack: typeof import('./build').buildPack;
+    try { ({ buildPack } = await import('./build')); } catch (err) { this.pending.delete(id); p.reject(err instanceof Error ? err : new Error(String(err))); return; }
     this.settle({ id, pack: buildPack(p.n) });
   }
 }

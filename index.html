@@ -30,8 +30,10 @@
 <script>if ('noModule' in HTMLScriptElement.prototype) document.documentElement.classList.add('js', 'fonts-pending');</script>
 <script>
 /* Startup guard, inline so it works even when the bundle cannot run (old syntax support, a failed
-   download). If startup throws, a script fails to load, or loading stalls for 8 s, the article is
-   revealed with a note (html.nogl.failed) instead of a blank stage. With ?debug the startup timeline
+   download). If one of our own scripts fails to load, our code throws during startup, or loading
+   stalls for 8 s, the article is revealed with a note (html.nogl.failed) instead of a blank stage.
+   Only our own origin counts: a third-party or injected script that is blocked or throws (analytics
+   the host injects, ad blockers, extensions, privacy browsers) is a line in the report, never fatal. With ?debug the startup timeline
    and every error, rejection, failed load and CSP violation are listed on screen, readable on a
    phone; on the dev server the list appears with the first problem. The bundle reports through window.__og (src/ui/guard.ts). */
 (function () {
@@ -55,22 +57,27 @@
     root.classList.remove('gl'); root.classList.add('nogl', 'failed');
   }
   function arm() { clearTimeout(timer); if (!done && !failed) timer = setTimeout(function () { fail('no progress for 8 s'); }, 8000); }
+  // ours: this origin (the bundle, its modules, the worker); anything else is someone else's
+  function own(url) { return !!url && url.indexOf(location.origin + '/') === 0; }
   function stack(e) { return e && e.stack ? '\n    ' + String(e.stack).split('\n').slice(0, 4).join('\n    ') : ''; }
   addEventListener('error', function (e) {
     var t = e.target;
     if (t && t !== window && t.tagName) {
-      add('load failed', (t.src || t.href || t.tagName).replace(location.origin, ''));
+      var url = t.src || t.href || '';
+      if (!own(url)) { add('third-party load failed, ignored', url || t.tagName); return; }
+      add('load failed', url.replace(location.origin, ''));
       if (t.tagName === 'SCRIPT') fail('a script did not load');
       return;
     }
-    var file = (e.filename || '').replace(location.origin, '');
-    add('error', (e.message || String(e.error)) + (file ? '  @ ' + file + ':' + e.lineno + ':' + e.colno : '') + stack(e.error));
-    if (!/^[a-z-]+-extension:/.test(e.filename || '')) fail('startup error');
+    var mine = own(e.filename), file = (e.filename || '').replace(location.origin, '');
+    add(mine ? 'error' : 'third-party error, ignored', (e.message || String(e.error)) + (file ? '  @ ' + file + ':' + e.lineno + ':' + e.colno : '') + stack(e.error));
+    if (mine) fail('startup error');
   }, true);
+  // a rejection does not say whose it is: logged only. Our own startup failures reveal the article
+  // themselves (main.ts), and anything that silently stops the loading is caught by the 8 s stall.
   addEventListener('unhandledrejection', function (e) {
     var r = e.reason;
     add('rejection', (r && r.message ? r.message : String(r)) + stack(r));
-    fail('startup error');
   });
   document.addEventListener('securitypolicyviolation', function (e) { add('CSP', e.violatedDirective + ' ' + (e.blockedURI || 'inline')); });
   document.addEventListener('DOMContentLoaded', arm);
