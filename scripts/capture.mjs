@@ -11,7 +11,9 @@
 // The picture is rendered in chunks of --chunk frames (1500), each in a fresh browser that first
 // steps the earlier frames without drawing, then joined without re-encoding. A chunk is tried up
 // to three times; a rerun after a failure keeps the chunks already finished.
-// --list prints the path's timeline and exits.
+// --list prints the path's timeline and exits. For clips and stills: --clean hides every word and
+// the HUD (the picture alone), --scale N renders at N× the size (scale it down afterwards), --no-sound
+// skips the sound (a silent picture), --name NAME writes capture/out/NAME.mp4 (scripts/fwa-clips.mjs).
 // ffmpeg: $FFMPEG, else the ffmpeg-static dev dependency, else ffmpeg on the PATH.
 import { spawn } from 'node:child_process';
 import { existsSync } from 'node:fs';
@@ -27,6 +29,9 @@ const soundOnly = args.includes('--sound-only');
 const [W, H] = soundOnly ? [640, 360] : (args.find((a) => /^\d+x\d+$/.test(a)) ?? '1920x1080').split('x').map(Number);
 const PATH = opt('--path', 'capture/path.json');
 const range = opt('--seconds', null)?.split('-').map(Number) ?? null;
+const clean = args.includes('--clean'), noSound = args.includes('--no-sound'), SCALE = +opt('--scale', 1), NAME = opt('--name', null);
+/** --clean: the picture alone (no title, chapter text, clock, brand, buttons, rail or ring) */
+const CLEAN = '.story,.time,.hud .brand,.intro,.controls,.timeline,.marker{display:none !important}';
 const OUT = 'capture/out';
 
 const ffmpeg = (() => {
@@ -94,7 +99,8 @@ console.log(`${W}×${H} · ${total.toFixed(1)} s · ${count} frames at ${fps} fp
 await mkdir(OUT, { recursive: true });
 await build({ logLevel: 'error' });
 const server = await startPreview(5199);
-const name = soundOnly ? `${OUT}/one-grain` : `${OUT}/one-grain-${W}x${H}${range ? `-${range[0]}-${range[1]}s` : ''}`;
+const name = NAME ? `${OUT}/${NAME}` : soundOnly ? `${OUT}/one-grain` : `${OUT}/one-grain-${W}x${H}${range ? `-${range[0]}-${range[1]}s` : ''}`;
+if (NAME) await mkdir(name.slice(0, name.lastIndexOf('/')), { recursive: true });
 const CHUNK = +opt('--chunk', 1500); // frames per browser session: long sessions wear Chromium out (a crash, a hung readback)
 
 /**
@@ -110,11 +116,12 @@ async function session(from, to, part, sound) {
   let lost = null;
   browser.on('disconnected', () => { lost ??= 'the browser closed'; });
   try {
-    const page = await (await browser.newContext({ viewport: { width: W, height: H }, deviceScaleFactor: 1 })).newPage();
+    const page = await (await browser.newContext({ viewport: { width: W, height: H }, deviceScaleFactor: SCALE })).newPage();
     page.on('console', (m) => { if (m.type() === 'error' || m.type() === 'warning') console.log(`page ${m.type()}: ${m.text()}`); });
     page.on('crash', () => { lost = 'the page crashed'; });
     await page.goto(`${server.origin}/?capture`);
     await page.waitForFunction(() => window.__PACK && window.__capture, null, { timeout: 180000 });
+    if (clean) await page.addStyleTag({ content: CLEAN });
     const within = (pr, what) => Promise.race([pr, new Promise((_, fail) => setTimeout(() => fail(new Error(lost ?? `${what} took over 60 s`)), 60000))]);
     const step = (i, draw = true) => { const st = stateAt(i / fps); return within(page.evaluate(([ms, v, c, d]) => window.__capture.step(ms, v, null, c, d), [i * 1000 / fps, st.v, st.cursor, draw]), `frame ${i}`)
       .catch((e) => { throw new Error(`frame ${i} (${(i / fps).toFixed(2)} s): ${lost ?? e.message}`); }); };
@@ -123,11 +130,11 @@ async function session(from, to, part, sound) {
     for (let i = 1; i < from; i++) await step(i, i >= from - 3);
     if (part) {
       const cdp = await page.context().newCDPSession(page);
-      const enc = run(['-f', 'image2pipe', '-framerate', String(fps), '-c:v', 'png', '-i', '-', '-c:v', 'libx264', '-preset', 'slow', '-crf', '14', '-pix_fmt', 'yuv420p', part], 'pipe');
+      const enc = run(['-f', 'image2pipe', '-framerate', String(fps), '-c:v', 'png', '-i', '-', '-vf', 'pad=ceil(iw/2)*2:ceil(ih/2)*2', '-c:v', 'libx264', '-preset', 'slow', '-crf', '14', '-pix_fmt', 'yuv420p', part], 'pipe');
       const t0 = Date.now();
       for (let i = from; i < to; i++) {
         if (i > 0) await step(i);
-        const { data } = await within(cdp.send('Page.captureScreenshot', { format: 'png', optimizeForSpeed: true }), `reading frame ${i}`);
+        const { data } = await within(cdp.send('Page.captureScreenshot', { format: 'png', optimizeForSpeed: true, ...(SCALE !== 1 ? { clip: { x: 0, y: 0, width: W, height: H, scale: SCALE } } : {}) }), `reading frame ${i}`);
         if (!enc.p.stdin.write(Buffer.from(data, 'base64'))) await new Promise((ok) => enc.p.stdin.once('drain', ok));
       }
       enc.p.stdin.end(); await enc.done;
@@ -147,9 +154,8 @@ const attempt = async (...a) => {
 try {
   const t0 = Date.now();
   // the sound: every frame stepped once, in the small window
-  const wav = await attempt(0, 0, null, true);
-  await writeFile(`${name}.wav`, wav);
-  console.log(`sound: ${((Date.now() - t0) / 1000).toFixed(0)} s`);
+  const wav = noSound ? null : await attempt(0, 0, null, true);
+  if (wav) { await writeFile(`${name}.wav`, wav); console.log(`sound: ${((Date.now() - t0) / 1000).toFixed(0)} s`); }
   if (soundOnly) {
     for (const f of (await readdir(OUT)).filter((x) => /^one-grain-\d+x\d+\.mp4$/.test(x))) {
       await run(['-i', `${OUT}/${f}`, '-i', `${name}.wav`, '-map', '0:v', '-map', '1:a', '-c:v', 'copy', '-c:a', 'aac', '-b:a', '320k', '-shortest', '-movflags', '+faststart', `${OUT}/new-${f}`]).done;
@@ -172,11 +178,12 @@ try {
     await writeFile(`${name}.parts.txt`, parts.map((f) => `file '${f.split('/').pop()}'`).join('\n'));
     await run(['-f', 'concat', '-safe', '0', '-i', `${name}.parts.txt`, '-c', 'copy', `${name}.video.mp4`]).done;
     console.log(`video: ${last - first} frames in ${((Date.now() - t0) / 60000).toFixed(1)} min`);
-    await run(['-i', `${name}.video.mp4`, '-ss', String(first / fps), '-i', `${name}.wav`, '-map', '0:v', '-map', '1:a', '-c:v', 'copy', '-c:a', 'aac', '-b:a', '320k', '-shortest', '-movflags', '+faststart', `${name}.mp4`]).done;
+    if (wav) await run(['-i', `${name}.video.mp4`, '-ss', String(first / fps), '-i', `${name}.wav`, '-map', '0:v', '-map', '1:a', '-c:v', 'copy', '-c:a', 'aac', '-b:a', '320k', '-shortest', '-movflags', '+faststart', `${name}.mp4`]).done;
+    else await run(['-i', `${name}.video.mp4`, '-c', 'copy', '-movflags', '+faststart', `${name}.mp4`]).done;
     for (const f of [...parts, ...parts.map((x) => `${x}.done`), `${name}.parts.txt`, `${name}.video.mp4`]) {
       // Windows (a virus scan of a new large file) may hold a part longer: the video is done, so only warn
       await rm(f, { force: true, maxRetries: 10, retryDelay: 1000 }).catch((e) => console.log(`  left ${f} (${e.code}): delete it later`));
     }
-    console.log(`→ ${name}.mp4 (the sound alone: ${name}.wav)`);
+    console.log(`→ ${name}.mp4${wav ? ` (the sound alone: ${name}.wav)` : ' (no sound)'}`);
   }
 } finally { await server.close(); }
