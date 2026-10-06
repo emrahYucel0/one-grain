@@ -231,6 +231,8 @@ them for an error tracker and do not upload them.
 
 ## After deploying
 
+`npm run check:live` checks all of the below against the real URL and writes `docs/live.md`.
+
 - Open the site and check that the browser shows no console messages and no CSP reports.
 - Check the response headers of `/` and of one file in `/assets/` (`curl -sI`).
 - Paste the URL into a sharing debugger (for example the Open Graph preview of a social
