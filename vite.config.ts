@@ -21,6 +21,9 @@ const TARGETS = ['chrome100', 'edge100', 'firefox100', 'safari15', 'ios15'];
  */
 const ICONS = ['favicon.svg', 'favicon-32.png', 'apple-touch-icon.png', 'icon-192.png', 'icon-512.png', 'site.webmanifest', 'og-image.jpg'];
 
+/** Cloudflare Web Analytics (automatic setup: Cloudflare injects the beacon into the page at the edge). */
+const ANALYTICS = { script: 'https://static.cloudflareinsights.com', connect: 'https://cloudflareinsights.com' } as const;
+
 /** main.css's web font faces (Archivo; Newsreader roman and italic), subset in src/fonts/ (npm run fonts). */
 const WEB_FACES = 3;
 
@@ -69,9 +72,11 @@ function site(): Plugin {
     },
     writeBundle(opts) {
       const csp = [
-        // closed by default; each source the site uses named (icons, fonts, module preloads, the worker, the manifest)
-        "default-src 'none'", `script-src 'self' ${hashes.script.join(' ')}`, `style-src 'self' ${hashes.style.join(' ')}`,
-        "img-src 'self'", "font-src 'self'", "connect-src 'self'", "worker-src 'self'", "manifest-src 'self'",
+        // closed by default; each source the site uses named (icons, fonts, module preloads, the worker, the
+        // manifest), and Cloudflare Web Analytics, whose beacon Cloudflare injects at the edge (its script
+        // and where it reports to)
+        "default-src 'none'", `script-src 'self' ${ANALYTICS.script} ${hashes.script.join(' ')}`, `style-src 'self' ${hashes.style.join(' ')}`,
+        "img-src 'self'", "font-src 'self'", `connect-src 'self' ${ANALYTICS.connect}`, "worker-src 'self'", "manifest-src 'self'",
         "base-uri 'self'", "form-action 'none'", "frame-ancestors 'none'", 'upgrade-insecure-requests',
       ].join('; ');
       // the last rule keeps Cloudflare Pages' own address for the project (*.pages.dev) out of search

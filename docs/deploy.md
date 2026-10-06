@@ -44,7 +44,7 @@ and an old cached copy would point to files that no longer exist.
 
 ```
 /*
-  Content-Security-Policy: default-src 'none'; script-src 'self' 'sha256-…'; style-src 'self' 'sha256-…'; img-src 'self'; font-src 'self'; connect-src 'self'; worker-src 'self'; manifest-src 'self'; base-uri 'self'; form-action 'none'; frame-ancestors 'none'; upgrade-insecure-requests
+  Content-Security-Policy: default-src 'none'; script-src 'self' https://static.cloudflareinsights.com 'sha256-…'; style-src 'self' 'sha256-…'; img-src 'self'; font-src 'self'; connect-src 'self' https://cloudflareinsights.com; worker-src 'self'; manifest-src 'self'; base-uri 'self'; form-action 'none'; frame-ancestors 'none'; upgrade-insecure-requests
   Strict-Transport-Security: max-age=63072000; includeSubDomains
   X-Content-Type-Options: nosniff
   Referrer-Policy: strict-origin-when-cross-origin
@@ -80,7 +80,11 @@ The CSP allows only what the site uses:
   The build computes the hashes. If you edit either block, rebuild and redeploy `_headers` with
   the new `index.html`; a stale hash leaves the first paint unstyled. The JSON-LD block is data,
   not a script, and needs no hash.
-- **Nothing from other origins.** The fonts are self-hosted and there are no analytics or CDNs.
+- **One other origin: Cloudflare Web Analytics.** With automatic setup, Cloudflare injects its
+  beacon into the page at the edge: the script from `https://static.cloudflareinsights.com`, its
+  reports to `https://cloudflareinsights.com`. Nothing else comes from elsewhere: the fonts are
+  self-hosted and there are no CDNs. If the beacon is blocked (an ad blocker, a privacy browser), the
+  site does not care: the startup guard only counts failures of our own scripts.
   The sound is synthesised in the browser and the worker comes from `assets/`.
 - **Everything else is closed.** `default-src 'none'` blocks any kind of request the policy
   does not name. `img-src` covers the icons, `manifest-src` covers the manifest, and
@@ -175,13 +179,14 @@ the zone shows **Active**.
 **4. Zone settings to keep as they are, or check**
 
 - **SSL/TLS → Edge Certificates → Always Use HTTPS**: on.
-- Keep these **off**: anything that changes the page or injects scripts would be blocked by the
-  CSP and would show a console error.
-  - **Web Analytics** with automatic setup (Pages project → Metrics; it injects a script);
+- **Web Analytics** with automatic setup is on (Pages project → Metrics): Cloudflare injects its
+  beacon, which the CSP allows (see *The CSP*). Anything else that changes the page or injects
+  scripts would be blocked by the CSP, so keep these **off**:
   - **Rocket Loader**;
   - **Email Address Obfuscation** (Scrape Shield). The page has no addresses, but it is safer off.
-  - If analytics are wanted later, add the script to `index.html` and its origin to the CSP
-    (`vite.config.ts`). Then run `npm run lighthouse`, which reports violations.
+  - A blocked injection never breaks the site (the startup guard ignores other origins), but it
+    shows a console error. To allow another service, add its origin to the CSP (`vite.config.ts`),
+    then run `npm run lighthouse`, which reports violations.
 - **Preview deployments**: every other branch gets its own `*.one-grain.pages.dev` address.
   They are kept out of search results by the noindex rule. They can be limited under
   **Settings → Builds & deployments → Preview branches** if unwanted.
