@@ -52,8 +52,6 @@ export const postShaders = {
 const skySection = sectionsOf('sky.glsl', sky);
 /** The sky behind the grains, a fullscreen quad (render/sky.ts). */
 export const skyShaders: ShaderPair = { vertexShader: skySection('vertex'), fragmentShader: skySection('fragment') };
-/** The low-resolution sky stretched over the HDR target. */
-export const skyCopyShaders: ShaderPair = { vertexShader: skySection('copy-vertex'), fragmentShader: skySection('copy') };
 
 const loupeSection = sectionsOf('loupe.glsl', loupe);
 /** The loupe's lens, raymarched into its own small target (render/loupe.ts). */

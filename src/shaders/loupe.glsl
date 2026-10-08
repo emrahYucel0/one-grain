@@ -29,6 +29,10 @@ uniform vec3 uColA, uColB, uGlowA, uGlowB, uEnvA, uEnvB;
 uniform int uZero;
 // the radius of a sphere around both looks' shapes (render/loupe.ts): rays that miss it are not marched
 uniform float uBound;
+// how much surface detail (relief) to draw, 0..1, and the march's step budget: a faint lens (fading in or
+// out of a transition) is marched plainly. The march costs by its length, not by its pixels: a small lens
+// is bound by how long one pixel's march takes.
+uniform float uDetail, uSteps;
 out highp vec4 fragColor;
 
 const vec3 KEY = vec3(.5516, .7522, .3609); // normalize(.55, .75, .36)
@@ -69,10 +73,10 @@ float shapeSd(vec3 p, float sh, float rnd, float wear){
     // a grain's dents (at most .14 × wear) and a lump's rough faces (at most .062): the one relief noise
     // (written once: see uZero), only near the surface; farther out the plain shape is a safe step
     d = sh < .5 ? grainSd(p, rnd) : lumpSd(p);
-    float reach = sh < .5 ? .14 * wear : .062;
+    float reach = (sh < .5 ? .14 * wear : .062) * uDetail;
     if (reach > 0. && d < reach + .05) {
       float r = fbm(p * (sh < .5 ? 1.7 : 2.6));
-      d += sh < .5 ? (r - .5) * .28 * wear : (r - .5) * .1 + sin(dot(p, vec3(4.1, 2.3, -3.2)) + r * 6.) * .012;
+      d += (sh < .5 ? (r - .5) * .28 * wear : (r - .5) * .1 + sin(dot(p, vec3(4.1, 2.3, -3.2)) + r * 6.) * .012) * uDetail;
     }
   }
   else if (sh < 2.5) d = dropSd(p);
@@ -142,8 +146,8 @@ void main(){
   float mask = smoothstep(.5, .5 - 1.5 / uRes.y, r);
   if (mask <= 0.) { fragColor = vec4(0.); return; }
   vec4 m1 = mix(uA1, uB1, uK), m2 = mix(uA2, uB2, uK);
-  float speckle = mix(uA3.z, uB3.z, uK), panels = mix(uA3.w, uB3.w, uK);
-  float frost = m1.z, gloss = m1.w, glass = m2.x, milk = m2.y, metal = m2.z, em = m2.w;
+  float speckle = mix(uA3.z, uB3.z, uK) * uDetail, panels = mix(uA3.w, uB3.w, uK);
+  float frost = m1.z * uDetail, gloss = m1.w, glass = m2.x * uDetail, milk = m2.y, metal = m2.z, em = m2.w;
   vec3 col = mix(uColA, uColB, uK), glow = mix(uGlowA, uGlowB, uK), env = mix(uEnvA, uEnvB, uK);
   gDome = 1. - .5 * glass;
   vec3 ro = vec3(0., 0., 3.6), rd = normalize(vec3(uv, -1.55));
@@ -167,7 +171,7 @@ void main(){
         if (d < .0008) { hit = true; p = q; step = 1; k = 0; acc = vec3(0.); q = p + tap(0) * .0015; continue; }
         if (d < dMin) { dMin = d; tMin = t; }
         t += d * .9; marched++;
-        if (t > tEnd || marched >= 72) {
+        if (t > tEnd || float(marched) >= uSteps) {
           // missed: where it passed within a pixel of the surface, that pixel is partly covered
           cover = 1. - dMin / (px * tMin * 1.5);
           if (cover <= 0.) break;

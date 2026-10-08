@@ -152,9 +152,10 @@ function boot(): void {
   Promise.all([sim.build(tier.n, (p) => loader.progress(.04 + .86 * p)), compiled]).then(async ([pack]) => {
     loop.setPack(pack);
     await pipeline.compile(stage.scene, stage.overlay, stage.camera).catch(() => {}); // a safety net: all cached
-    // ?parity and capture: the loupe's program too, before the harness is told the page is ready (a normal
-    // visit compiles it after the first frame, off the critical path: render/loupe.ts)
-    if (flags.parity && layers.on('loupe')) pipeline.prepareLoupe();
+    // the loupe's program: where it cannot compile in parallel (Firefox), now, while the loader shows, so it
+    // never stalls the first screen; and under ?parity and capture before the harness is told the page is
+    // ready. Elsewhere it compiles in parallel after the first frame (render/loupe.ts)
+    if (layers.on('loupe') && (flags.parity || !pipeline.parallelCompile)) pipeline.prepareLoupe(true);
     exposePack(pack);
     if (guard.failed) return; // the guard gave up on this load and the article is the page
     intro.ready();

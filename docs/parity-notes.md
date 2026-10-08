@@ -42,9 +42,16 @@ every other position measures as it did on main (same figures to the third decim
 **Skies** (`story/skies.ts`, `core/sky.ts`, `render/sky.ts`, `shaders/sky.glsl`): v27's sky table and
 shader, unchanged in look: river (soft morning), coast (sunset), desert (sunny, clouds drifting),
 again (half a sky, darkening as the grain is buried); magma, granite, industry and now keep their dark
-stages. As in v27 the sky is a pass in the HDR target before the grains, with a ground band below each
-horizon and distant grains fogging into the horizon colour (70 % of the way at a full sky; exactly the
-stage colour where there is no sky, so those worlds render as before). Differences from the file:
+stages. As in v27 there is a ground band below each horizon and distant grains fog into the horizon
+colour (70 % of the way at a full sky; exactly the stage colour where there is no sky, so those worlds
+render as before). Differences from the file:
+- v27 draws the sky into the HDR target before the grains at full resolution. The port draws it at a
+  sixth of the resolution into its own target and never copies it: the post passes that read the scene
+  (bloom's bright pass, the depth of field, the composite) add it, stretched, where no grain is (depth 1),
+  over the stage colour the target was cleared to. The depth of field blurs it fully anyway (it has no
+  depth), so the image is the same; on Intel UHD the full-resolution pass cost 4.5 ms, this about 0.4 ms;
+- the river's sun moved from v27's [.78, .86], behind the top-right clock and controls, left and down to
+  [.47, .82]: it rises behind the far bank, clear of the controls at 16:9 and on a phone;
 - colours go sRGB → linear by the formula, not through three's `Color`: the table loads before
   `core/renderer.ts` turns colour management off, and three would convert twice (the first attempt
   gave a purple, too dark desert sky);
@@ -52,8 +59,11 @@ stage colour where there is no sky, so those worlds render as before). Differenc
   follow the virtual clock in capture mode and `?parity`'s `__T`;
 - the clouds' noise is skipped below 30 % of the screen height, where v27's own mask is 0 (same image,
   less work);
-- the port's top and right scrims (Phase 6a/6c) lie over the sky; v27 had neither. They darken the
-  sky under the HUD and the rail, which keeps every text at AA or better (below).
+- the port's top and right scrims (Phase 6a/6c) lie over the sky; v27 had neither. Over a sky the right
+  scrim is wider (clamp(240px, 26vw, 420px) instead of clamp(160px, 17vw, 280px)), lighter (60 % at the edge
+  instead of 90 %) and feathered over seven stops, blended in with the sky's amount (core/stage-colour.ts),
+  so it no longer stands as a dark column on a bright sky; the clock's figures and the rail labels carry a
+  deeper shadow of their own there (`html.sky`, main.css). Over the dark stages it is the gradient it was.
 
 **Light rigs** for river, coast and desert: v27's changes applied as deltas to the port's values (which
 were v23's, so the results equal v27's): see the commit "River, coast and desert lit by their skies"
@@ -81,9 +91,14 @@ Differences from the file:
 - the startup fade (1.2–2.6 s after the scene) is skipped under `?parity`, and its program is compiled
   before `__PACK` there, so measured frames do not depend on timing;
 - compile time: the distance function is called from a single place and loops start from a uniform
-  zero; v27's structure took 7.5 s to compile on this laptop's Intel UHD (D3D11), the port's 1.1–1.4 s,
-  in parallel where the browser can (Chrome, Safari) and otherwise once, in an idle moment 3 s after the
-  scene appears (Firefox: about a second);
+  zero; v27's structure took 7.5 s to compile on this laptop's Intel UHD (D3D11), the port's 1.1–1.4 s.
+  Chromium and Safari compile it in parallel after the first frame; Firefox, which cannot, compiles it
+  during the loader, before the scene appears (docs/perf.md: about 0.9 s more loading, and no stall on
+  the first screen, where it used to freeze 2.4–2.9 s);
+- cost on an integrated GPU: half its pixels are marched each frame (a checkerboard of 4×4 blocks), a
+  quarter at half the resolution in transitions; a faint lens (below 55 % opacity, as in the middle of a
+  transition) is marched plainly, with fewer steps and no surface detail or refraction, which fade in
+  from 55 to 85 % (docs/perf.md);
 - not on the low tier; reduced motion: no turn.
 
 **The light chapter's pattern** (`story/pattern.ts`, the grain vertex shader): v27's uPatC block,
@@ -93,9 +108,10 @@ single grains in the foreground.
 
 **Contrast** (`npm run check:contrast`, real pixels at 390×844, 1440×900 and 2560×1440): 420
 measurements (main: 406; the 14 more are the loupe's caption), none below AA, every body text and
-title at AAA; the lowest figure is the same as on main (5.37, "Listen" over the wafer on a phone). The
-clock over the desert sky: its unit word lowest at 5.67. No darker art direction was needed: the
-skies' darker zenith and the existing scrims carry it.
+title at AAA. With the lighter right scrim over the skies the lowest figure is a rail label over the
+coast's sunset, 5.04 (main's lowest: 5.37); the clock's unit word over the again and desert skies 5.26 and
+5.37. No darker art direction was needed: the skies' darker zenith, the scrims and the words' own
+shadows carry it.
 
 ## Phase 6d: melting silicon glows, it does not turn pink (beyond the reference)
 

@@ -1,6 +1,6 @@
 import { flags } from '../debug/parity';
 import {
-  DepthTexture, GLSL3, HalfFloatType, LinearFilter, UnsignedByteType, Mesh, OrthographicCamera, PlaneGeometry, Scene, ShaderMaterial, Vector2, WebGLRenderTarget,
+  DepthTexture, GLSL3, HalfFloatType, LinearFilter, UnsignedByteType, Mesh, OrthographicCamera, PlaneGeometry, Scene, ShaderMaterial, Vector2, Vector3, WebGLRenderTarget,
   type Camera, type IUniform, type Texture, type WebGLRenderer,
 } from 'three';
 import type { GpuTimer } from '../core/gpu-timer';
@@ -64,6 +64,8 @@ export class PostChain {
   private readonly dof: FullscreenPass;
   private readonly composite: FullscreenPass;
   private readonly size = new Vector2();
+  /** shared by the bright, dof and composite passes (the same objects) */
+  private readonly skyU: Record<string, IUniform> = { uSky: { value: null }, uSkyOn: { value: 0 }, uStage: { value: new Vector3() } };
 
   /**
    * `hdr`: half-float targets, so highlights above 1 survive into the bloom. Where the GPU cannot render
@@ -79,16 +81,27 @@ export class PostChain {
     this.bloomB = new WebGLRenderTarget(1, 1, half); this.bloomB2 = new WebGLRenderTarget(1, 1, half);
     this.dofTarget = new WebGLRenderTarget(1, 1, half);
     const geo = new PlaneGeometry(2, 2);
-    this.bright = new FullscreenPass(postShaders.bright, { uTex: { value: this.scene.texture }, uTh: { value: .95 } }, geo);
+    // the sky where no grain is (render/sky.ts): one set of uniforms for the passes that read the scene
+    const sky = this.skyU;
+    this.bright = new FullscreenPass(postShaders.bright, { uTex: { value: this.scene.texture }, uTh: { value: .95 }, uDepth: { value: this.scene.depthTexture }, ...sky }, geo);
     this.blur = new FullscreenPass(postShaders.blur, { uTex: { value: null }, uDir: { value: new Vector2() } }, geo);
     const depth = (): Record<string, IUniform> => ({ uDepth: { value: this.scene.depthTexture }, uNear: { value: .05 }, uFar: { value: 200 }, uFocus: { value: 10 }, uRange: { value: 4 } });
     this.dof = new FullscreenPass(postShaders.dof, {
-      uColor: { value: this.scene.texture }, ...depth(), uMaxBlur: { value: 3 }, uTexel: { value: new Vector2() },
+      uColor: { value: this.scene.texture }, ...depth(), uMaxBlur: { value: 3 }, uTexel: { value: new Vector2() }, ...sky,
     }, geo);
     this.composite = new FullscreenPass(postShaders.composite, {
       uColor: { value: this.scene.texture }, ...depth(), uBloomA: { value: this.bloomA.texture }, uBloomB: { value: this.bloomB.texture }, uDof: { value: this.dofTarget.texture },
-      uBloom: { value: .75 }, uUseDof: { value: 1 }, uUseBloom: { value: 1 }, uUseGrade: { value: 1 }, uTime: { value: 0 }, uGrainOn: { value: 1 },
+      uBloom: { value: .75 }, uUseDof: { value: 1 }, uUseBloom: { value: 1 }, uUseGrade: { value: 1 }, uTime: { value: 0 }, uGrainOn: { value: 1 }, ...sky,
     }, geo);
+  }
+
+  /**
+   * The sky this frame (render/sky.ts), or null: where no grain is, the passes add it over the stage colour
+   * the scene was cleared to.
+   */
+  setSky(texture: Texture | null, stage: Vector3): void {
+    this.skyU.uSky!.value = texture; this.skyU.uSkyOn!.value = texture ? 1 : 0;
+    (this.skyU.uStage!.value as Vector3).copy(stage);
   }
 
   /** Match the drawing buffer (cheap when unchanged; call every frame). */

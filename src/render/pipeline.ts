@@ -27,9 +27,9 @@ export interface PipelineFrame {
 /**
  * The frame's render passes, in order, each timed on the GPU (core/gpu-timer.ts):
  *   shadow     the key light's shadow map (every 3rd frame at rest, every other while moving; render/shadow.ts)
- *   sky        the sky behind the grains, only where the world has one, at a quarter of the resolution
+ *   sky        the sky behind the grains, only where the world has one, at a sixth of the resolution
+ *              (the post passes add it where no grain is: render/sky.ts)
  *   grains     the grain cloud, into the HDR target
- *   sky copy   the sky stretched over the HDR target where no grain is (render/sky.ts)
  *   hero       the grain the story follows, drawn over everything (no clear in between)
  *   bloom, dof, composite   the post chain (render/post.ts)
  *   loupe      the hero grain magnified, at five chapters: half its pixels marched, laid over the canvas (render/loupe.ts)
@@ -68,7 +68,7 @@ export class Pipeline {
     this.post.fit(r);
     r.setRenderTarget(this.shadow.target); jobs.push(one(this.shadow.scene, this.shadow.camera));
     r.setRenderTarget(this.post.scene); jobs.push(one(scene, camera), one(overlay, camera));
-    jobs.push(this.sky.compile(r, one, this.post.scene));
+    jobs.push(this.sky.compile(r, one));
     jobs.push(this.post.compile(r, one));
     r.setRenderTarget(null);
     // then each program's uniform table, one per task: three.js reads it with a synchronous WebGL call per
@@ -86,8 +86,11 @@ export class Pipeline {
     if (!shadows) this.shadow.invalidate(); else this.shadow.due(every);
   }
 
-  /** The loupe's program, compiled once the scene runs (render/loupe.ts); call after the first frame. */
-  prepareLoupe(): void { this.loupe.prepare(this.renderer); }
+  /** Whether programs compile in parallel, off the main thread (KHR_parallel_shader_compile). */
+  get parallelCompile(): boolean { return this.renderer.extensions.has('KHR_parallel_shader_compile'); }
+
+  /** The loupe's program (render/loupe.ts): `atOnce` during loading, else in parallel after the first frame. */
+  prepareLoupe(atOnce = false): void { this.loupe.prepare(this.renderer, atOnce); }
 
   render(f: PipelineFrame): void {
     const { renderer, timer, shadow, post } = this;
@@ -118,16 +121,11 @@ export class Pipeline {
     timer.begin('grains');
     renderer.render(f.grains, f.camera);
     timer.end();
-    if (sky) {
-      timer.begin('sky copy');
-      this.sky.draw(renderer);
-      timer.end();
-    }
     timer.begin('hero');
     renderer.render(f.overlay, f.camera);
     timer.end();
     renderer.autoClear = autoClear;
-    if (!f.direct) post.render(renderer, timer, f.post);
+    if (!f.direct) { post.setSky(sky ? this.sky.texture : null, f.clear); post.render(renderer, timer, f.post); }
     if (f.loupe && !f.direct && this.loupe.ready) {
       timer.begin('loupe');
       renderer.setRenderTarget(null);

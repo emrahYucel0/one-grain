@@ -1,3 +1,4 @@
+import { ss } from '../core/ease';
 import { flags } from '../debug/parity';
 import {
   GLSL3, LinearFilter, Matrix3, Mesh, NoBlending, NormalBlending, OrthographicCamera, PlaneGeometry, Scene, ShaderMaterial, Vector2, Vector3, Vector4, WebGLRenderTarget,
@@ -68,7 +69,7 @@ export class LoupePass {
     });
     this.u = {
       uRes: { value: new Vector2(1, 1) }, uTime: { value: 0 }, uK: { value: 0 }, uPhase: { value: -1 }, uCycle: { value: 2 },
-      uRot: { value: this.rot }, uZero: { value: 0 }, uBound: { value: 1.5 }, ...side('A'), ...side('B'),
+      uRot: { value: this.rot }, uZero: { value: 0 }, uBound: { value: 1.5 }, uDetail: { value: 1 }, uSteps: { value: 72 }, ...side('A'), ...side('B'),
     };
     const geometry = new PlaneGeometry(2, 2);
     const march = new Mesh(geometry, new ShaderMaterial({ glslVersion: GLSL3, uniforms: this.u, blending: NoBlending, depthTest: false, depthWrite: false, ...loupeShaders }));
@@ -85,12 +86,13 @@ export class LoupePass {
   private preparing = false;
 
   /**
-   * Compile the lens's programs once the scene is running, never in the way of the first frame: it is a
-   * raymarcher, and the first screen does not need it. In parallel where the browser can
-   * (KHR_parallel_shader_compile); otherwise in an idle moment a few seconds in. ?parity and capture:
-   * at once, so every measured frame has it.
+   * Compile the lens's programs. Where the browser compiles in parallel (KHR_parallel_shader_compile:
+   * Chromium, Safari) after the first frame, off the main thread: the first screen does not need it.
+   * Elsewhere (Firefox) `atOnce`, during the loader, before the scene appears, so the cost (about a
+   * second on an integrated GPU) is part of loading and never a stall on the first screen; ?parity and
+   * capture likewise, so every measured frame has it.
    */
-  prepare(renderer: WebGLRenderer): void {
+  prepare(renderer: WebGLRenderer, atOnce = false): void {
     if (this.preparing) return;
     this.preparing = true;
     // compiled and linked now: one invisible march of a single pixel (a browser links a program at its
@@ -104,13 +106,13 @@ export class LoupePass {
       this.held = '';
       this.ready = true;
     };
-    if (flags.parity) now();
-    else if (renderer.extensions.has('KHR_parallel_shader_compile')) {
+    if (atOnce || flags.parity || !renderer.extensions.has('KHR_parallel_shader_compile')) now();
+    else {
       renderer.setRenderTarget(this.target);
       const a = renderer.compileAsync(this.scene, this.camera);
       renderer.setRenderTarget(null);
       void Promise.all([a, renderer.compileAsync(this.blitScene, this.camera)]).then(() => { this.ready = true; }, () => {});
-    } else setTimeout(() => (typeof requestIdleCallback === 'function' ? requestIdleCallback(now, { timeout: 2000 }) : now()), 3000);
+    }
   }
 
   /** Nothing drawn this frame: the next lens is marched whole. */
@@ -124,20 +126,28 @@ export class LoupePass {
       (u[`uCol${s}`]!.value as Vector3).copy(P.col); (u[`uGlow${s}`]!.value as Vector3).copy(P.glow); (u[`uEnv${s}`]!.value as Vector3).copy(P.env);
     }
     u.uK!.value = f.k; u.uTime!.value = f.time;
+    // a faint lens is marched plainly: no surface detail (relief, frost, mineral grains) below 55 %
+    // opacity, all of it from 85 %; fewer steps while it moves (the cost of a small lens is the length of
+    // one pixel's march, not the number of its pixels)
+    u.uDetail!.value = ss(.55, .85, f.op);
+    u.uSteps!.value = f.k > 0 && f.k < 1 ? 40 : 72;
     u.uBound!.value = Math.max(f.k < 1 ? BOUND[f.a]! : 0, f.k > 0 ? BOUND[f.b]! : 0);
     const cy = Math.cos(f.yaw), sy = Math.sin(f.yaw), cx = Math.cos(f.tilt), sx = Math.sin(f.tilt);
     this.rot.set(cy, 0, sy, sx * sy, cx, -sx * cy, -cx * sy, sx, cx * cy); // v27's turn: about y, then tilted about x
     // the lens's square, in device pixels, and in CSS pixels from the canvas's bottom left (three scales the viewport)
     const px = Math.max(2, Math.round(2 * f.r * dpr)), h = renderer.domElement.height / dpr;
     const left = Math.round((f.x - f.r) * dpr) / dpr, bottom = Math.round((h - f.y - f.r) * dpr) / dpr;
-    const key = `${f.a} ${f.b} ${px}`, whole = !this.shownLast || key !== this.held;
-    if (this.target.width !== px) this.target.setSize(px, px);
-    (u.uRes!.value as Vector2).set(px, px);
+    // in a transition, where it moves, fades and blends two looks, the lens is marched at half the
+    // resolution (a quarter of the pixels) and stretched; at rest at full resolution
+    const moving = f.k > 0 && f.k < 1, size = moving ? Math.max(2, Math.round(px / 2)) : px;
+    const key = `${f.a} ${f.b} ${size}`, whole = !this.shownLast || key !== this.held;
+    if (this.target.width !== size) this.target.setSize(size, size);
+    (u.uRes!.value as Vector2).set(size, size);
     renderer.getViewport(this.saved);
     renderer.setRenderTarget(this.target);
     if (whole) { renderer.setClearColor(0x000000, 0); renderer.clear(); }
-    // at rest half the blocks a frame; in a transition, where it moves and fades, a quarter
-    const cycle = f.k > 0 && f.k < 1 ? 4 : 2;
+    // at rest half the blocks a frame; in a transition a quarter
+    const cycle = moving ? 4 : 2;
     this.phase = (this.phase + 1) % cycle;
     u.uCycle!.value = cycle; u.uPhase!.value = whole ? -1 : this.phase;
     renderer.render(this.scene, this.camera);
