@@ -130,7 +130,7 @@ export class LoupePass {
     // opacity, all of it from 85 %; fewer steps while it moves (the cost of a small lens is the length of
     // one pixel's march, not the number of its pixels)
     u.uDetail!.value = ss(.55, .85, f.op);
-    u.uSteps!.value = f.k > 0 && f.k < 1 ? 40 : 72;
+    u.uSteps!.value = f.k > 0 && f.k < 1 ? 28 : 72;
     u.uBound!.value = Math.max(f.k < 1 ? BOUND[f.a]! : 0, f.k > 0 ? BOUND[f.b]! : 0);
     const cy = Math.cos(f.yaw), sy = Math.sin(f.yaw), cx = Math.cos(f.tilt), sx = Math.sin(f.tilt);
     this.rot.set(cy, 0, sy, sx * sy, cx, -sx * cy, -cx * sy, sx, cx * cy); // v27's turn: about y, then tilted about x

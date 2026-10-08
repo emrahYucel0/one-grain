@@ -733,3 +733,37 @@ stretch it over the pixels no grain covers; the loupe 0.6 ms (wafer, display) to
   GPU" and "The loupe marches a quarter of its blocks a frame in transitions" list each step.
 - **Compile:** the loupe's program links in 1.1–1.4 s on this GPU (Chromium, Firefox; v27's structure:
   7.5 s), after the first frame: in parallel in Chromium and Safari, in an idle moment in Firefox.
+
+### Phase 7 review: river → coast, Firefox's compile
+
+**River → coast** (the worst position, mid tier, Intel UHD, 1920×909). Measured as paired, interleaved
+runs on one build, the sky and loupe layers on and off (`?off=sky,loupe` takes the cost back to main's),
+because the GPU was not quiet (another browser drew ~10 % of it) and absolute times drifted by a
+millisecond between runs:
+
+| | before (7907a18) | after |
+|---|---|---|
+| GPU frame at the river → coast midpoint, features on | 17.85 ms | 16.30 ms (three runs: 16.29, 16.35, 16.30) |
+| the same build with `?off=sky,loupe` | — | 15.35–15.44 ms in the same sessions (main measured 15.08 ms on a quiet GPU) |
+| what the sky and the loupe add (paired) | 2.8 ms | about 0.9 ms (whole-frame A/B: sky 0.4, loupe 0.6) |
+
+- **Sky:** no longer copied into the HDR target at full resolution (0.8 ms); drawn at a sixth of the
+  resolution and added by the post passes where no grain is.
+- **Loupe:** on an integrated GPU a small lens costs the length of one pixel's march, not its pixel count
+  (a sixteenth of the pixels cost as much as a quarter), so in a transition it is marched at half the
+  resolution, a quarter of its blocks a frame, with 28 steps instead of 72; below 55 % opacity (the middle
+  of a transition) without surface detail or refraction, which fade back in up to 85 %.
+- **Result:** the frame interval at river → coast stays at every third refresh (20.9 ms), as on main; the
+  GPU frame is about 0.9 ms over main's. Measured here it is 16.3 ms, not under 16; with main's 15.1 ms on
+  a quiet GPU the estimate is about 16.0 ms.
+- **High** (forced on this GPU, for measurement only): median GPU frame 19.75 ms, interval 27.6 ms (main:
+  18.62 ms, 21.0 ms); high is the tier for discrete GPUs and Apple Silicon.
+
+**Firefox's compile** (no KHR_parallel_shader_compile; built site, fresh profile each run, three runs,
+1440×900):
+
+| | scene ready (median) | longest frame in the 8 s after |
+|---|---|---|
+| before: the loupe compiled in an idle moment 3 s after the scene | 4.8 s | 2.5 s (2.4–2.9 s freeze on the first screen) |
+| after: compiled during the loader | 5.7 s (+0.9 s) | 70 ms |
+| for reference: `?off=loupe` | 4.1 s | 69 ms |
