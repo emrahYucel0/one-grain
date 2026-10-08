@@ -9,7 +9,7 @@ import compat from 'eslint-plugin-compat';
 const pattern = (group, message) => ({ group, message });
 
 export default tseslint.config(
-  { ignores: ['dist/', 'reference/', 'parity/', 'node_modules/', 'scripts/_*'] }, // scripts/_* are git-ignored scratch tools
+  { ignores: ['dist/', 'reference/', 'parity/', 'node_modules/', '.cache/', 'scripts/_*'] }, // scripts/_* are git-ignored scratch tools; .cache/ holds what check:robust downloads (browser extensions)
   js.configs.recommended,
   ...tseslint.configs.recommended,
   // web APIs the oldest supported browsers lack (package.json browserslist: Safari/iOS 15 and up,
