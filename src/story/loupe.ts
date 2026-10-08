@@ -69,11 +69,11 @@ export const LOUPE: readonly LoupeLook[] = [
   // river: worn, wet
   L({ shape: 'grain', round: .45, wear: .4, frost: .12, gloss: 1, glass: .5, milk: .45, metal: 0, emission: 0, speckle: .15, pattern: 'none', colour: [.86, .85, .8], glow: NONE, env: [.35, .75, .8] }),
   // coast: rounded by the waves, worn and frosted: a matte, satin surface, light glowing through its edges
-  L({ show: true, shape: 'grain', round: .82, wear: .8, frost: .85, gloss: .25, glass: .1, milk: .9, metal: 0, emission: 0, speckle: .35, pattern: 'none', colour: [.9, .84, .74], glow: NONE, env: [.95, .62, .48] }),
+  L({ show: true, shape: 'grain', round: 1, wear: .8, frost: .85, gloss: .25, glass: 0, milk: .9, metal: 0, emission: 0, speckle: .35, pattern: 'none', colour: [.9, .84, .74], glow: NONE, env: [.95, .62, .48] }),
   // desert: round, frosted, iron-stained
-  L({ shape: 'grain', round: 1, wear: .6, frost: 1, gloss: .12, glass: .05, milk: 1, metal: 0, emission: 0, speckle: .6, pattern: 'none', colour: [.95, .7, .46], glow: NONE, env: [1, .7, .45] }),
+  L({ shape: 'grain', round: 1, wear: .6, frost: 1, gloss: .12, glass: 0, milk: 1, metal: 0, emission: 0, speckle: .6, pattern: 'none', colour: [.95, .7, .46], glow: NONE, env: [1, .7, .45] }),
   // again: quartzite
-  L({ shape: 'grain', round: .6, wear: .5, frost: .55, gloss: .3, glass: .1, milk: .9, metal: 0, emission: 0, speckle: .3, pattern: 'none', colour: [.82, .75, .66], glow: NONE, env: [.8, .6, .45] }),
+  L({ shape: 'grain', round: .6, wear: .5, frost: .55, gloss: .3, glass: 0, milk: .9, metal: 0, emission: 0, speckle: .3, pattern: 'none', colour: [.82, .75, .66], glow: NONE, env: [.8, .6, .45] }),
   // quarry: a broken lump of stone: fresh fracture faces, grains of quartz, feldspar and mica
   L({ show: true, shape: 'lump', round: 0, wear: 0, frost: .5, gloss: .2, glass: 0, milk: 0, metal: 0, emission: 0, speckle: 1, pattern: 'none', colour: [.7, .67, .63], glow: NONE, env: [.65, .68, .72] }),
   // furnace: molten
@@ -91,7 +91,7 @@ export const LOUPE: readonly LoupeLook[] = [
   // display: one pixel: three fine sub-pixels in a black matrix, behind cover glass
   L({ show: true, shape: 'pixel', round: 0, wear: 0, frost: 0, gloss: .95, glass: 0, milk: 0, metal: 0, emission: 1, speckle: 0, panels: .3, sway: true, pattern: 'subpixels', colour: [.04, .04, .045], glow: [1, 1, 1], env: [.6, .6, .7] }),
   // now: sand again
-  L({ shape: 'grain', round: 1, wear: .6, frost: 1, gloss: .12, glass: .05, milk: 1, metal: 0, emission: 0, speckle: .6, pattern: 'none', colour: [.9, .76, .58], glow: NONE, env: [.9, .72, .5] }),
+  L({ shape: 'grain', round: 1, wear: .6, frost: 1, gloss: .12, glass: 0, milk: 1, metal: 0, emission: 0, speckle: .6, pattern: 'none', colour: [.9, .76, .58], glow: NONE, env: [.9, .72, .5] }),
 ];
 
 /**

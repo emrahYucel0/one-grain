@@ -1,5 +1,6 @@
 // The loupe (reference v27, materials reworked): the hero grain magnified, raymarched into a small
-// square of the canvas after the post chain (render/loupe.ts), masked to a circle, premultiplied alpha.
+// target (half its pixels a frame, in an alternating checkerboard), masked to a circle, premultiplied
+// alpha, then laid over the canvas after the post chain (//#blit; render/loupe.ts).
 // Two looks, A and B (story/loupe.ts), blended by uK: the shapes' distances, the materials' numbers.
 //   m1 = round, wear, frost, gloss · m2 = glass, milk, metal, emission · m3 = shape, pattern, speckle, panels
 // shape: 0 natural grain (a crystal, rounded by `round`), 1 broken lump, 2 molten drop, 3 perfect
@@ -8,14 +9,16 @@
 // up and to the right, a strip light on the left, and for the factory's worlds a ceiling of light panels
 // (a mirror shows them); clear materials refract through their body. Edges are smoothed by the ray's
 // closest approach where it misses.
-// Sections are split by the //#vertex and //#fragment markers.
+// Sections are split by the //#vertex, //#fragment, //#blit-vertex and //#blit markers.
 
 //#vertex
 void main(){ gl_Position = vec4(position.xy, 0., 1.); }
 
 //#fragment
-uniform vec2 uRes, uOrigin;
-uniform float uTime, uK, uOp;
+uniform vec2 uRes;
+uniform float uTime, uK;
+// which half of the checkerboard to march this frame (0 or 1), or -1: all of it
+uniform float uPhase;
 uniform mat3 uRot;
 uniform vec4 uA1, uA2, uA3, uB1, uB2, uB3;
 uniform vec3 uColA, uColB, uGlowA, uGlowB, uEnvA, uEnvB;
@@ -23,6 +26,8 @@ uniform vec3 uColA, uColB, uGlowA, uGlowB, uEnvA, uEnvB;
 // from one place only (a D3D compiler unrolls and inlines all it can: each call site of the distance
 // function cost about a second of compile time on an integrated GPU)
 uniform int uZero;
+// the radius of a sphere around both looks' shapes (render/loupe.ts): rays that miss it are not marched
+uniform float uBound;
 out highp vec4 fragColor;
 
 const vec3 KEY = vec3(.5516, .7522, .3609); // normalize(.55, .75, .36)
@@ -34,35 +39,41 @@ float hash(vec3 p){ p = fract(p * .3183099 + .1); p *= 17.; return fract(p.x * p
 float noise(vec3 x){ vec3 i = floor(x), f = fract(x); f = f * f * (3. - 2. * f);
   return mix(mix(mix(hash(i), hash(i + vec3(1, 0, 0)), f.x), mix(hash(i + vec3(0, 1, 0)), hash(i + vec3(1, 1, 0)), f.x), f.y),
              mix(mix(hash(i + vec3(0, 0, 1)), hash(i + vec3(1, 0, 1)), f.x), mix(hash(i + vec3(0, 1, 1)), hash(i + vec3(1, 1, 1)), f.x), f.y), f.z); }
-float fbm(vec3 p){ float a = .5, s = 0.; for (int i = uZero; i < 4; i++){ s += a * noise(p); p *= 2.03; a *= .5; } return s; }
+float fbm(vec3 p){ float a = .5, s = 0.; for (int i = uZero; i < 3; i++){ s += a * noise(p); p *= 2.03; a *= .5; } return s + .0625; }
 
 // ---- shapes (shape space: the view scaled by 1.6) ----
 float sdHex(vec3 p, vec2 h){ const vec3 k = vec3(-.8660254, .5, .57735); p = abs(p); p.xy -= 2. * min(dot(k.xy, p.xy), 0.) * k.xy;
   vec2 d = vec2(length(p.xy - vec2(clamp(p.x, -k.z * h.x, k.z * h.x), h.x)) * sign(p.y - h.x), p.z - h.y); return min(max(d.x, d.y), 0.) + length(max(d, 0.)); }
 float crystalSd(vec3 p){ float pr = sdHex(p, vec2(.62, 2.4)); float cone = dot(vec2(length(p.xy), abs(p.z)), normalize(vec2(1., .55))) - 1.05; return max(pr, cone); }
 float sdEll(vec3 p, vec3 r){ float k0 = length(p / r), k1 = length(p / (r * r)); return k0 * (k0 - 1.) / k1; }
-// r: the relief, fbm at 1.7× (the dents of transport)
-float grainSd(vec3 p, float rnd, float wear, float r){
+// without its relief (the dents of transport: shapeSd adds them near the surface)
+float grainSd(vec3 p, float rnd){
   float cr = rnd > .99 ? 0. : crystalSd(p), el = rnd < .01 ? 0. : sdEll(p, vec3(1.3, 1.08, 1.18));
-  return mix(cr, el, smoothstep(0., .85, rnd)) + (r - .5) * .28 * wear;
+  return mix(cr, el, smoothstep(0., .85, rnd));
 }
-// broken stone: an ellipsoid cut by fracture planes, the faces rippled (conchoidal) and rough; r: fbm at 2.6×
-float lumpSd(vec3 p, float r){ float d = sdEll(p, vec3(1.35, 1.05, 1.2));
+// broken stone: an ellipsoid cut by fracture planes (shapeSd adds the rough, rippled faces near the surface)
+float lumpSd(vec3 p){ float d = sdEll(p, vec3(1.35, 1.05, 1.2));
   d = max(d, dot(p, normalize(vec3(.8, .5, .3))) - .8); d = max(d, dot(p, normalize(vec3(-.6, .7, -.2))) - .75);
   d = max(d, dot(p, normalize(vec3(.1, -.8, .6))) - .78); d = max(d, dot(p, normalize(vec3(-.5, -.3, -.8))) - .82);
   d = max(d, dot(p, normalize(vec3(.4, .2, -.9))) - .85); d = max(d, dot(p, normalize(vec3(-.9, -.2, .35))) - .9);
-  return d + (r - .5) * .1 + sin(dot(p, vec3(4.1, 2.3, -3.2)) + r * 6.) * .012; }
+  return d; }
 float dropSd(vec3 p){ return length(p * vec3(1., 1.1, 1.)) - 1.15 + sin(p.y * 5. + uTime * 2.) * .02; }
 // a wafer: thin, polished, a small notch at its edge
 float discSd(vec3 p){ vec2 d = abs(vec2(length(p.xz), p.y)) - vec2(1.53, .04); float s = min(max(d.x, d.y), 0.) + length(max(d, 0.)) - .03;
   return max(s, -(length(p.xz - vec2(1.58, 0.)) - .085)); }
 float pixSd(vec3 p){ vec3 q = abs(p) - vec3(1.05, 1.05, .2); return length(max(q, 0.)) + min(max(q.x, max(q.y, q.z)), 0.) - .05; }
 float shapeSd(vec3 p, float sh, float rnd, float wear){
-  // the one relief noise, for the shapes that have one (written once: see uZero)
-  float r = sh < .5 && wear <= 0. ? .5 : sh < 1.5 ? fbm(p * (sh < .5 ? 1.7 : 2.6)) : .5;
   float d;
-  if (sh < .5) d = grainSd(p, rnd, wear, r);
-  else if (sh < 1.5) d = lumpSd(p, r);
+  if (sh < 1.5) {
+    // a grain's dents (at most .14 × wear) and a lump's rough faces (at most .062): the one relief noise
+    // (written once: see uZero), only near the surface; farther out the plain shape is a safe step
+    d = sh < .5 ? grainSd(p, rnd) : lumpSd(p);
+    float reach = sh < .5 ? .14 * wear : .062;
+    if (reach > 0. && d < reach + .05) {
+      float r = fbm(p * (sh < .5 ? 1.7 : 2.6));
+      d += sh < .5 ? (r - .5) * .28 * wear : (r - .5) * .1 + sin(dot(p, vec3(4.1, 2.3, -3.2)) + r * 6.) * .012;
+    }
+  }
   else if (sh < 2.5) d = dropSd(p);
   else if (sh < 3.5) d = crystalSd(p);
   else if (sh < 4.5) d = discSd(p);
@@ -120,9 +131,11 @@ void pattern(float pat, vec3 pr, vec3 glow, float em, float w, inout vec3 c){
 }
 
 void main(){
-  vec2 uv = (gl_FragCoord.xy - uOrigin - .5 * uRes) / uRes.y; float r = length(uv);
+  // the checkerboard is of 2×2 blocks: a GPU shades pixels in 2×2 quads, so only whole quads left out save work
+  if (uPhase >= 0. && mod(floor(gl_FragCoord.x * .25) + floor(gl_FragCoord.y * .25), 2.) != uPhase) discard;
+  vec2 uv = (gl_FragCoord.xy - .5 * uRes) / uRes.y; float r = length(uv);
   float mask = smoothstep(.5, .5 - 1.5 / uRes.y, r);
-  if (mask <= 0.) discard;
+  if (mask <= 0.) { fragColor = vec4(0.); return; }
   vec4 m1 = mix(uA1, uB1, uK), m2 = mix(uA2, uB2, uK);
   float speckle = mix(uA3.z, uB3.z, uK), panels = mix(uA3.w, uB3.w, uK);
   float frost = m1.z, gloss = m1.w, glass = m2.x, milk = m2.y, metal = m2.z, em = m2.w;
@@ -134,7 +147,7 @@ void main(){
   // surface (only rays that meet the shapes' bounding sphere), the normal there (four taps), how open
   // the surface is (one tap off it), and for clear materials the way through the body to where the ray
   // leaves it, and the normal there.
-  float bb = dot(ro, rd), disc = bb * bb - dot(ro, ro) + 2.25;
+  float bb = dot(ro, rd), disc = bb * bb - dot(ro, ro) + uBound * uBound;
   bool hit = false;
   vec3 p = vec3(0.), n = vec3(0., 0., 1.), nx = vec3(0., 0., 1.), acc = vec3(0.), q = vec3(0.), rdIn = rd, exitP = vec3(0.);
   float ao = 1., th = 0., cover = 1.;
@@ -143,13 +156,13 @@ void main(){
     int step = 0, k = 0, marched = 0; // step: 0 march, 1 normal, 2 openness, 3 through the body, 4 normal at the exit
     float dMin = 1e3, tMin = 0., px = 1. / (uRes.y * 1.55); // the ray's closest approach; a pixel's width at distance 1
     q = ro + rd * t;
-    for (int i = uZero; i < 136; i++){
+    for (int i = uZero; i < 112; i++){
       float d = map(q);
       if (step == 0) {
         if (d < .0008) { hit = true; p = q; step = 1; k = 0; acc = vec3(0.); q = p + tap(0) * .0015; continue; }
         if (d < dMin) { dMin = d; tMin = t; }
-        t += d * .85; marched++;
-        if (t > tEnd || marched >= 96) {
+        t += d * .9; marched++;
+        if (t > tEnd || marched >= 72) {
           // missed: where it passed within a pixel of the surface, that pixel is partly covered
           cover = 1. - dMin / (px * tMin * 1.5);
           if (cover <= 0.) break;
@@ -210,5 +223,15 @@ void main(){
   }
   if (em > 0. && uA3.y < 3.5 && uB3.y < 3.5) c += glow * em * .22 * exp(-r * r * 7.);
   c = c / (1. + c * .55); c = pow(max(c, 0.), vec3(1. / 2.2));
-  fragColor = vec4(c * mask * uOp, mask * uOp);
+  fragColor = vec4(c * mask, mask);
 }
+
+//#blit-vertex
+out vec2 vUv;
+void main(){ vUv = uv; gl_Position = vec4(position.xy, 0., 1.); }
+
+//#blit
+uniform sampler2D uTex;
+uniform float uOp;
+in vec2 vUv; out highp vec4 fragColor;
+void main(){ fragColor = texture(uTex, vUv) * uOp; }

@@ -18,8 +18,6 @@ import type { FrameUniforms } from '../render/types';
 import type { GrainPack } from '../sim/pack';
 import { PATTERN } from '../story/pattern';
 import { WORLDS } from '../story/worlds';
-
-const PATTERN_WORLD = WORLDS.findIndex((w) => w.slug === PATTERN.world);
 import type { HashRouter } from '../timeline/hash';
 import type { ScrollTimeline } from '../timeline/scroll';
 import { locate, locateAt, type Located } from '../timeline/segments';
@@ -32,6 +30,8 @@ import type { TypeAxes } from '../ui/type-axes';
 import type { Stage } from './renderer';
 import type { Projection } from './resize';
 import type { StageColour } from './stage-colour';
+
+const PATTERN_WORLD = WORLDS.findIndex((w) => w.slug === PATTERN.world);
 
 export interface LoopDeps {
   stage: Stage;

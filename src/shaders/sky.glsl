@@ -2,7 +2,9 @@
 // a gradient from the horizon colour to the zenith, a sun with a soft glow, slowly drifting clouds, a
 // darker zenith (the HUD sits there), and below the horizon a ground band, so no sky shows between the
 // grains. Linear, at uLevel of its colour; uAmount mixes it over the stage colour.
-// Sections are split by the //#vertex and //#fragment markers.
+// Drawn at a quarter of the resolution, then stretched over the HDR target after the grains, on the far
+// plane with the depth test, so only the pixels no grain covers are written (//#copy).
+// Sections are split by the //#vertex, //#fragment, //#copy-vertex and //#copy markers.
 
 //#vertex
 out vec2 vUv;
@@ -31,3 +33,12 @@ void main(){
   sky = mix(uGround / uLevel, sky, smoothstep(uHorizon - .12, uHorizon + .04, y)); // below the horizon: ground
   fragColor = vec4(mix(uStage, sky * uLevel, uAmount), 1.);
 }
+
+//#copy-vertex
+out vec2 vUv;
+void main(){ vUv = uv; gl_Position = vec4(position.xy, 1., 1.); }
+
+//#copy
+uniform sampler2D uTex;
+in vec2 vUv; out highp vec4 fragColor;
+void main(){ fragColor = vec4(texture(uTex, vUv).rgb, 1.); }

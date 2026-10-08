@@ -27,18 +27,19 @@ export interface PipelineFrame {
 /**
  * The frame's render passes, in order, each timed on the GPU (core/gpu-timer.ts):
  *   shadow     the key light's shadow map (every 3rd frame at rest, every other while moving; render/shadow.ts)
- *   sky        the sky behind the grains, only where the world has one (render/sky.ts)
+ *   sky        the sky behind the grains, only where the world has one, at a quarter of the resolution
  *   grains     the grain cloud, into the HDR target
+ *   sky copy   the sky stretched over the HDR target where no grain is (render/sky.ts)
  *   hero       the grain the story follows, drawn over everything (no clear in between)
  *   bloom, dof, composite   the post chain (render/post.ts)
- *   loupe      the hero grain magnified, in its own square of the canvas, at five chapters (render/loupe.ts)
+ *   loupe      the hero grain magnified, at five chapters: half its pixels marched, laid over the canvas (render/loupe.ts)
  */
 export class Pipeline {
   private readonly renderer: WebGLRenderer;
   private readonly timer: GpuTimer;
   readonly shadow = new ShadowMap();
   private readonly post: PostChain;
-  private readonly sky = new SkyPass();
+  private readonly sky: SkyPass;
   private readonly loupe = new LoupePass();
   /** whether the post chain renders to half-float targets (render/post.ts) */
   readonly hdr: boolean;
@@ -48,6 +49,7 @@ export class Pipeline {
     this.renderer = renderer; this.timer = timer;
     this.hdr = renderer.extensions.has('EXT_color_buffer_float') || renderer.extensions.has('EXT_color_buffer_half_float');
     this.post = new PostChain(this.hdr);
+    this.sky = new SkyPass(this.hdr);
   }
 
   /**
@@ -65,7 +67,8 @@ export class Pipeline {
     const one: CompileOne = (s, c) => (parallel ? r.compileAsync(s, c) : (r.compile(s, c), Promise.resolve()));
     this.post.fit(r);
     r.setRenderTarget(this.shadow.target); jobs.push(one(this.shadow.scene, this.shadow.camera));
-    r.setRenderTarget(this.post.scene); jobs.push(one(scene, camera), one(overlay, camera), this.sky.compile(one));
+    r.setRenderTarget(this.post.scene); jobs.push(one(scene, camera), one(overlay, camera));
+    jobs.push(this.sky.compile(r, one, this.post.scene));
     jobs.push(this.post.compile(r, one));
     r.setRenderTarget(null);
     // then each program's uniform table, one per task: three.js reads it with a synchronous WebGL call per
@@ -94,6 +97,12 @@ export class Pipeline {
       shadow.render(renderer);
       timer.end();
     }
+    const sky = !!f.sky && !f.direct && f.sky.state.amount > SKY_MIN;
+    if (sky) {
+      timer.begin('sky');
+      this.sky.render(renderer, f.sky!);
+      timer.end();
+    }
     if (f.direct) {
       renderer.setRenderTarget(null);
       this.clear.setRGB(0, 0, 0);
@@ -106,14 +115,14 @@ export class Pipeline {
     renderer.clear();
     const autoClear = renderer.autoClear;
     renderer.autoClear = false;
-    if (f.sky && !f.direct && f.sky.state.amount > SKY_MIN) {
-      timer.begin('sky');
-      this.sky.render(renderer, f.sky);
-      timer.end();
-    }
     timer.begin('grains');
     renderer.render(f.grains, f.camera);
     timer.end();
+    if (sky) {
+      timer.begin('sky copy');
+      this.sky.draw(renderer);
+      timer.end();
+    }
     timer.begin('hero');
     renderer.render(f.overlay, f.camera);
     timer.end();
@@ -126,6 +135,6 @@ export class Pipeline {
       this.loupe.render(renderer, f.loupe);
       renderer.autoClear = autoClear;
       timer.end();
-    }
+    } else this.loupe.skip();
   }
 }
