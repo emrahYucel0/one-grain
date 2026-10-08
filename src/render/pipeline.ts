@@ -2,6 +2,7 @@ import { Color, type Camera, type Scene, type Vector3, type WebGLRenderer } from
 import type { GpuTimer } from '../core/gpu-timer';
 import { PostChain, type CompileOne, type PostFrame } from './post';
 import { ShadowMap } from './shadow';
+import { LoupePass, type LoupeFrame } from './loupe';
 import { SKY_MIN, SkyPass, type SkyFrame } from './sky';
 
 export interface PipelineFrame {
@@ -16,6 +17,8 @@ export interface PipelineFrame {
   clear: Vector3;
   /** the sky behind the grains, where the world has one (null: the stage colour alone) */
   sky: SkyFrame | null;
+  /** the loupe's lens, drawn over the finished picture (null: none this frame) */
+  loupe: LoupeFrame | null;
   /** debug: grains straight to the screen on black, no post (the overdraw view counts brightness) */
   direct: boolean;
   post: PostFrame;
@@ -28,6 +31,7 @@ export interface PipelineFrame {
  *   grains     the grain cloud, into the HDR target
  *   hero       the grain the story follows, drawn over everything (no clear in between)
  *   bloom, dof, composite   the post chain (render/post.ts)
+ *   loupe      the hero grain magnified, in its own square of the canvas, at five chapters (render/loupe.ts)
  */
 export class Pipeline {
   private readonly renderer: WebGLRenderer;
@@ -35,6 +39,7 @@ export class Pipeline {
   readonly shadow = new ShadowMap();
   private readonly post: PostChain;
   private readonly sky = new SkyPass();
+  private readonly loupe = new LoupePass();
   /** whether the post chain renders to half-float targets (render/post.ts) */
   readonly hdr: boolean;
   private readonly clear = new Color();
@@ -78,6 +83,9 @@ export class Pipeline {
     if (!shadows) this.shadow.invalidate(); else this.shadow.due(every);
   }
 
+  /** The loupe's program, compiled once the scene runs (render/loupe.ts); call after the first frame. */
+  prepareLoupe(): void { this.loupe.prepare(this.renderer); }
+
   render(f: PipelineFrame): void {
     const { renderer, timer, shadow, post } = this;
     if (!f.shadows) shadow.invalidate();
@@ -111,5 +119,13 @@ export class Pipeline {
     timer.end();
     renderer.autoClear = autoClear;
     if (!f.direct) post.render(renderer, timer, f.post);
+    if (f.loupe && !f.direct && this.loupe.ready) {
+      timer.begin('loupe');
+      renderer.setRenderTarget(null);
+      renderer.autoClear = false;
+      this.loupe.render(renderer, f.loupe);
+      renderer.autoClear = autoClear;
+      timer.end();
+    }
   }
 }

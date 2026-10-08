@@ -18,13 +18,13 @@ export interface Tier {
   fx: LayerSet;
 }
 
-const ALL: LayerSet = { light: true, shadows: true, dof: true, bloom: true, grade: true, sky: true };
+const ALL: LayerSet = { light: true, shadows: true, dof: true, bloom: true, grade: true, sky: true, loupe: true };
 
 // mid = v10 on desktop (the parity baseline), the tier of every phone and most tablets and laptops;
 // high = ours, for discrete GPUs and Apple Silicon; low = v10 on small screens (no shadows, no depth
-// of field), now only where mid cannot run (pickTier). The pixel-ratio caps are v10's: post costs per pixel.
+// of field, no loupe), now only where mid cannot run (pickTier). The pixel-ratio caps are v10's: post costs per pixel.
 export const TIERS: Readonly<Record<TierName, Tier>> = {
-  low: { name: 'low', n: 36000, dpr: 1.25, pixels: 1.5e6, dprFloor: 0, fx: { ...ALL, shadows: false, dof: false } },
+  low: { name: 'low', n: 36000, dpr: 1.25, pixels: 1.5e6, dprFloor: 0, fx: { ...ALL, shadows: false, dof: false, loupe: false } },
   mid: { name: 'mid', n: 90000, dpr: 1.4, pixels: 2.2e6, dprFloor: 0, fx: ALL },
   high: { name: 'high', n: 160000, dpr: 1.75, pixels: 4.5e6, dprFloor: 1, fx: ALL },
 };

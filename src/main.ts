@@ -28,6 +28,7 @@ import { readCopy, type Copy } from './ui/copy';
 import { revealWhenFontsReady } from './ui/fonts';
 import { Loader } from './ui/loader';
 import { guard } from './ui/guard';
+import { LoupeView } from './ui/loupe';
 import { HeroMarker } from './ui/marker';
 import { MotionToggle } from './ui/motion';
 import { TimelineNav } from './ui/nav';
@@ -96,7 +97,8 @@ function boot(): void {
   // phones: the title alone on the first screen; the opening chapter's words come with the first scroll
   const opening = new Opening(deviceKind(readDevice()).kind === 'phone');
   const textBlock = new TextBlock($('chapter'), stage.renderer.domElement, document.querySelector<HTMLElement>('.scrim-top'));
-  const loop = new Loop({ stage, grains, hero, timeline, hash, projection, typeAxes, stageColour: new StageColour(), pipeline, timer, layers, textBlock, opening });
+  const loupe = new LoupeView($('loupe'), $('loupeLine'), stage.renderer.domElement, [...document.querySelectorAll<HTMLElement>('.hud .brand, #time, .controls, #timeline')]);
+  const loop = new Loop({ stage, grains, hero, timeline, hash, projection, typeAxes, stageColour: new StageColour(), pipeline, timer, layers, textBlock, opening, loupe });
   const go = (i: number): void => timeline.goTo(i);
 
   // words and instruments
@@ -141,16 +143,19 @@ function boot(): void {
 
   const sim = new SimClient(guard.log);
   let firstFrame = true;
-  loop.onFrame(() => { if (firstFrame) { firstFrame = false; loader.done(); } });
+  loop.onFrame(() => { if (firstFrame) { firstFrame = false; loader.done(); if (layers.on('loupe')) pipeline.prepareLoupe(); } });
   if (flags.debug) void import('./debug/overlay').then((m) => m.debugOverlay({ tier, rule: picked.rule, gpu: gpu.renderer }, layers, () => stage.renderer.getPixelRatio(), timer));
 
   // the loading line: the worlds' generation fills 90 %, the first rendered frame the rest
   const loader = new Loader($('loaderFill'), flags.parity);
   loader.progress(.04);
   Promise.all([sim.build(tier.n, (p) => loader.progress(.04 + .86 * p)), compiled]).then(async ([pack]) => {
-    exposePack(pack);
     loop.setPack(pack);
     await pipeline.compile(stage.scene, stage.overlay, stage.camera).catch(() => {}); // a safety net: all cached
+    // ?parity and capture: the loupe's program too, before the harness is told the page is ready (a normal
+    // visit compiles it after the first frame, off the critical path: render/loupe.ts)
+    if (flags.parity && layers.on('loupe')) pipeline.prepareLoupe();
+    exposePack(pack);
     if (guard.failed) return; // the guard gave up on this load and the article is the page
     intro.ready();
     hash.restore();

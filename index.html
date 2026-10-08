@@ -98,7 +98,7 @@ html{background:#0d181c;color:#ece3d3;color-scheme:dark;scrollbar-width:none}
 html::-webkit-scrollbar{display:none}
 body{margin:0;background:#0d181c}
 html.js:not(.nogl) #story{position:absolute;width:1px;height:1px;margin:-1px;padding:0;overflow:hidden;clip:rect(0 0 0 0);clip-path:inset(50%);white-space:nowrap;border:0}
-html.js:not(.ready):not(.nogl) :is(.hud,.story,.timeline,.marker,.cut){visibility:hidden}
+html.js:not(.ready):not(.nogl) :is(.hud,.story,.timeline,.marker,.loupe,.loupe-line,.cut){visibility:hidden}
 .loader{position:fixed;inset:0;z-index:6;background:#0d181c;pointer-events:none;padding:calc(env(safe-area-inset-top,0px) + 1.2rem) clamp(1.25rem,5vw,4.5rem) 0;
   font:500 1.05rem/1.5 "Archivo Variable","Archivo Fallback",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;letter-spacing:.01em;-webkit-font-smoothing:antialiased}
 /* font-stretch in a rule of its own: the minifier folds it into a font shorthand as a percentage, which browsers reject (and drop the whole font) */
@@ -126,7 +126,7 @@ html:not(.js) .intro{display:none}
 .intro .loader-line{display:block;width:min(14rem,40vw);height:1px;margin-top:1.4rem;background:rgba(236,227,211,.22);overflow:hidden;transition:opacity .6s ease}
 .loader-line i{display:block;height:100%;background:#ece3d3;transform:scaleX(var(--load,0));transform-origin:left;transition:transform .3s ease-out}
 html.ready .intro .loader-line{opacity:0}
-html.nogl :is(#scene,.scrim,.marker,.hud,.intro,.story,.timeline,.cut,#scroll-length){display:none}
+html.nogl :is(#scene,.scrim,.marker,.loupe,.loupe-line,.hud,.intro,.story,.timeline,.cut,#scroll-length){display:none}
 html.nogl #story{max-width:40rem;margin:0 auto;padding:2rem 1.25rem 4rem;font:1.0625rem/1.5 "Newsreader Variable",Georgia,serif}
 .fallback-note{display:none}
 html.nogl #story .fallback-note{display:block;margin:0 0 2.5rem;font-style:italic;opacity:.8}
@@ -142,6 +142,8 @@ html.nogl #story .fallback-note{display:block;margin:0 0 2.5rem;font-style:itali
 <div class="scrim scrim-top" aria-hidden="true"></div>
 <div class="scrim scrim-right" aria-hidden="true"></div>
 <div class="marker" id="marker" aria-hidden="true"><span id="markerLabel">this grain</span></div>
+<div class="loupe" id="loupe" aria-hidden="true"><span class="loupe-cap">×200</span></div>
+<i class="loupe-line" id="loupeLine" aria-hidden="true"></i>
 
 <!-- translate="no": the HUD (brand, clock and its units, buttons) and the rail are updated by the
      script every frame or on every change; a page translator rewriting them would fight those updates.

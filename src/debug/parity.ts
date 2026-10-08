@@ -12,7 +12,7 @@
 //   ?shadowevery=N   at rest the shadow map refreshes every N-th frame (default 3; every 2nd in transitions), measurements only
 //   ?capture         the submission video's offline render (src/capture/, scripts/capture.mjs): implies
 //                    ?parity and the high tier; the page runs on a virtual clock, one frame per step
-//   ?off=a,b         switch render layers off (light, shadows, dof, bloom, grade, sky), for measurements
+//   ?off=a,b         switch render layers off (light, shadows, dof, bloom, grade, sky, loupe), for measurements
 //   with ?parity, window.__AT = { tr, t, lean } renders transition tr at t with that camera lean
 //   with ?parity, window.__LIVE = ms pins the display's live clock (it counts real time otherwise)
 //   with ?parity, window.__FT = s pins the seconds spent in the current hold (ring fade, final hold)
@@ -41,6 +41,8 @@ declare global {
     __audio?: unknown;
     /** ?parity: the hero grain projected by the camera (NDC x, y, z) and whether it is shown, each frame */
     __hero?: { x: number; y: number; z: number; visible: boolean };
+    /** ?parity: the loupe as placed this frame (ui/loupe.ts): centre, radius, opacity, the grain, what it keeps clear of; null when hidden */
+    __loupe?: { x: number; y: number; r: number; op: number; hero: [number, number]; avoid: { l: number; t: number; r: number; b: number }[] } | null;
     /** ?parity: the same grain projected after rendering, through the matrices the frame was drawn with */
     __heroRendered?: { x: number; y: number };
   }
@@ -102,6 +104,9 @@ export function reportHeroRendered(hero: Vector3, camera: Camera): void {
   const p = rendered.copy(hero).applyMatrix4(camera.matrixWorldInverse).applyMatrix4(camera.projectionMatrix);
   window.__heroRendered = { x: p.x, y: p.y };
 }
+
+/** ?parity: the loupe's placement, for check:responsive. */
+export function reportLoupe(l: Window['__loupe']): void { if (flags.parity) window.__loupe = l; }
 
 /** ?parity: the tier picked at startup, for check:tiers. */
 export function exposeTier(tier: { name: string; n: number }, rule: string): void { if (flags.parity) window.__tier = { name: tier.name, n: tier.n, rule }; }

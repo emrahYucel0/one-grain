@@ -2,7 +2,7 @@ import type { GpuTimer } from '../core/gpu-timer';
 import { LAYER_NAMES, type LayerName, type RenderLayers } from '../core/layers';
 import type { Tier } from '../core/quality';
 
-const LABELS: Record<LayerName, string> = { light: 'Light', shadows: 'Shadows', dof: 'Depth of field', bloom: 'Bloom', grade: 'Grade', sky: 'Sky' };
+const LABELS: Record<LayerName, string> = { light: 'Light', shadows: 'Shadows', dof: 'Depth of field', bloom: 'Bloom', grade: 'Grade', sky: 'Sky', loupe: 'Loupe' };
 
 /** What chose the tier: shown first, since the tier never changes after startup. */
 export interface TierInfo { tier: Tier; rule: string; gpu: string }

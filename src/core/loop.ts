@@ -26,6 +26,7 @@ import { locate, locateAt, type Located } from '../timeline/segments';
 import { FixedClock } from './clock';
 import { env } from './env';
 import { chapterOpacity, type Opening } from '../ui/overlays';
+import type { LoupeView } from '../ui/loupe';
 import type { TextBlock } from '../ui/text-block';
 import type { TypeAxes } from '../ui/type-axes';
 import type { Stage } from './renderer';
@@ -49,6 +50,8 @@ export interface LoopDeps {
   textBlock: TextBlock;
   /** phones: the opening chapter's words wait for the first scroll (ui/overlays.ts) */
   opening: Opening;
+  /** the hero grain magnified, at five chapters (ui/loupe.ts places it, render/loupe.ts draws its lens) */
+  loupe: LoupeView;
 }
 
 /** Per-frame hook for the parts that react to where the story is (UI, input, audio, quality). */
@@ -153,8 +156,9 @@ export class Loop {
     // stage colour per act; confinement, eased like the camera: lens (and uScale), type axes, jitter
     stageColour.update(a, b, S.eg);
     projection.setLens(towards(ca.fov, cb.fov, S.eg));
-    // light rigs, eased like the camera unless the transition delays them
-    this.rigState = this.rig.update(a, b, tr.rig ? ss(tr.rig[0], tr.rig[1], t) : S.eg, this.heroes);
+    // light rigs, eased like the camera unless the transition delays them (the loupe's look follows them)
+    const rigK = tr.rig ? ss(tr.rig[0], tr.rig[1], t) : S.eg;
+    this.rigState = this.rig.update(a, b, rigK, this.heroes);
     typeAxes.set(towards(ca.wdth, cb.wdth, S.eg), towards(ca.wght, cb.wght, S.eg));
     // the sky, where the grain is at the surface, eased like the stage colour; distant grains fog into it
     this.sky.update(a, b, S.eg, stageColour.fogLinear);
@@ -177,6 +181,9 @@ export class Loop {
     const fade = reduced ? 1 - Math.sin(Math.PI * L.t) : 1;
     const opacity = fade === 1 ? '1' : fade.toFixed(3);
     if (opacity !== this.canvasOpacity) { this.canvasOpacity = opacity; stage.renderer.domElement.style.opacity = opacity; }
+    const loupe = layers.on('loupe')
+      ? this.d.loupe.update({ a, b, k: rigK, cut: tr.cam === 'cut' ? t : -1, hero: S.hero, camera: stage.camera, heroVisible, heroLight: info.heroLight, text: tb.box, fade, time, dt, now: info.now })
+      : this.d.loupe.hide();
 
     // the key light's shadow map, framed around what the camera looks at
     const light = layers.on('light'), shadows = light && layers.on('shadows');
@@ -199,7 +206,7 @@ export class Loop {
     if (!draw) { pipeline.skip(shadows && !overdraw, shadowEvery); timer.tick(); return; }
     pipeline.render({
       grains: stage.scene, overlay: stage.overlay, camera: cam, shadows: shadows && !overdraw, shadowEvery, clear: stageColour.fogLinear, direct: overdraw,
-      sky: layers.on('sky') ? this.skyFrame : null,
+      sky: layers.on('sky') ? this.skyFrame : null, loupe,
       post: { bloom: layers.on('bloom'), dof: layers.on('dof'), grade: layers.on('grade'), near: cam.near, far: cam.far, focus: cam.position.distanceTo(S.hero), dofScale: this.rigState.dof, time, grainMoves: !reduced },
     });
     reportHeroRendered(S.hero, cam);

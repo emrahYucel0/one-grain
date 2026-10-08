@@ -7,6 +7,7 @@ import grainsVert from './grains.vert.glsl?raw';
 import hero from './hero.glsl?raw';
 import emission from './emission.glsl?raw';
 import interact from './interact.glsl?raw';
+import loupe from './loupe.glsl?raw';
 import paint from './paint.glsl?raw';
 import post from './post.glsl?raw';
 import sky from './sky.glsl?raw';
@@ -51,3 +52,7 @@ export const postShaders = {
 const skySection = sectionsOf('sky.glsl', sky);
 /** The sky behind the grains, a fullscreen quad (render/sky.ts). */
 export const skyShaders: ShaderPair = { vertexShader: skySection('vertex'), fragmentShader: skySection('fragment') };
+
+const loupeSection = sectionsOf('loupe.glsl', loupe);
+/** The loupe's lens, raymarched into its own square of the canvas (render/loupe.ts). */
+export const loupeShaders: ShaderPair = { vertexShader: loupeSection('vertex'), fragmentShader: loupeSection('fragment') };
