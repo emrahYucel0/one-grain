@@ -693,3 +693,43 @@ position over two rounds, 3 s of raw GPU frames each (`EXT_disjoint_timer_query_
 - **Decision:** shadows refresh every 3rd frame at rest by default (`render/shadow.ts` SHADOW_EVERY;
   every other frame while the story moves); depth of field stays at half resolution. `?shadowevery`
   and `?dofres` remain for measurements.
+
+## Phase 7: skies, the loupe, the light chapter's pattern
+
+`npm run perf` on main and on the branch, the same machine (i5-12450H, Intel UHD Graphics, 144 Hz panel),
+1920×909, headed Chromium, built site. "Interval" is the median frame interval (the panel shows a frame
+every 6.9 ms, so 20.8 ms is every third refresh, 27.7 ms every fourth); "GPU" is the median GPU frame.
+
+| Position | mid, main: interval / GPU | mid, branch | high, main | high, branch |
+|---|---|---|---|---|
+| hold granite | 20.7 / 11.91 ms | 20.8 / 13.07 ms | 20.9 / 14.89 ms | 21.0 / 16.24 ms |
+| granite → river | 20.8 / 14.63 ms | 20.9 / 17.22 ms | 21.0 / 19.06 ms | 27.7 / 21.63 ms |
+| hold river | 20.8 / 12.36 ms | 20.8 / 13.52 ms | 21.0 / 15.33 ms | 21.0 / 16.43 ms |
+| river → coast | 20.8 / 15.08 ms | 21.0 / 17.85 ms | 27.4 / 19.32 ms | 27.8 / 22.10 ms |
+| hold coast | 20.8 / 12.86 ms | 20.9 / 15.46 ms | 21.0 / 16.00 ms | 27.7 / 18.52 ms |
+| coast → desert | 20.8 / 14.79 ms | 21.0 / 17.28 ms | 21.1 / 19.24 ms | 27.7 / 21.69 ms |
+| hold desert | 20.8 / 12.41 ms | 20.8 / 13.51 ms | 20.9 / 15.14 ms | 20.9 / 16.33 ms |
+| hold again | 20.8 / 13.41 ms | 20.9 / 14.53 ms | 21.1 / 16.80 ms | 27.6 / 17.73 ms |
+| hold quarry | 20.8 / 12.96 ms | 20.9 / 14.26 ms | 20.9 / 15.75 ms | 27.5 / 17.12 ms |
+| hold wafer | 20.8 / 12.04 ms | 20.8 / 12.77 ms | 20.9 / 14.99 ms | 20.9 / 15.79 ms |
+| hold light | 20.8 / 12.89 ms | 20.8 / 12.93 ms | 20.9 / 15.96 ms | 21.0 / 16.05 ms |
+| hold display | 20.8 / 12.53 ms | 20.8 / 13.20 ms | 20.9 / 15.36 ms | 21.0 / 16.12 ms |
+| all positions | median 14.25, worst 15.54 ms GPU; interval 20.8 | median 14.60, worst 17.85; interval 20.8, worst 21.0 | median 18.62, worst 20.19; interval 21.0 | median 18.84, worst 22.10; interval 27.5 |
+| scrub through the story | GPU 13.19 (p95 15.50); interval p95 27.7 | GPU 14.39 (p95 17.51); p95 27.8 | GPU 16.70 (p95 20.21); p95 28.0 | GPU 17.95 (p95 21.91); p95 28.1 |
+
+The passes (raw medians, mid): the sky 0.3 ms at a quarter of the resolution (the timer also puts about
+1 ms of the previous frame's work into it, as it does into whichever pass comes first) plus 0.8 ms to
+stretch it over the pixels no grain covers; the loupe 0.6 ms (wafer, display) to 1.1 ms (granite) and
+1.4 ms (coast) at rest, 1.3–1.9 ms in transitions; the pattern costs nothing measurable (light hold
+12.89 → 12.93 ms).
+
+- **Mid (this laptop's tier):** every position keeps its cadence (a frame every third refresh, as on
+  main); the GPU frame grows by up to 2.8 ms where the sky and the loupe meet (river → coast).
+- **High** is the tier for discrete GPUs and Apple Silicon; on this Intel UHD it is only forced for the
+  measurement. It was already at the edge on main (several positions at 27.5 ms); on the branch most of the
+  loupe's and the sky's positions drop to every fourth refresh.
+- **Getting there:** the first versions cost the sky 4.5 ms and the loupe up to 7.9 ms (coast 21.4 ms GPU,
+  a frame every 27.8 ms at mid); the commits "Skies and the loupe within the frame budget on an integrated
+  GPU" and "The loupe marches a quarter of its blocks a frame in transitions" list each step.
+- **Compile:** the loupe's program links in 1.1–1.4 s on this GPU (Chromium, Firefox; v27's structure:
+  7.5 s), after the first frame: in parallel in Chromium and Safari, in an idle moment in Firefox.
