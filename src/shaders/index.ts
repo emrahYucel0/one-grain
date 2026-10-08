@@ -9,6 +9,7 @@ import emission from './emission.glsl?raw';
 import interact from './interact.glsl?raw';
 import paint from './paint.glsl?raw';
 import post from './post.glsl?raw';
+import sky from './sky.glsl?raw';
 import transitions from './transitions.glsl?raw';
 
 export interface ShaderPair { vertexShader: string; fragmentShader: string }
@@ -46,3 +47,7 @@ const fullscreen = (name: string): ShaderPair => ({ vertexShader: postSection('v
 export const postShaders = {
   bright: fullscreen('bright'), blur: fullscreen('blur'), dof: fullscreen('dof'), composite: fullscreen('composite'),
 } as const;
+
+const skySection = sectionsOf('sky.glsl', sky);
+/** The sky behind the grains, a fullscreen quad (render/sky.ts). */
+export const skyShaders: ShaderPair = { vertexShader: skySection('vertex'), fragmentShader: skySection('fragment') };

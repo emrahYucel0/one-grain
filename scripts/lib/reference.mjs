@@ -11,7 +11,7 @@ import { fileURLToPath } from 'node:url';
 
 /** The behavioural spec of the current phase comes first. */
 export const REFERENCES = ['v15', 'v10', 'v8', 'v6', 'v5'];
-const FILES = { v23: 'v23-sound.html', v15: 'v15-lit.html', v10: 'v10-lit.html' };
+const FILES = { v27: 'v27-skies.html', v23: 'v23-sound.html', v15: 'v15-lit.html', v10: 'v10-lit.html' };
 export const referenceFile = (version = REFERENCES[0]) => fileURLToPath(new URL(`../../reference/${FILES[version] ?? `blockout-${version}.html`}`, import.meta.url));
 
 const PATCHES = [

@@ -2,6 +2,7 @@ import { Color, type Camera, type Scene, type Vector3, type WebGLRenderer } from
 import type { GpuTimer } from '../core/gpu-timer';
 import { PostChain, type CompileOne, type PostFrame } from './post';
 import { ShadowMap } from './shadow';
+import { SKY_MIN, SkyPass, type SkyFrame } from './sky';
 
 export interface PipelineFrame {
   grains: Scene;
@@ -13,6 +14,8 @@ export interface PipelineFrame {
   shadowEvery?: number;
   /** the stage colour, linear: the HDR target is cleared to it */
   clear: Vector3;
+  /** the sky behind the grains, where the world has one (null: the stage colour alone) */
+  sky: SkyFrame | null;
   /** debug: grains straight to the screen on black, no post (the overdraw view counts brightness) */
   direct: boolean;
   post: PostFrame;
@@ -21,6 +24,7 @@ export interface PipelineFrame {
 /**
  * The frame's render passes, in order, each timed on the GPU (core/gpu-timer.ts):
  *   shadow     the key light's shadow map (every 3rd frame at rest, every other while moving; render/shadow.ts)
+ *   sky        the sky behind the grains, only where the world has one (render/sky.ts)
  *   grains     the grain cloud, into the HDR target
  *   hero       the grain the story follows, drawn over everything (no clear in between)
  *   bloom, dof, composite   the post chain (render/post.ts)
@@ -30,6 +34,7 @@ export class Pipeline {
   private readonly timer: GpuTimer;
   readonly shadow = new ShadowMap();
   private readonly post: PostChain;
+  private readonly sky = new SkyPass();
   /** whether the post chain renders to half-float targets (render/post.ts) */
   readonly hdr: boolean;
   private readonly clear = new Color();
@@ -55,7 +60,7 @@ export class Pipeline {
     const one: CompileOne = (s, c) => (parallel ? r.compileAsync(s, c) : (r.compile(s, c), Promise.resolve()));
     this.post.fit(r);
     r.setRenderTarget(this.shadow.target); jobs.push(one(this.shadow.scene, this.shadow.camera));
-    r.setRenderTarget(this.post.scene); jobs.push(one(scene, camera), one(overlay, camera));
+    r.setRenderTarget(this.post.scene); jobs.push(one(scene, camera), one(overlay, camera), this.sky.compile(one));
     jobs.push(this.post.compile(r, one));
     r.setRenderTarget(null);
     // then each program's uniform table, one per task: three.js reads it with a synchronous WebGL call per
@@ -93,6 +98,11 @@ export class Pipeline {
     renderer.clear();
     const autoClear = renderer.autoClear;
     renderer.autoClear = false;
+    if (f.sky && !f.direct && f.sky.state.amount > SKY_MIN) {
+      timer.begin('sky');
+      this.sky.render(renderer, f.sky);
+      timer.end();
+    }
     timer.begin('grains');
     renderer.render(f.grains, f.camera);
     timer.end();

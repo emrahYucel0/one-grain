@@ -18,7 +18,7 @@ export interface Tier {
   fx: LayerSet;
 }
 
-const ALL: LayerSet = { light: true, shadows: true, dof: true, bloom: true, grade: true };
+const ALL: LayerSet = { light: true, shadows: true, dof: true, bloom: true, grade: true, sky: true };
 
 // mid = v10 on desktop (the parity baseline), the tier of every phone and most tablets and laptops;
 // high = ours, for discrete GPUs and Apple Silicon; low = v10 on small screens (no shadows, no depth

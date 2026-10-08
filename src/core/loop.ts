@@ -5,6 +5,8 @@ import { SAFE, keepInSafeArea } from '../camera/safe-area';
 import { CONFINEMENT, towards } from '../camera/confinement';
 import { ss } from './ease';
 import { LightRigBlend, type RigState } from './light-rig';
+import { SkyBlend } from './sky';
+import type { SkyFrame } from '../render/sky';
 import { shot } from '../camera/shot';
 import { flags, overdrawView, progressOverride, reportGpu, reportHero, reportHeroRendered, reportProgress, reportRender, restPathAllowed, timeOverride, transitionOverride } from '../debug/parity';
 import type { GrainCloud } from '../render/grains';
@@ -79,6 +81,8 @@ export class Loop {
   heroes: Vector3[] = [];
   private readonly clock = new FixedClock();
   private readonly rig = new LightRigBlend();
+  private readonly sky = new SkyBlend();
+  private readonly skyFrame: SkyFrame = { state: this.sky.state, stage: new Vector3(), time: 0, aspect: 1 };
   /** this frame's light rig (render/ draws with it) */
   rigState: RigState = this.rig.state;
   private readonly listeners: Record<FramePhase, FrameListener[]> = { story: [], camera: [], scene: [] };
@@ -149,6 +153,10 @@ export class Loop {
     // light rigs, eased like the camera unless the transition delays them
     this.rigState = this.rig.update(a, b, tr.rig ? ss(tr.rig[0], tr.rig[1], t) : S.eg, this.heroes);
     typeAxes.set(towards(ca.wdth, cb.wdth, S.eg), towards(ca.wght, cb.wght, S.eg));
+    // the sky, where the grain is at the surface, eased like the stage colour; distant grains fog into it
+    this.sky.update(a, b, S.eg, stageColour.fogLinear);
+    const sf = this.skyFrame, canvas = stage.renderer.domElement;
+    sf.stage.copy(stageColour.fogLinear); sf.time = time; sf.aspect = canvas.width / Math.max(1, canvas.height);
 
     hero.moveTo(S.hero);
     hero.visible = heroVisible;
@@ -177,7 +185,7 @@ export class Loop {
       style: tr.g, k: tr.k ?? 1, span: tr.span ?? .45, spread: tr.spread ?? 30, dir: tr.dir ?? [1, 0, 0],
       heroA: this.heroes[a]!, heroB: this.heroes[b]!,
       loA: wa.lo, hiA: wa.hi, loB: wb.lo, hiB: wb.hi, grain, jitter: towards(ca.jitter, cb.jitter, S.eg),
-      fog: stageColour.fog, fogLinear: stageColour.fogLinear, rig: this.rigState, camera: stage.camera, light, shadows, lightVP: pipeline.shadow.viewProjection, shadowPx: pipeline.shadow.pxPerUnit, land: landed, landPos: S.hero, interact: ix.mode, mouse: ix.mode ? ix.at : this.mouse, press: ix.press,
+      fog: stageColour.fog, fogLinear: layers.on('sky') ? this.sky.fog : stageColour.fogLinear, rig: this.rigState, camera: stage.camera, light, shadows, lightVP: pipeline.shadow.viewProjection, shadowPx: pipeline.shadow.pxPerUnit, land: landed, landPos: S.hero, interact: ix.mode, mouse: ix.mode ? ix.at : this.mouse, press: ix.press,
     };
     const overdraw = overdrawView();
     grains.setOverdrawView(overdraw);
@@ -188,6 +196,7 @@ export class Loop {
     if (!draw) { pipeline.skip(shadows && !overdraw, shadowEvery); timer.tick(); return; }
     pipeline.render({
       grains: stage.scene, overlay: stage.overlay, camera: cam, shadows: shadows && !overdraw, shadowEvery, clear: stageColour.fogLinear, direct: overdraw,
+      sky: layers.on('sky') ? this.skyFrame : null,
       post: { bloom: layers.on('bloom'), dof: layers.on('dof'), grade: layers.on('grade'), near: cam.near, far: cam.far, focus: cam.position.distanceTo(S.hero), dofScale: this.rigState.dof, time, grainMoves: !reduced },
     });
     reportHeroRendered(S.hero, cam);

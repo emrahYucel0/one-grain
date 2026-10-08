@@ -12,7 +12,7 @@
 //   ?shadowevery=N   at rest the shadow map refreshes every N-th frame (default 3; every 2nd in transitions), measurements only
 //   ?capture         the submission video's offline render (src/capture/, scripts/capture.mjs): implies
 //                    ?parity and the high tier; the page runs on a virtual clock, one frame per step
-//   ?off=a,b         switch render layers off (light, shadows, dof, bloom, grade), for measurements
+//   ?off=a,b         switch render layers off (light, shadows, dof, bloom, grade, sky), for measurements
 //   with ?parity, window.__AT = { tr, t, lean } renders transition tr at t with that camera lean
 //   with ?parity, window.__LIVE = ms pins the display's live clock (it counts real time otherwise)
 //   with ?parity, window.__FT = s pins the seconds spent in the current hold (ring fade, final hold)

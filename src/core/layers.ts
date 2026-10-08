@@ -3,8 +3,8 @@
  *   - the quality tier, fixed for the visit (core/quality.ts: low drops shadows and depth of field);
  *   - overrides for measurements: ?off=a,b and the ?debug panel. They win.
  */
-export type LayerName = 'light' | 'shadows' | 'dof' | 'bloom' | 'grade';
-export const LAYER_NAMES: readonly LayerName[] = ['light', 'shadows', 'dof', 'bloom', 'grade'];
+export type LayerName = 'light' | 'shadows' | 'dof' | 'bloom' | 'grade' | 'sky';
+export const LAYER_NAMES: readonly LayerName[] = ['light', 'shadows', 'dof', 'bloom', 'grade', 'sky'];
 export type LayerSet = Readonly<Record<LayerName, boolean>>;
 
 export const isLayerName = (k: string): k is LayerName => (LAYER_NAMES as readonly string[]).includes(k);
