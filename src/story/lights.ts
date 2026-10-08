@@ -1,7 +1,8 @@
 import type { Vec3 } from './types';
 
 /**
- * The light rig of each world, with the per-world look (values from reference/v15-lit.html).
+ * The light rig of each world, with the per-world look (values from reference/v15-lit.html; river, coast
+ * and desert lit by their skies, reference/v27-skies.html).
  * Colours are linear and may exceed 1 (HDR).
  */
 export interface LightRig {
@@ -37,11 +38,12 @@ export const LIGHTS: Readonly<Record<string, LightRig>> = {
   magma: { key: [[-.45, .85, .3], [1.05, 1.1, 1.25]], sky: [.05, .06, .08], ground: [.32, .1, .03], rim: [.3, .34, .45], point: [[-.77, -5.9, -1.5], [2.4, .75, .18], 5], spec: 1, shadow: 14, glow: .14, dof: .8 },
   // a cool rim on the outcrop
   granite: { key: [[-.6, .42, .45], [1.45, 1.15, .9]], sky: [.07, .09, .12], ground: [.03, .025, .02], rim: [.32, .4, .55], point: NONE, spec: .3, shadow: 34, dof: .7 },
-  // a lower sun from the front; the water glints more
-  river: { key: [[-.35, .55, .75], [1.15, 1.12, 1.05]], sky: [.07, .1, .13], ground: [.03, .03, .025], rim: [.14, .18, .24], point: NONE, spec: .35, shadow: 18, water: 1 },
-  coast: { key: [[.45, .62, .5], [1.15, 1.02, .86]], sky: [.06, .09, .12], ground: [.04, .035, .03], rim: [.1, .12, .16], point: NONE, spec: .3, shadow: 18 },
-  // more of the dunes in focus
-  desert: { key: [[-.75, .32, .35], [1.6, 1.15, .75]], sky: [.07, .06, .05], ground: [.06, .04, .025], rim: [.18, .12, .08], point: NONE, spec: .12, shadow: 30, dof: .45 },
+  // a lower sun from the front; the water glints more; a brighter fill from the morning sky (v27)
+  river: { key: [[-.35, .55, .75], [1.15, 1.12, 1.05]], sky: [.1, .13, .17], ground: [.03, .03, .025], rim: [.14, .18, .24], point: NONE, spec: .35, shadow: 18, water: 1 },
+  // the sunset (v27): a low, warm key from the sun's side, warm light from the sky, a pink rim
+  coast: { key: [[.78, .26, .45], [1.7, .98, .62]], sky: [.13, .09, .11], ground: [.05, .035, .03], rim: [.38, .2, .22], point: NONE, spec: .3, shadow: 18 },
+  // more of the dunes in focus; a higher, brighter sun and a blue sky's fill (v27)
+  desert: { key: [[-.75, .42, .35], [1.65, 1.2, .82]], sky: [.11, .12, .15], ground: [.06, .04, .025], rim: [.18, .12, .08], point: NONE, spec: .12, shadow: 30, dof: .45 },
   // raking side light
   again: { key: [[.92, .3, .25], [1.35, 1.08, .82]], sky: [.05, .045, .04], ground: [.03, .02, .015], rim: [.22, .16, .12], point: NONE, spec: .2, shadow: 24 },
   quarry: { key: [[-.2, .9, .35], [.85, .88, .92]], sky: [.09, .095, .1], ground: [.04, .04, .04], rim: [.06, .06, .07], point: NONE, spec: .15, shadow: 30 },
