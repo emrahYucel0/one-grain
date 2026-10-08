@@ -22,8 +22,9 @@ export interface Sky {
   cloudColour: string;
 }
 
+// river: the sun moved from v27's [.78, .86] (behind the top-right controls) left and down, onto the far bank
 export const SKIES: Readonly<Record<string, Sky>> = {
-  river: { amount: 1, horizon: .5, ground: '#16211f', zenith: '#2f4d66', low: '#a7bac3', sun: [.78, .86], sunColour: '#fff0d4', sunIntensity: .45, sunSize: .07, clouds: .35, cloudColour: '#dfe5e8' },
+  river: { amount: 1, horizon: .5, ground: '#16211f', zenith: '#2f4d66', low: '#a7bac3', sun: [.47, .82], sunColour: '#fff0d4', sunIntensity: .45, sunSize: .07, clouds: .35, cloudColour: '#dfe5e8' },
   coast: { amount: 1, horizon: .42, ground: '#2b1f22', zenith: '#2a2646', low: '#ee9a5c', sun: [.8, .5], sunColour: '#ffcf8a', sunIntensity: 1.1, sunSize: .05, clouds: .32, cloudColour: '#f0a284' },
   desert: { amount: 1, horizon: .58, ground: '#3a2616', zenith: '#3b76ab', low: '#e4cfae', sun: [.2, .9], sunColour: '#fff3da', sunIntensity: .85, sunSize: .07, clouds: .5, cloudColour: '#ffffff' },
   again: { amount: .5, horizon: .5, ground: '#141016', zenith: '#111827', low: '#3a3247', sun: [.5, .3], sunColour: '#000000', sunIntensity: 0, sunSize: .1, clouds: .12, cloudColour: '#4a4258' },

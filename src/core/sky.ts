@@ -30,6 +30,9 @@ const linear = (sky: Sky): Linear => {
 };
 const PER_WORLD: readonly Linear[] = WORLDS.map((w) => linear(SKIES[w.slug] ?? NO_SKY));
 
+/** How much sky shows between worlds a and b at k (the right scrim follows it: core/stage-colour.ts). */
+export const skyAmount = (a: number, b: number, k: number): number => num(PER_WORLD[a]!.sky.amount, PER_WORLD[b]!.sky.amount, k);
+
 /** The sky is drawn at this share of its colour (v27): the post chain's exposure brings it up. */
 export const SKY_LEVEL = .62;
 /** How far distant grains fog into the sky's horizon instead of the stage colour, at full sky. */

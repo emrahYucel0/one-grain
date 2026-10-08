@@ -124,7 +124,8 @@ body{margin:0;background:var(--stage);color:var(--ink);font-family:var(--sans);f
 .scrim{height:42vh;height:42dvh}
 .scrim-top{top:0;bottom:auto;height:20vh;height:20dvh}
 /* behind the rail and the right-aligned HUD: their small labels stay readable over bright worlds (contrast, Phase 6c) */
-.scrim-right{top:0;bottom:0;left:auto;right:0;height:auto;width:clamp(160px,17vw,280px)}
+/* as wide as it gets over a sky (Phase 7); over the dark stages the gradient ends at --scrim-dark (core/stage-colour.ts) */
+.scrim-right{top:0;bottom:0;left:auto;right:0;height:auto;--scrim-dark:clamp(160px,17vw,280px);--scrim-sky:clamp(240px,26vw,420px);width:var(--scrim-sky)}
 /* touch targets of at least 44 px, without changing how things look */
 .sound{position:relative}
 .sound::after{content:'';position:absolute;inset:-12px -12px}
@@ -237,6 +238,10 @@ html.capture .controls{visibility:hidden}
 .chapter.final h2{text-shadow:0 1px 14px rgba(0,0,0,.75),0 0 3px rgba(0,0,0,.6)}
 /* the smallest labels over the scene (controls, rail): a denser halo, close to a soft outline */
 :is(.sound,.timeline .label){text-shadow:0 0 3px rgba(0,0,0,1),0 0 3px rgba(0,0,0,1),0 0 8px rgba(0,0,0,.85),0 0 16px rgba(0,0,0,.6)}
+/* under a sky (Phase 7; html.sky from core/stage-colour.ts) the right scrim is lighter: the clock's figures and the
+   rail labels carry a deeper shadow of their own (the unit and the controls keep their halos above) */
+html.sky .time{text-shadow:0 0 3px rgba(0,0,0,.55),0 1px 12px rgba(0,0,0,.6),0 0 26px rgba(0,0,0,.4)}
+html.sky .timeline .label{text-shadow:0 0 3px rgba(0,0,0,1),0 0 3px rgba(0,0,0,1),0 0 6px rgba(0,0,0,1),0 0 12px rgba(0,0,0,.85),0 0 22px rgba(0,0,0,.6)}
 /* and a soft local scrim behind them, for the brightest worlds: the stage colour itself (--stage-rgb,
    core/stage-colour.ts; all of them dark), dense under the words and fading out over a wide ellipse,
    so it reads as the stage showing through rather than as a shape */

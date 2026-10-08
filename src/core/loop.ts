@@ -5,7 +5,7 @@ import { SAFE, keepInSafeArea } from '../camera/safe-area';
 import { CONFINEMENT, towards } from '../camera/confinement';
 import { ss } from './ease';
 import { LightRigBlend, type RigState } from './light-rig';
-import { SkyBlend } from './sky';
+import { SkyBlend, skyAmount } from './sky';
 import type { SkyFrame } from '../render/sky';
 import { shot } from '../camera/shot';
 import { flags, overdrawView, progressOverride, reportGpu, reportHero, reportHeroRendered, reportProgress, reportRender, restPathAllowed, timeOverride, transitionOverride } from '../debug/parity';
@@ -153,8 +153,9 @@ export class Loop {
       S.hero.z -= .6 * (1 - (1 - landed) ** 3);
     }
 
-    // stage colour per act; confinement, eased like the camera: lens (and uScale), type axes, jitter
-    stageColour.update(a, b, S.eg);
+    // stage colour per act (the right scrim lighter under a sky); confinement, eased like the camera: lens
+    // (and uScale), type axes, jitter
+    stageColour.update(a, b, S.eg, layers.on('sky') ? skyAmount(a, b, S.eg) : 0);
     projection.setLens(towards(ca.fov, cb.fov, S.eg));
     // light rigs, eased like the camera unless the transition delays them (the loupe's look follows them)
     const rigK = tr.rig ? ss(tr.rig[0], tr.rig[1], t) : S.eg;
