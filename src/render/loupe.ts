@@ -41,9 +41,10 @@ const BOUND = LOUPE.map((l) => ({ grain: 1.42 + (.9 - 1.42) * Math.min(1, l.roun
 /**
  * The loupe's lens (shaders/loupe.glsl), inside the frame's renderer (no second WebGL context): raymarched
  * into its own small target, then laid over the finished picture in its square of the canvas, masked to a
- * circle (premultiplied alpha). Each frame marches half of the lens's pixels, in a checkerboard that
- * alternates (the other half keeps the previous frame's): the lens turns slowly, so this halves its cost,
- * peak included, without a visible difference. A new pair of looks, a new size, or a lens that was not on
+ * circle (premultiplied alpha). Each frame marches half of the lens's pixels, in a checkerboard of 4×4
+ * blocks that alternates (the other half keeps the previous frame's; an integrated GPU shades 16 pixels
+ * together, so only whole blocks left out save work), and a quarter of them in a transition, where it
+ * moves and fades: the lens turns slowly, so this cuts its cost, peak included, without a visible difference. A new pair of looks, a new size, or a lens that was not on
  * screen the frame before is marched whole. Its ring, connector line and caption are DOM (ui/loupe.ts).
  */
 export class LoupePass {
@@ -66,7 +67,7 @@ export class LoupePass {
       [`uCol${s}`]: { value: new Vector3() }, [`uGlow${s}`]: { value: new Vector3() }, [`uEnv${s}`]: { value: new Vector3() },
     });
     this.u = {
-      uRes: { value: new Vector2(1, 1) }, uTime: { value: 0 }, uK: { value: 0 }, uPhase: { value: -1 },
+      uRes: { value: new Vector2(1, 1) }, uTime: { value: 0 }, uK: { value: 0 }, uPhase: { value: -1 }, uCycle: { value: 2 },
       uRot: { value: this.rot }, uZero: { value: 0 }, uBound: { value: 1.5 }, ...side('A'), ...side('B'),
     };
     const geometry = new PlaneGeometry(2, 2);
@@ -135,8 +136,10 @@ export class LoupePass {
     renderer.getViewport(this.saved);
     renderer.setRenderTarget(this.target);
     if (whole) { renderer.setClearColor(0x000000, 0); renderer.clear(); }
-    this.phase ^= 1;
-    u.uPhase!.value = whole ? -1 : this.phase;
+    // at rest half the blocks a frame; in a transition, where it moves and fades, a quarter
+    const cycle = f.k > 0 && f.k < 1 ? 4 : 2;
+    this.phase = (this.phase + 1) % cycle;
+    u.uCycle!.value = cycle; u.uPhase!.value = whole ? -1 : this.phase;
     renderer.render(this.scene, this.camera);
     this.held = key; this.shownLast = true;
     renderer.setRenderTarget(null);

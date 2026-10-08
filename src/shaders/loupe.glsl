@@ -17,8 +17,9 @@ void main(){ gl_Position = vec4(position.xy, 0., 1.); }
 //#fragment
 uniform vec2 uRes;
 uniform float uTime, uK;
-// which half of the checkerboard to march this frame (0 or 1), or -1: all of it
-uniform float uPhase;
+// which share of the 4×4 blocks to march this frame: block set uPhase of uCycle (2: a checkerboard; 4: one
+// block in each 2×2 of blocks), or uPhase -1: all of them
+uniform float uPhase, uCycle;
 uniform mat3 uRot;
 uniform vec4 uA1, uA2, uA3, uB1, uB2, uB3;
 uniform vec3 uColA, uColB, uGlowA, uGlowB, uEnvA, uEnvB;
@@ -132,7 +133,11 @@ void pattern(float pat, vec3 pr, vec3 glow, float em, float w, inout vec3 c){
 
 void main(){
   // the checkerboard is of 2×2 blocks: a GPU shades pixels in 2×2 quads, so only whole quads left out save work
-  if (uPhase >= 0. && mod(floor(gl_FragCoord.x * .25) + floor(gl_FragCoord.y * .25), 2.) != uPhase) discard;
+  if (uPhase >= 0.) {
+    vec2 bl = floor(gl_FragCoord.xy * .25);
+    float set = uCycle < 3. ? mod(bl.x + bl.y, 2.) : mod(bl.x, 2.) + 2. * mod(bl.y, 2.);
+    if (set != uPhase) discard;
+  }
   vec2 uv = (gl_FragCoord.xy - .5 * uRes) / uRes.y; float r = length(uv);
   float mask = smoothstep(.5, .5 - 1.5 / uRes.y, r);
   if (mask <= 0.) { fragColor = vec4(0.); return; }
