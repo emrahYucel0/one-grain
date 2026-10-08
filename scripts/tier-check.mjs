@@ -6,7 +6,7 @@
 //     every refresh the browser offers (no pacing), the context asked for 'high-performance';
 //  3. the tier never changes after the scene appears: the same tier and grain pack after scrolling
 //     through the whole story and resizing the window;
-//  4. the low tier draws no shadows and no depth of field;
+//  4. the low tier draws no shadows, no depth of field and no loupe (mid shows the loupe at granite);
 //  5. ?debug shows the tier, the rule that chose it and the GPU the browser reported, and its layer
 //     toggles work;
 //  and no console errors.
@@ -16,6 +16,8 @@ import { startDev } from './lib/servers.mjs';
 
 const vite = await createServer({ server: { middlewareMode: true }, appType: 'custom', logLevel: 'error' });
 const { TIERS, pickTier } = await vite.ssrLoadModule('/src/core/quality.ts');
+const { SNAP_POINTS } = await vite.ssrLoadModule('/src/timeline/segments.ts');
+const { WORLDS } = await vite.ssrLoadModule('/src/story/worlds.ts');
 await vite.close();
 
 const results = [];
@@ -136,7 +138,15 @@ try {
     const page = await open('?parity&debug&tier=low');
     await page.waitForSelector('.og-debug');
     const on = await layersOn(page), n = await page.evaluate(() => window.__PACK.n);
-    check('low tier: no shadows, no depth of field, the rest on', n === TIERS.low.n && !on.Shadows && !on['Depth of field'] && on.Light && on.Bloom && on.Grade, JSON.stringify(on));
+    check('low tier: no shadows, no depth of field, no loupe, the rest on', n === TIERS.low.n && !on.Shadows && !on['Depth of field'] && !on.Loupe && on.Light && on.Bloom && on.Grade && on.Sky, JSON.stringify(on));
+    await page.context().close();
+  }
+  for (const tier of ['low', 'mid']) {
+    const page = await open(`?parity&tier=${tier}`);
+    await page.evaluate((v) => { window.__V = v; window.__T = 10; }, SNAP_POINTS[WORLDS.findIndex((w) => w.slug === 'granite')]);
+    await page.waitForTimeout(1500);
+    const shown = await page.evaluate(() => !!window.__loupe && +getComputedStyle(document.getElementById('loupe')).opacity > 0);
+    check(`${tier} tier: the loupe ${tier === 'low' ? 'not drawn' : 'drawn'} at granite`, tier === 'low' ? !shown : shown, shown ? 'shown' : 'hidden');
     await page.context().close();
   }
   {

@@ -191,6 +191,21 @@ it.
 (`core/stage-colour.ts`). The page declares `color-scheme: dark` and ignores the system
 preference.
 
+**Skies** (Phase 7, reference v27). Only while the grain is at the surface: a soft morning over the
+river, a sunset over the coast, a sunny desert with slowly drifting clouds, and a sky that darkens as
+the grain is buried (again); the other worlds keep their dark stages. A pass behind the grains with a
+ground band below each horizon; distant grains fog into the horizon colour; river, coast and desert are
+lit by their skies (`story/skies.ts`, `render/sky.ts`).
+
+**The loupe** (Phase 7, reference v27). At granite, coast, quarry, wafer and display, the hero grain
+magnified beside it, morphing between chapters: translucent quartz, a worn and frosted grain, broken
+stone, a mirror-polished wafer, one pixel with three sub-pixels. It keeps clear of the words, the HUD,
+the rail and the scene's subject, and stays away where there is no room (`story/loupe.ts`,
+`ui/loupe.ts`, `render/loupe.ts`). Not on the low tier.
+
+**The light chapter's pattern** (Phase 7, reference v27). A circuit exposed onto the photosensitive
+layer: lit traces, a darkened rest (`story/pattern.ts`).
+
 **The ending.** "Become" (display → now, 2.8 screens): the camera pushes in to macro, the
 sub-pixels' light goes out, the glass vanishes, every sub-pixel cluster spreads into the area it lit
 and turns into sand, and the camera pulls back; "Now" reaches the clock at 74 % of the move. In the
@@ -289,7 +304,7 @@ Without WebGL2 or without JavaScript, the article is the page.
 
 | Tier | Grains per world | DPR cap | Pixel budget | Layers | Chosen when |
 |---|---|---|---|---|---|
-| low | 36 000 | 1.25 | 1.5 MP | no shadows, no depth of field | only where mid cannot run: a software renderer (SwiftShader, llvmpipe, Microsoft Basic Render Driver…), a browser that offers only a "major performance caveat" context, or a texture limit too small for mid's grains |
+| low | 36 000 | 1.25 | 1.5 MP | no shadows, no depth of field, no loupe | only where mid cannot run: a software renderer (SwiftShader, llvmpipe, Microsoft Basic Render Driver…), a browser that offers only a "major performance caveat" context, or a texture limit too small for mid's grains |
 | mid | 90 000 | 1.4 | 2.2 MP | all | phones, iPads, tablets, and laptops and desktops with integrated or unrecognised GPUs (v10's desktop setting; the parity baseline) |
 | high | 160 000 | 1.75 | 4.5 MP, never below DPR 1 | all | laptops and desktops with a discrete GPU or Apple Silicon; Android tablets whose GPU is a recent high-end family |
 
@@ -325,7 +340,7 @@ the rest of the camera) says where: 0 keeps the 2:1 frame's bottom edge (crops f
 its top edge (crops from the bottom), .5 crops evenly. At 2:1 and below nothing changes.
 
 The layers and pixel-ratio caps follow v10: post costs per pixel. Layers are light, shadows,
-depth of field, bloom and grade (vignette and film grain); `core/layers.ts` combines the tier and
+depth of field, bloom, grade (vignette and film grain), sky and loupe (Phase 7); `core/layers.ts` combines the tier and
 the overrides (`?off=`, the `?debug` toggles).
 
 Phase 1 measurement with `npm run perf`, headed Chromium, Intel UHD Graphics (i5-12450H laptop,
@@ -393,7 +408,7 @@ Everything is synthesised with Web Audio (no files), ported from `reference/v23-
 | `?debug` | Corner panel: the tier, the rule that chose it and the GPU the browser reported; effects, grains, DPR, fps, GPU time per pass and per frame (live, measured only here), and a toggle per render layer (overrides the tier until Reset). Also the startup guard's on-screen report from the first moment (index.html) |
 | `?capture` | Capture mode for `npm run capture`: implies `?parity` and the high tier; the page runs on a virtual clock, one frame per `window.__capture.step()` |
 | `?perf` | Time every render pass on the GPU (`window.__gpu`, with the last 240 raw frames) |
-| `?off=a,b` | Switch render layers off (light, shadows, dof, bloom, grade), for measurements |
+| `?off=a,b` | Switch render layers off (light, shadows, dof, bloom, grade, sky, loupe), for measurements |
 | `?grains=N` · `?pointcap=N` · `?shadowstride=N` | Measurements: grains per world, largest grain in pixels, every N-th grain casts shadows (default 1: all) |
 | `?parity` | Let a harness drive progress (`window.__V`) and shader time (`window.__T`), or render a transition point directly (`window.__AT = { tr, t, lean }`); pin the display's live clock (`window.__LIVE`, ms) and the seconds spent in the current hold (`window.__FT`: ring fade, final hold); the rendered progress is published as `window.__progress` |
 | `?nosnap` | Scrolling does not settle on chapters, so a position mid-transition can be held |

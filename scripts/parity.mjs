@@ -34,7 +34,19 @@ const rightBand = (w) => Math.round(Math.min(280, Math.max(160, w * .17)));
 // ends, the signature's CSS tie) are gone: v10 fixed the tie, and ulp-level differences from exact
 // ends no longer stand out under lighting and post.
 const QUARRY = 'quarry reframe (Phase 6a): seen from the side of the pit, the pit filling the frame';
-const DEVIATIONS = { '13-hold-quarry': QUARRY, '14-tr-quarry-furnace': QUARRY, '35-tr-quarry-furnace-t30': QUARRY, '36-tr-quarry-furnace-t55': QUARRY, '37-tr-quarry-furnace-t80': QUARRY };
+// Phase 7 (reference v27): skies over the surface worlds, the loupe at five chapters, the light chapter's pattern
+const SKY = 'sky (Phase 7, reference v27): the surface worlds under their skies, river, coast and desert lit by them';
+const LOUPE = 'loupe (Phase 7, reference v27): the hero grain magnified beside it';
+const PATTERN = "light chapter's pattern (Phase 7, reference v27): the circuit exposed onto the layer";
+const DEVIATIONS = {
+  '13-hold-quarry': `${QUARRY}; ${LOUPE}`, '14-tr-quarry-furnace': `${QUARRY}; ${LOUPE}`, '35-tr-quarry-furnace-t30': QUARRY, '36-tr-quarry-furnace-t55': `${QUARRY}; ${LOUPE}`, '37-tr-quarry-furnace-t80': `${QUARRY}; ${LOUPE}`,
+  '02-tr-magma-granite': LOUPE, '03-hold-granite': LOUPE, '04-tr-granite-river': `${SKY}; ${LOUPE}`,
+  '05-hold-river': SKY, '06-tr-river-coast': `${SKY}; ${LOUPE}`, '07-hold-coast': `${SKY}; ${LOUPE}`, '08-tr-coast-desert': `${SKY}; ${LOUPE}`,
+  '32-tr-coast-desert-t30': `${SKY}; ${LOUPE}`, '33-tr-coast-desert-t55': SKY, '34-tr-coast-desert-t80': SKY,
+  '09-hold-desert': SKY, '30-hover-desert': SKY, '10-tr-desert-again': SKY,
+  '20-tr-crystal-wafer': LOUPE, '21-hold-wafer': LOUPE, '22-tr-wafer-light': `${PATTERN}; ${LOUPE}`, '23-hold-light': PATTERN, '24-tr-light-chip': PATTERN,
+  '27-hold-display': LOUPE,
+};
 // harness only: the reference's layer panel, benchmark box and version label are not part of the look
 const HIDE_REFERENCE_TOOLS = ['</head>', '<style>.fx,.bench,.brand span{display:none !important}</style></head>'];
 const SUBJECT_REASON = 'purity → crystal reframe (Phase 2): the pool centred, the crystal followed up';

@@ -31,7 +31,7 @@ const BLOCKS = [
   ['intro title', '.intro-title', true], ['intro hint', '#introHint', false],
   ['title', '#chapter h2', true], ['body', '#chapter > p:not(.hint):not(.micro)', true],
   ['micro / footnote', '#micro', false], ['hint', '#hint', false],
-  ['rail label', '.timeline .label', false],
+  ['rail label', '.timeline .label', false], ['loupe caption', '.loupe-cap', false],
 ];
 
 const lum = (r, g, b) => { const f = (c) => { c /= 255; return c <= .03928 ? c / 12.92 : ((c + .055) / 1.055) ** 2.4; }; return .2126 * f(r) + .7152 * f(g) + .0722 * f(b); };

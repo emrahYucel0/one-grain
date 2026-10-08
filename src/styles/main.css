@@ -86,10 +86,12 @@ body{margin:0;background:var(--stage);color:var(--ink);font-family:var(--sans);f
    its ring and shadow (an outer shadow never darkens the lens inside), the line to the grain, the caption */
 .loupe{position:fixed;z-index:2;left:0;top:0;width:176px;height:176px;border-radius:50%;pointer-events:none;opacity:0;
   box-shadow:0 0 0 1px rgba(236,227,211,.42),0 14px 44px rgba(0,0,0,.55);will-change:transform,opacity}
-.loupe-cap{position:absolute;left:50%;top:calc(100% + 8px);transform:translateX(-50%);font:500 .64rem/1 var(--sans);letter-spacing:.14em;color:rgba(236,227,211,.78);white-space:nowrap;
-  text-shadow:0 0 2px rgba(0,0,0,.9),0 0 6px rgba(0,0,0,.75),0 0 14px rgba(0,0,0,.5)}
+.loupe-cap{position:absolute;left:50%;top:calc(100% + 8px);transform:translateX(-50%);font:500 .64rem/1 var(--sans);letter-spacing:.14em;color:rgba(236,227,211,.9);white-space:nowrap;
+  text-shadow:0 0 3px rgba(0,0,0,1),0 0 3px rgba(0,0,0,1),0 0 8px rgba(0,0,0,.85),0 0 16px rgba(0,0,0,.6)}
+.loupe-cap::before{content:'';position:absolute;inset:-16px -30px;z-index:-1;pointer-events:none;
+  background:radial-gradient(closest-side,rgb(var(--stage-rgb,13 24 28) / .8),rgb(var(--stage-rgb,13 24 28) / .7) 35%,rgb(var(--stage-rgb,13 24 28) / .4) 62%,rgb(var(--stage-rgb,13 24 28) / 0))}
 .loupe-line{position:fixed;z-index:2;left:0;top:0;width:1px;height:1px;background:rgba(236,227,211,.38);transform-origin:0 50%;pointer-events:none;opacity:0}
-@media (max-width:720px){.loupe{width:116px;height:116px}}
+@media (max-width:720px),(max-height:540px){.loupe{width:116px;height:116px}}
 .marker{position:fixed;z-index:2;left:0;top:0;width:30px;height:30px;margin:-15px 0 0 -15px;border:1.5px solid var(--ink);border-radius:50%;pointer-events:none;opacity:.8;will-change:transform}
 .marker span{position:absolute;left:38px;top:5px;font-size:.8rem;white-space:nowrap}
 /* .intro: in index.html's critical styles (the loading screen's title) */
@@ -187,7 +189,7 @@ html{scrollbar-width:none}html::-webkit-scrollbar{display:none}
 html:not(.gl) :is(#scene,.scrim,.marker,.loupe,.loupe-line,.hud,.story,.timeline,.cut,#scroll-length){display:none}
 
 /* Its text waits for the web fonts (at most a few seconds), so nothing visible reflows when they arrive. */
-html.fonts-pending :is(.hud,.story,.timeline,.cut,.marker){visibility:hidden}
+html.fonts-pending :is(.hud,.story,.timeline,.cut,.marker,.loupe){visibility:hidden}
 
 /* Visually hidden, still read by assistive tech. */
 .sr-only,

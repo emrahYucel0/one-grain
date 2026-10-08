@@ -6,8 +6,10 @@ camera moves), with v6's rest-state bugs fixed on purpose in Phase 2.1, and
 `reference/blockout-v8.html` in Phase 3 (typography, confinement, stage colour per act,
 reworked drift, break and grow, the final dramaturgy), `reference/v10-lit.html` for the look in
 Phase 4a, and `reference/v15-lit.html` since Phase 4b (look per world, type and HUD, clock, pacing,
-hero grain, and a new final). The generators of worlds 0–13 have not changed since v5; the final
-world is new in v15.
+hero grain, and a new final). Phase 7 ports three features of `reference/v27-skies.html` (skies,
+the loupe, the light chapter's pattern) and nothing else from it: v27 is built on v23 and predates the
+port's later fixes. The generators of worlds 0–13 have not changed since v5; the final world is new in
+v15.
 This page lists every place where the port is not the reference, and why. It also lists what
 was verified and how, and what was not.
 
@@ -28,6 +30,72 @@ was verified and how, and what was not.
 
 The reference is never edited. The harness serves a patched copy with three hooks: progress
 override, time override, and exposing the built texture (`scripts/lib/reference.mjs`).
+
+## Phase 7: skies, the loupe, the light chapter's pattern (reference v27)
+
+Only these three features come from v27; everything else stays as the port had it (the first screen,
+the phone opening, the hero safe area, the quarry's side view, the melt's incandescence, the copy
+corrections, the tiers, the guard, the scrims, the motion button, capture mode, the CSP). The parity
+reference stays v15; `npm run parity` marks the positions these features change as intentional, and
+every other position measures as it did on main (same figures to the third decimal).
+
+**Skies** (`story/skies.ts`, `core/sky.ts`, `render/sky.ts`, `shaders/sky.glsl`): v27's sky table and
+shader, unchanged in look: river (soft morning), coast (sunset), desert (sunny, clouds drifting),
+again (half a sky, darkening as the grain is buried); magma, granite, industry and now keep their dark
+stages. As in v27 the sky is a pass in the HDR target before the grains, with a ground band below each
+horizon and distant grains fogging into the horizon colour (70 % of the way at a full sky; exactly the
+stage colour where there is no sky, so those worlds render as before). Differences from the file:
+- colours go sRGB → linear by the formula, not through three's `Color`: the table loads before
+  `core/renderer.ts` turns colour management off, and three would convert twice (the first attempt
+  gave a purple, too dark desert sky);
+- the clouds drift on the shader clock (v27: the same), so they stand still under reduced motion,
+  follow the virtual clock in capture mode and `?parity`'s `__T`;
+- the clouds' noise is skipped below 30 % of the screen height, where v27's own mask is 0 (same image,
+  less work);
+- the port's top and right scrims (Phase 6a/6c) lie over the sky; v27 had neither. They darken the
+  sky under the HUD and the rail, which keeps every text at AA or better (below).
+
+**Light rigs** for river, coast and desert: v27's changes applied as deltas to the port's values (which
+were v23's, so the results equal v27's): see the commit "River, coast and desert lit by their skies"
+for each value old → new.
+
+**The loupe** (`story/loupe.ts`, `ui/loupe.ts`, `render/loupe.ts`, `shaders/loupe.glsl`): the hero grain
+magnified at granite, coast, quarry, wafer and display, morphing between the chapters' looks as in
+v27 (on the quarry → furnace break the look follows the delayed light rig, as v27's style-18 rule did).
+Differences from the file:
+- drawn inside the frame's renderer into its own square of the canvas after the post chain, not in a
+  second WebGL context; the ring, line and caption stay DOM, aria-hidden;
+- materials reworked: granite a translucent, faintly smoky quartz (refracted through its body), coast a
+  rounded, worn and frosted grain, quarry a broken lump with fracture faces and mineral grains, wafer a
+  true mirror (a cleanroom ceiling of light panels in it, a rounded edge, the notch), display one pixel
+  (black matrix, three fine sub-pixels, cover glass) that sways instead of turning so its face stays
+  towards the viewer; edges smoothed from the ray's closest approach;
+- placement: v27 put it up and to the right of the grain, clamped to the window, and it covered the
+  wafer stack and the display panel. The port keeps up-and-right as the first choice but takes the
+  nearest spot clear of the chapter's text, the HUD, the rail, the grain, the screen's edges and the
+  scene's main subject (each wafer of the stack, the display panel); where no spot is clear it stays
+  away: the display on portrait phones and tablets, where the panel fills the screen. Smaller on phones
+  and short screens (116 px, as v27's phone size);
+- the caption: v27's ×200, at 90 % of the ink with the rail labels' halo and a local scrim (v27: 62 %,
+  no halo), for contrast;
+- the startup fade (1.2–2.6 s after the scene) is skipped under `?parity`, and its program is compiled
+  before `__PACK` there, so measured frames do not depend on timing;
+- compile time: the distance function is called from a single place and loops start from a uniform
+  zero; v27's structure took 7.5 s to compile on this laptop's Intel UHD (D3D11), the port's 1.1–1.4 s,
+  in parallel where the browser can (Chrome, Safari) and otherwise once, in an idle moment 3 s after the
+  scene appears (Firefox: about a second);
+- not on the low tier; reduced motion: no turn.
+
+**The light chapter's pattern** (`story/pattern.ts`, the grain vertex shader): v27's uPatC block,
+centred on the light chapter's hero grain. Scale 1.5 cells per world unit (v27: 1.25), so it reads as
+a circuit at 16:9 and still shows several traces on a phone; at 1.7 and above the traces break up into
+single grains in the foreground.
+
+**Contrast** (`npm run check:contrast`, real pixels at 390×844, 1440×900 and 2560×1440): 420
+measurements (main: 406; the 14 more are the loupe's caption), none below AA, every body text and
+title at AAA; the lowest figure is the same as on main (5.37, "Listen" over the wafer on a phone). The
+clock over the desert sky: its unit word lowest at 5.67. No darker art direction was needed: the
+skies' darker zenith and the existing scrims carry it.
 
 ## Phase 6d: melting silicon glows, it does not turn pink (beyond the reference)
 

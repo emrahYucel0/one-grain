@@ -16,6 +16,11 @@
 //     below the HUD's top scrim, and not under the chapter's visible text
 //  5. the pixel ratio each tier gets on a 4K screen at DPR 1 and a 1440p one at DPR 2 (the tier
 //     itself, picked from the device, is check:tiers')
+//  7. the loupe (ui/loupe.ts), at the holds of its chapters and every transition midpoint where it shows:
+//     its circle inside the viewport and clear of the chapter's visible text, the HUD's brand, clock and
+//     controls, the rail, the hero grain's ring, and the scene's main subject (the wafer stack, the display
+//     panel, as the page projects them); smaller on phones; its ring, line and caption hidden from
+//     assistive technology. Where it stays away (no clear spot) the position is reported, not failed.
 import { readFileSync } from 'node:fs';
 import { createServer } from 'vite';
 import { launch, watchConsole } from './lib/browser.mjs';
@@ -26,6 +31,7 @@ const vite = await createServer({ server: { middlewareMode: true }, appType: 'cu
 const { SNAP_POINTS, transitionMidpoint } = await vite.ssrLoadModule('/src/timeline/segments.ts');
 const { SAFE } = await vite.ssrLoadModule('/src/camera/safe-area.ts');
 const { TIERS } = await vite.ssrLoadModule('/src/core/quality.ts');
+const { LOUPE } = await vite.ssrLoadModule('/src/story/loupe.ts');
 const ACTS = readFileSync('index.html', 'utf8').match(/class="act-group" data-act=/g)?.length ?? 0;
 await vite.close();
 const dev = await startDev(5176);
@@ -73,6 +79,41 @@ try {
         if (Math.abs(m.x) > SAFE.x || Math.abs(m.y) > SAFE.y || m.under || m.hud) out.push(`${name} at ${m.x.toFixed(2)}, ${m.y.toFixed(2)}${m.under ? ' under the text' : ''}${m.hud ? ' under the HUD' : ''}`);
       }
       check(`${vp.name}: the hero grain inside the safe area, clear of the text, at every hold and midpoint`, out.length === 0, out.join('; ') || `${n} positions`);
+    }
+    // 7: the loupe
+    {
+      const shows = LOUPE.map((l) => !!l.show), at = [];
+      SNAP_POINTS.forEach((v, i) => {
+        if (shows[i]) at.push([`hold ${i + 1}`, v, true]);
+        if (i < SNAP_POINTS.length - 1 && (shows[i] || shows[i + 1])) at.push([`midpoint ${i + 1}→${i + 2}`, transitionMidpoint(i), false]);
+      });
+      const out = [], away = [];
+      let n = 0, rMax = 0;
+      for (const [name, v, hold] of at) {
+        await page.evaluate((x) => { window.__V = x; window.__T = 10; window.__FT = 0; }, v);
+        await page.waitForTimeout(900);
+        const m = await page.evaluate(() => {
+          const l = window.__loupe;
+          if (!l || l.op < .01) return null;
+          const into = (q, pad = 0) => { const dx = Math.max(q.left - pad - l.x, 0, l.x - q.right - pad), dy = Math.max(q.top - pad - l.y, 0, l.y - q.bottom - pad); return Math.hypot(dx, dy) < l.r - .5; };
+          const hits = [], ch = document.getElementById('chapter');
+          if (+getComputedStyle(ch).opacity > .05) for (const e of ch.children) { const r = e.getBoundingClientRect(); if (r.width && r.height && into(r)) hits.push('the text'); }
+          for (const [sel, label] of [['.hud .brand', 'the brand'], ['#time', 'the clock'], ['.controls', 'the controls'], ['#timeline', 'the rail']]) {
+            const r = document.querySelector(sel)?.getBoundingClientRect(); if (r && r.width && r.height && into(r)) hits.push(label);
+          }
+          if (l.x - l.r < 0 || l.y - l.r < 0 || l.x + l.r > innerWidth || l.y + l.r > innerHeight) hits.push('the viewport edge');
+          if (Math.hypot(l.x - l.hero[0], l.y - l.hero[1]) < l.r + 15) hits.push('the grain');
+          for (const q of l.avoid) if (into({ left: q.l, top: q.t, right: q.r, bottom: q.b })) hits.push('an obstacle or the subject');
+          const hidden = ['loupe', 'loupeLine'].every((id) => document.getElementById(id).getAttribute('aria-hidden') === 'true');
+          return { hits: [...new Set(hits)], r: l.r, hidden };
+        });
+        if (!m) { if (hold) away.push(name); continue; }
+        n++; rMax = Math.max(rMax, m.r);
+        if (m.hits.length || !m.hidden) out.push(`${name}: over ${m.hits.join(', ')}${m.hidden ? '' : ', not aria-hidden'}`);
+      }
+      const small = !vp.mobile || rMax <= 60;
+      check(`${vp.name}: the loupe clear of the text, HUD, rail, grain, subject and edges${vp.mobile ? ', smaller' : ''}`, out.length === 0 && small,
+        `${out.join('; ') || `${n} positions`}, radius ${rMax} px${away.length ? `; stays away (no clear spot) at ${away.join(', ')}` : ''}`);
     }
     // 3: the pixel budget
     const buf = await page.evaluate(() => ({ w: document.getElementById('scene').width, h: document.getElementById('scene').height, n: window.__PACK.n }));
