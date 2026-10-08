@@ -6,6 +6,8 @@ import { grainShaders, grainShadowShaders } from '../shaders';
 import type { GrainPack, LayerName } from '../sim/pack';
 import { PACK_LAYERS, layerDefines, layerTextures, layerUniform, layoutDefines } from './bind';
 import type { ShadowMap } from './shadow';
+import { PATTERN } from '../story/pattern';
+import { WORLDS } from '../story/worlds';
 import type { FrameUniforms } from './types';
 
 /** A point per n-th grain id (the same grains, so the same per-grain randoms). */
@@ -45,6 +47,7 @@ export class GrainCloud {
       uKeyDir: { value: new Vector3(0, 1, 0) }, uKeyCol: { value: new Vector3() }, uSky: { value: new Vector3() }, uGround: { value: new Vector3() }, uRim: { value: new Vector3() },
       uPLPos: { value: new Vector3() }, uPLCol: { value: new Vector3() }, uPLRange: { value: 1 },
       uCamPos: { value: new Vector3() }, uCamR: { value: new Vector3() }, uCamU: { value: new Vector3() }, uCamB: { value: new Vector3() }, uFogLin: { value: new Vector3() },
+      uPatC: { value: new Vector3() }, uPatWorld: { value: WORLDS.findIndex((w) => w.slug === PATTERN.world) }, uPatCells: { value: PATTERN.cells },
       uUseShadow: { value: 0 }, uUseLight: { value: 1 }, uShadow: { value: null }, uKeyView: { value: new Vector3(0, 0, 1) }, uUpView: { value: new Vector3(0, 1, 0) },
       [layerUniform('pos')]: { value: null },
       [layerUniform('surface')]: { value: null },
@@ -138,6 +141,7 @@ export class GrainCloud {
     u.uGrain!.value = f.grain; u.uJitter!.value = f.jitter;
     u.uLand!.value = f.land; (u.uLandPos!.value as Vector3).copy(f.landPos);
     u.uInteract!.value = f.interact; u.uPress!.value = f.press;
+    (u.uPatC!.value as Vector3).copy(f.patternAt);
     if (f.interact) (u.uMouseW!.value as Vector3).copy(f.mouse);
     // lighting
     const rig = f.rig;

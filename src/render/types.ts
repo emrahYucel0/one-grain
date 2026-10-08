@@ -45,6 +45,8 @@ export interface FrameUniforms {
   /** the final grain landing, 0..1, and where (its neighbours make room) */
   land: number;
   landPos: Vector3;
+  /** the light chapter's pattern: centred on that chapter's hero grain (story/pattern.ts) */
+  patternAt: Vector3;
   /** 0 none · 1 brush the dunes · 2 light the switches */
   interact: number;
   mouse: Vector3;

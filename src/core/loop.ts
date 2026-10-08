@@ -16,7 +16,10 @@ import type { RenderLayers } from './layers';
 import type { HeroGrain } from '../render/hero';
 import type { FrameUniforms } from '../render/types';
 import type { GrainPack } from '../sim/pack';
+import { PATTERN } from '../story/pattern';
 import { WORLDS } from '../story/worlds';
+
+const PATTERN_WORLD = WORLDS.findIndex((w) => w.slug === PATTERN.world);
 import type { HashRouter } from '../timeline/hash';
 import type { ScrollTimeline } from '../timeline/scroll';
 import { locate, locateAt, type Located } from '../timeline/segments';
@@ -185,7 +188,7 @@ export class Loop {
       style: tr.g, k: tr.k ?? 1, span: tr.span ?? .45, spread: tr.spread ?? 30, dir: tr.dir ?? [1, 0, 0],
       heroA: this.heroes[a]!, heroB: this.heroes[b]!,
       loA: wa.lo, hiA: wa.hi, loB: wb.lo, hiB: wb.hi, grain, jitter: towards(ca.jitter, cb.jitter, S.eg),
-      fog: stageColour.fog, fogLinear: layers.on('sky') ? this.sky.fog : stageColour.fogLinear, rig: this.rigState, camera: stage.camera, light, shadows, lightVP: pipeline.shadow.viewProjection, shadowPx: pipeline.shadow.pxPerUnit, land: landed, landPos: S.hero, interact: ix.mode, mouse: ix.mode ? ix.at : this.mouse, press: ix.press,
+      fog: stageColour.fog, fogLinear: layers.on('sky') ? this.sky.fog : stageColour.fogLinear, rig: this.rigState, camera: stage.camera, light, shadows, lightVP: pipeline.shadow.viewProjection, shadowPx: pipeline.shadow.pxPerUnit, land: landed, landPos: S.hero, patternAt: this.heroes[PATTERN_WORLD]!, interact: ix.mode, mouse: ix.mode ? ix.at : this.mouse, press: ix.press,
     };
     const overdraw = overdrawView();
     grains.setOverdrawView(overdraw);

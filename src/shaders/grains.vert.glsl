@@ -5,6 +5,9 @@
 #ifndef SHADOW
 uniform vec3 uKeyDir, uPLPos, uPLCol, uCamPos, uCamR, uCamU, uCamB, uFogLin;
 uniform float uPLRange, uUseShadow, uUseLight;
+uniform vec3 uPatC;      // the light chapter's pattern: its centre (story/pattern.ts)
+uniform int uPatWorld;   // the world it is exposed onto
+uniform float uPatCells; // cells per world unit
 uniform sampler2D uShadow;
 
 out vec3 vAlb;    // linear albedo
@@ -97,6 +100,18 @@ void main(){
   }
   em += m.heat * 2.2 + m.whiten * .5;
   if (fl < .5) em += blend(uGlowA, uGlowB, e); // the world's inner glow for its base material (magma's quartz)
+  // the light chapter (v27): the circuit pattern lands on the layer, its traces lit, the rest darkened;
+  // the light rays themselves (behaviour 17) are not part of the layer
+  float wL = (uFrom == uPatWorld ? 1. - e : 0.) + (uTo == uPatWorld ? e : 0.);
+  if (wL > .01 && !(fl > 16.5 && fl < 17.5)) {
+    vec2 q = (p.xz - uPatC.xz) * uPatCells, cell = floor(q), f = fract(q);
+    float h = fract(sin(dot(cell, vec2(12.9898, 78.233))) * 43758.5453), h2 = fract(h * 7.13);
+    float tx = step(abs(f.y - .5), .1) * step(.3, h), ty = step(abs(f.x - .5), .1) * step(h2, .5);
+    float pad = step(length(f - .5), .22) * step(.82, h);
+    float trace = clamp(tx + ty + pad, 0., 1.);
+    c = mix(c * mix(1., .45, wL), vec3(.86, .76, 1.), trace * wL * .9);
+    em += trace * wL * 1.5;
+  }
   c *= 1. + arc * .25;
   vec4 mv = modelViewMatrix * vec4(p, 1.);
   float depth = -mv.z;
