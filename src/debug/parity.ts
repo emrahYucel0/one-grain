@@ -71,6 +71,10 @@ export const flags = {
   off: new Set((params.get('off') ?? '').split(',').filter(Boolean)),
 };
 
+// the harnesses' pages are still pictures between frames: html.parity stops the HUD's ornamental CSS
+// animations (the sound's bars, the motion's dot, main.css), which no virtual clock reaches
+if (params.has('parity') || capture) document.documentElement.classList.add('parity');
+
 // ?capture: the page's clock is the capture's (every timed thing reads performance.now(): the ending,
 // the live clock, the ring, the shader clock, the sound's hold timing), so a render is the same at any speed
 if (capture) {

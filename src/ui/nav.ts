@@ -9,6 +9,7 @@ const PHONE = '(hover:none) and (pointer:coarse) and (max-width:719px), (hover:n
  */
 export class TimelineNav {
   private readonly buttons: HTMLButtonElement[] = [];
+  private readonly groups: HTMLElement[] = [];
   private readonly nav: HTMLElement;
   private progress = '';
 
@@ -34,12 +35,18 @@ export class TimelineNav {
         b.addEventListener('click', () => go(i));
         g.appendChild(b); this.buttons[i] = b;
       });
-      nav.appendChild(g);
+      nav.appendChild(g); this.groups.push(g);
     }
   }
 
+  /** The chapter shown: named on the rail, the ones before it marked, its act lit. */
   setCurrent(i: number): void {
-    this.buttons.forEach((b, k) => (k === i ? b.setAttribute('aria-current', 'step') : b.removeAttribute('aria-current')));
+    this.buttons.forEach((b, k) => {
+      if (k === i) b.setAttribute('aria-current', 'step'); else b.removeAttribute('aria-current');
+      b.classList.toggle('done', k < i);
+    });
+    const here = this.buttons[i]?.parentElement;
+    for (const g of this.groups) g.classList.toggle('here', g === here);
   }
 
   /** Story progress, 0..1: the rail as a line (short screens, phones) draws it (--p, on the rail only). */

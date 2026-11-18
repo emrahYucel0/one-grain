@@ -98,8 +98,8 @@ One responsibility per module:
 | `src/shaders` | GLSL as raw-imported files: resting behaviours, palette, transition styles, interaction, main, hero/halo |
 | `src/camera` | The shot director (bezier flights with per-style handles, orbit, cut, the hold lean, an optional subject to aim at) and the camera rig |
 | `src/timeline` | Uneven scroll segments, `locate()`, ScrollTrigger scrub and snap to holds, `#slug` routing, keyboard chapter steps |
-| `src/ui` | Clock, chapter card (its letters and words choreographed on the story's progress), act label, timeline nav, hero marker, cut card, intro, entry gate (`gate.ts`: the veil around the grain and the iris that opens it), timed ending, accessibility glue |
-| `src/input` | Mouse hover and touch tap state; projecting the pointer onto the scene for the desert and chip holds |
+| `src/ui` | Clock, chapter card (its letters and words choreographed on the story's progress), act label, timeline nav (the current chapter named, the ones behind marked), hero marker, cut card, intro, entry gate (`gate.ts`: the veil around the grain and the iris that opens it, and closes it again to start over), timed ending and its last word (`outro.ts`: start again, share, credits dialog), the cursor (`cursor.ts`: a mouse only; the brush and the probe on the hands-on holds), accessibility glue |
+| `src/input` | Mouse hover and touch tap state and the mouse's speed (the cursor's touch: grains stirred under a moving mouse in every world without hands-on play); projecting the pointer onto the scene for the desert and chip holds |
 | `src/audio` | The sound (v23): `engine` (context, buses, limiter, room, noise), `score` (pads, notes, motif, pulse), `ambience` (primitives, the water rush, the event scheduler), `frame` (the story → the sound, per frame), `toggle` (the button). Its data is `story/sound.ts`. Off by default; nothing is created before the visitor asks |
 | `src/debug` | URL switches for testing (below) |
 

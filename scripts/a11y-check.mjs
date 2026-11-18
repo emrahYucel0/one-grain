@@ -52,7 +52,7 @@ try {
     return {
       storyHidden: story.closest('[aria-hidden="true"]') !== null || getComputedStyle(story).display === 'none' || getComputedStyle(story).visibility === 'hidden',
       sections: story.querySelectorAll('section[data-slug]').length,
-      overlayHidden: document.querySelector('.story').getAttribute('aria-hidden') === 'true',
+      overlayHidden: document.getElementById('chapter').getAttribute('aria-hidden') === 'true',
       liveRegions: [...document.querySelectorAll('[aria-live],[role=status]')].map((e) => e.id),
       overlayLinkTabbable: document.querySelector('#chapter a')?.tabIndex,
     };
@@ -92,6 +92,32 @@ try {
   // …and jumps straight to the fully revealed ending (well before the 8.5 s of the timed sequence)
   const end = await page.evaluate(() => ({ cls: document.getElementById('chapter').className, stage: document.body.style.backgroundColor }));
   check('signature link focus → fully revealed (sentence, signature, end colour)', /\bin\b/.test(end.cls) && /\bsig\b/.test(end.cls) && end.stage === END_STAGE, JSON.stringify(end));
+
+  // the ending's last word (src/ui/outro.ts): three named choices, shown with the revealed ending and kept
+  // while focus moves on to them; the credits are a modal dialog that takes focus and gives it back
+  await page.waitForTimeout(1200);
+  const row = await page.evaluate(() => ({ shown: document.documentElement.classList.contains('outro-on'), names: [...document.querySelectorAll('#outro button')].map((b) => b.textContent.trim()), vis: getComputedStyle(document.getElementById('outro')).visibility }));
+  check('ending: three named choices, shown', row.shown && row.vis === 'visible' && row.names.join(' | ') === 'Start again | Share | Credits', JSON.stringify(row));
+  await page.locator('#creditsOpen').focus();
+  await page.waitForTimeout(300);
+  const kept = await page.evaluate(() => document.documentElement.classList.contains('outro-on') && document.activeElement?.id === 'creditsOpen');
+  check('ending: the choices stay while focused', kept);
+  const outroRing = await page.evaluate(() => { const s = getComputedStyle(document.activeElement); return `${s.outlineStyle} ${s.outlineWidth}`; });
+  check('ending: visible focus ring', /solid 2px/.test(outroRing), outroRing);
+  await axe(page, 'ending with its choices');
+  await page.keyboard.press('Enter'); await page.waitForTimeout(900);
+  const dlg = await page.evaluate(() => ({ open: document.getElementById('credits').open, focusIn: document.getElementById('credits').contains(document.activeElement) }));
+  check('credits: Enter opens a modal dialog with focus inside', dlg.open && dlg.focusIn, JSON.stringify(dlg));
+  await axe(page, 'credits dialog');
+  await page.keyboard.press('Escape'); await page.waitForTimeout(400);
+  const closed = await page.evaluate(() => ({ open: document.getElementById('credits').open, focus: document.activeElement?.id }));
+  check('credits: Escape closes it, focus back on its button', !closed.open && closed.focus === 'creditsOpen', JSON.stringify(closed));
+  await page.locator('#again').focus(); await page.keyboard.press('Enter'); await page.waitForTimeout(300);
+  const again = await page.evaluate(() => ({ cls: document.documentElement.className, focus: document.activeElement?.id }));
+  check('start again: the veil closes, focus on the sound button', /gate-closing/.test(again.cls) && again.focus === 'sound', JSON.stringify(again));
+  await page.waitForFunction(() => !document.documentElement.classList.contains('gated'), null, { timeout: 10000 }).catch(() => {});
+  const back = await page.evaluate(() => ({ cls: document.documentElement.className, hash: location.hash, y: scrollY, current: [...document.querySelectorAll('#timeline button')].findIndex((b) => b.getAttribute('aria-current') === 'step') }));
+  check('start again: back at the first chapter, the veil open', !/gated|outro-on/.test(back.cls) && back.y === 0 && back.current === 0, JSON.stringify(back));
   await page.close();
 
   await wcag22(browser, url, check);

@@ -29,6 +29,6 @@ export class MotionToggle {
     env.reduced = !on;
     document.documentElement.classList.toggle('motion-off', !on);
     this.button.setAttribute('aria-pressed', String(on));
-    this.button.textContent = attr(this.button, on ? 'on' : 'off');
+    (this.button.querySelector('.lbl') ?? this.button).textContent = attr(this.button, on ? 'on' : 'off');
   }
 }

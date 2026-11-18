@@ -115,6 +115,21 @@ void main(){
   c *= 1. + arc * .25;
   vec4 mv = modelViewMatrix * vec4(p, 1.);
   float depth = -mv.z;
+  // the cursor's touch (Awwwards P1): wherever there is no hands-on play, a moving mouse stirs the grains
+  // under it, turning them a little about the pointer on screen (nothing opens: the centre barely moves),
+  // and they catch a little light; once it rests the touch fades and they settle back
+  if (uTouch.w > 0.) {
+    vec4 cl = projectionMatrix * mv;
+    float asp = projectionMatrix[1][1] / projectionMatrix[0][0];
+    vec2 d = (cl.xy / max(cl.w, 1e-4) - uTouch.xy) * vec2(asp, 1.); // half screen heights
+    float f = 1. - smoothstep(0., uTouch.z, length(d));
+    f *= f * uTouch.w;
+    float a = f * 1.3, ca = cos(a), sa = sin(a);
+    vec2 turn = vec2(ca * d.x - sa * d.y, sa * d.x + ca * d.y) - d;
+    // half screen heights to camera space at this depth (the same on screen at any depth)
+    mv.xy += turn * depth / projectionMatrix[1][1];
+    em += f * 1.1;
+  }
   vec3 alb = pow(max(c, 0.), vec3(2.2));
   float fog = clamp(1. - exp(-uFogD * depth), 0., .85), keep = 1. - fog;
   vec3 flat_ = alb * em * (.88 + .2 * sin(R.x * 30. + p.x));

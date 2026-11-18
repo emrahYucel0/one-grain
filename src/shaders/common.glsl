@@ -15,6 +15,7 @@ uniform float uShadowGrow;    // disc size factor in the shadow map (1; ?shadowg
 uniform mat4 uLightVP;        // the key light's view-projection (shadow map)
 uniform float uTime, uT, uMotion, uScale, uGrain, uFogD, uK, uSpan, uSpread, uPress, uJitter;
 uniform vec3 uHeroA, uHeroB, uDir, uMouseW, uLoA, uHiA, uLoB, uHiB, uFog;
+uniform vec4 uTouch; // the cursor's touch: its NDC xy, radius (in half screen heights), strength (0: none)
 
 // per-grain stable random from its id
 float h1(float n){ return fract(sin(n * 12.9898 + 4.1) * 43758.5453); }

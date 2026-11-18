@@ -49,6 +49,8 @@ export interface FrameUniforms {
   patternAt: Vector3;
   /** 0 none · 1 brush the dunes · 2 light the switches */
   interact: number;
+  /** the cursor's touch elsewhere: NDC x, y and strength (0 none) */
+  touch: { x: number; y: number; s: number };
   mouse: Vector3;
   press: number;
 }

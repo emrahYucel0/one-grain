@@ -24,16 +24,19 @@ export class ScrollTimeline {
   private targetAt = 0;
   /** the scroll range as last measured (a resize changes it before refresh() runs) */
   private max = 0;
+  private readonly trigger: ScrollTrigger | undefined;
 
   constructor(track: HTMLElement, { snap = true }: { snap?: boolean } = {}) {
     track.style.height = `${TOTAL * 100 + 100}vh`;
-    gsap.to(this.state, {
+    const tween = gsap.to(this.state, {
       v: 1, ease: 'none',
       scrollTrigger: {
         trigger: track, start: 'top top', end: 'bottom bottom', scrub: 1.6,
         ...(snap ? { snap: { snapTo: this.snapTo, duration: { min: .9, max: 2 }, delay: .15, ease: 'power2.inOut' } } : {}),
       },
-    });    this.max = document.documentElement.scrollHeight - innerHeight;
+    });
+    this.trigger = tween.scrollTrigger;
+    this.max = document.documentElement.scrollHeight - innerHeight;
   }
 
   /**
@@ -50,6 +53,19 @@ export class ScrollTimeline {
     const max = document.documentElement.scrollHeight - innerHeight;
     this.target = i; this.targetAt = performance.now();
     scrollTo({ top: max * SNAP_POINTS[i]!, behavior: instant || env.reduced ? 'auto' : 'smooth' });
+  }
+
+  /**
+   * Back to the start at once (the ending's "Start again", behind the closed veil): the page scrolls to the
+   * top and the 1.6 s scrub is skipped, so the story does not run backwards through every world.
+   */
+  restart(): void {
+    this.target = 0; this.targetAt = performance.now();
+    scrollTo({ top: 0, behavior: 'auto' });
+    ScrollTrigger.update();
+    this.trigger?.getTween()?.progress(1);
+    this.trigger?.animation?.progress(0);
+    this.state.v = 0;
   }
 
   /** The chapter the visitor is at, or heading to if a jump is still under way. */

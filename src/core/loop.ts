@@ -103,6 +103,8 @@ export class Loop {
   finalTime = -1;
   /** smoothed pointer, for camera parallax (set by input) */
   parallax: { x: number; y: number } = { x: 0, y: 0 };
+  /** the cursor's touch on the grains (NDC x, y, strength; set by input) */
+  touch = { x: 0, y: 0, s: 0 };
 
   constructor(deps: LoopDeps) { this.d = deps; }
 
@@ -196,7 +198,7 @@ export class Loop {
       style: tr.g, k: tr.k ?? 1, span: tr.span ?? .45, spread: tr.spread ?? 30, dir: tr.dir ?? [1, 0, 0],
       heroA: this.heroes[a]!, heroB: this.heroes[b]!,
       loA: wa.lo, hiA: wa.hi, loB: wb.lo, hiB: wb.hi, grain, jitter: towards(ca.jitter, cb.jitter, S.eg),
-      fog: stageColour.fog, fogLinear: layers.on('sky') ? this.sky.fog : stageColour.fogLinear, rig: this.rigState, camera: stage.camera, light, shadows, lightVP: pipeline.shadow.viewProjection, shadowPx: pipeline.shadow.pxPerUnit, land: landed, landPos: S.hero, patternAt: this.heroes[PATTERN_WORLD]!, interact: ix.mode, mouse: ix.mode ? ix.at : this.mouse, press: ix.press,
+      fog: stageColour.fog, fogLinear: layers.on('sky') ? this.sky.fog : stageColour.fogLinear, rig: this.rigState, camera: stage.camera, light, shadows, lightVP: pipeline.shadow.viewProjection, shadowPx: pipeline.shadow.pxPerUnit, land: landed, landPos: S.hero, patternAt: this.heroes[PATTERN_WORLD]!, interact: ix.mode, mouse: ix.mode ? ix.at : this.mouse, press: ix.press, touch: this.touch,
     };
     const overdraw = overdrawView();
     grains.setOverdrawView(overdraw);

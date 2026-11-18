@@ -26,7 +26,9 @@ import { TextBlock } from './ui/text-block';
 import { ChapterView } from './ui/chapter';
 import { ClockView, clockProgress } from './ui/clock';
 import { readCopy, type Copy } from './ui/copy';
+import { Cursor } from './ui/cursor';
 import { Gate } from './ui/gate';
+import { Outro } from './ui/outro';
 import { revealWhenFontsReady } from './ui/fonts';
 import { Loader } from './ui/loader';
 import { guard } from './ui/guard';
@@ -119,6 +121,14 @@ function boot(): void {
     enabled: gated, gate: $('gate'), veil: $('veil'), hint: $('introHint'), reduced: () => env.reduced,
     onChoice: (on) => sound.choose(on), preloadSound: () => sound.preload(),
   });
+  // the ending's last word: start again (the veil closes and opens on the first world), share, credits
+  const outro = new Outro({
+    again: $<HTMLButtonElement>('again'), share: $<HTMLButtonElement>('share'), credits: $<HTMLButtonElement>('creditsOpen'),
+    dialog: $<HTMLDialogElement>('credits'), status: $('status'),
+    onAgain: () => gate.rewind(() => timeline.restart()),
+  });
+  // the cursor: a mouse only, and not in the video (the capture has its own scripted pointer)
+  const cursor = new Cursor($('cursor'), !flags.capture);
   const a11y = new StoryA11y($('story'), $('status'), copy, {
     go,
     onSignatureFocus: (focused) => { ending.forced = focused; chapter.setSignatureFocus(focused); },
@@ -129,11 +139,27 @@ function boot(): void {
   const pointer = new Pointer();
   chapter.show(0); nav.setCurrent(0);
 
-  loop.onFrame(({ L, now }) => { loop.finalTime = ending.update(L.hold === LAST, now); }, 'story');
-  loop.onFrame(() => { pointer.smooth(); loop.parallax = { x: pointer.sx, y: pointer.sy }; }, 'camera');
-  loop.onFrame(({ v, L, t, eg, hero: heroPos, heroVisible, heroLight, now, textOpacity }) => {
+  loop.onFrame(({ L, now }) => {
+    loop.finalTime = ending.update(L.hold === LAST, now);
+    outro.update(loop.finalTime, ending.forced, gate.rewinding);
+  }, 'story');
+  let depth = '';
+  loop.onFrame(() => {
+    pointer.smooth(); loop.parallax = { x: pointer.sx, y: pointer.sy };
+    // the cursor's touch on the grains: it rises with the mouse's speed and fades once it rests; none on the
+    // hands-on holds (they have their own), with motion off, or without a mouse
+    const touch = loop.touch, want = pointer.hovering && !env.reduced && !loop.interaction.mode ? Math.min(1, pointer.speed / 16) : 0;
+    touch.s += (want - touch.s) * (want > touch.s ? .3 : .035);
+    if (touch.s < .003) touch.s = 0;
+    touch.x = pointer.nx; touch.y = pointer.ny;
+    // and the words a little nearer than the world: they drift against the camera's parallax
+    const d = env.reduced ? '0,0' : `${pointer.sx.toFixed(3)},${pointer.sy.toFixed(3)}`;
+    if (d !== depth) { depth = d; const [x, y] = d.split(','); root.style.setProperty('--px', x!); root.style.setProperty('--py', y!); }
+  }, 'camera');
+  loop.onFrame(({ v, L, t, eg, hero: heroPos, heroVisible, heroLight, now, dt, textOpacity }) => {
     const { a, b, tr, hold } = L;
     updateInteraction(loop.interaction, pointer, { hold, reduced: env.reduced, heroes: loop.heroes, camera: stage.camera, now });
+    cursor.frame(dt, loop.interaction.mode, env.reduced);
     if (chapter.show(t < .5 ? a : b)) nav.setCurrent(chapter.current);
     nav.setProgress(v);
     marker.update(heroPos, stage.camera, heroVisible, v, hold, now, heroLight);

@@ -257,14 +257,14 @@ html.sky .timeline .label{text-shadow:0 0 3px rgba(0,0,0,1),0 0 3px rgba(0,0,0,1
 .veil{position:fixed;inset:0;z-index:1;pointer-events:none;
   background:radial-gradient(circle at var(--vx,50%) var(--vy,50%),rgb(var(--stage-rgb,13 24 28) / 0) var(--vr,40px),rgb(var(--stage-rgb,13 24 28) / .78) calc(var(--vr,40px) + var(--vf,150px) * .5),rgb(var(--stage-rgb,13 24 28)) calc(var(--vr,40px) + var(--vf,150px)))}
 html.gated .veil{display:block}
-html.gated:not(.gate-opening) :is(.hud,.timeline,.story){visibility:hidden;opacity:0}
+html.gated:not(.gate-opening):not(.gate-closing) :is(.hud,.timeline,.story){visibility:hidden;opacity:0}
 html.gated :is(.hud,.timeline){transition:opacity 1.4s ease 1.1s}
 /* the choices: under the title, where the loading line was; they come in once the scene is on screen */
 .gate{display:none;align-items:center;gap:28px;margin-top:2rem;pointer-events:auto;font-family:var(--sans)}
 html.gated .gate{display:flex;opacity:0;visibility:hidden;transform:translateY(8px);
   transition:opacity .9s ease .5s,transform 1.1s cubic-bezier(.16,.84,.24,1) .5s,visibility 0s linear 1.4s}
-html.gated.ready:not(.gate-opening) .gate{opacity:1;visibility:visible;transform:none;transition-delay:.5s,.5s,0s}
-html.gate-opening .gate{opacity:0;visibility:hidden;transform:translateY(-6px);transition:opacity .45s ease,transform .6s ease,visibility 0s linear .6s}
+html.gated.ready:not(.gate-opening):not(.gate-closing) .gate{opacity:1;visibility:visible;transform:none;transition-delay:.5s,.5s,0s}
+html:is(.gate-opening,.gate-closing) .gate{opacity:0;visibility:hidden;transform:translateY(-6px);transition:opacity .45s ease,transform .6s ease,visibility 0s linear .6s}
 .gate button{all:unset;position:relative;cursor:pointer;box-sizing:border-box;color:var(--ink);font-size:.82rem;font-weight:500;font-stretch:112%;letter-spacing:.06em;line-height:1}
 .gate .gate-enter{display:inline-flex;align-items:center;gap:.75rem;min-height:48px;padding:0 1.5rem 0 1.25rem;border-radius:999px;
   border:1px solid rgba(236,227,211,.5);background:rgba(13,24,28,.35);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);
@@ -317,3 +317,123 @@ html.motion-off .chapter:not(.final) .micro{opacity:var(--micro-opacity)}
 .chapter .idx{text-shadow:0 0 3px rgba(0,0,0,1),0 0 3px rgba(0,0,0,1),0 0 8px rgba(0,0,0,.85),0 0 16px rgba(0,0,0,.6)}
 /* narrow phones: a tighter index, so the card stays as compact as it was (the loupe's room, check:responsive) */
 @media (max-width:479px){.chapter .idx{margin-bottom:.5rem;font-size:.66rem;gap:.55rem}.chapter .idx .act{gap:.55rem}.chapter .idx .act::before{width:1.1rem}}
+
+
+/* ---------- the HUD (Awwwards P1) ----------
+   The controls carry a small icon each beside their words: the sound's bars move while it plays, the
+   motion's dot circles while motion is on. The rail keeps the chapter you are in named, marks the ones
+   behind you, and lights its act. */
+.controls{gap:22px}
+.sound{display:inline-flex;align-items:center;gap:.5rem;border-bottom:0;padding:2px 0;font-size:.8rem;letter-spacing:.02em;transition:color .3s ease}
+.sound:hover{color:var(--ink)}
+.sound .ico{flex:none;display:inline-flex;width:14px;height:12px}
+.ico-sound{align-items:flex-end;justify-content:space-between}
+.ico-sound i{display:block;width:2px;height:100%;background:currentColor;border-radius:1px;transform-origin:50% 100%;transform:scaleY(var(--h,.5));transition:transform .5s ease}
+/* still: an equaliser at rest (it moves while the sound plays) */
+.ico-sound i:nth-child(1){--h:.4}.ico-sound i:nth-child(2){--h:.85}.ico-sound i:nth-child(3){--h:.6}.ico-sound i:nth-child(4){--h:.3}
+.sound[aria-pressed="true"] .ico-sound i{animation:gate-bar 1.1s ease-in-out infinite alternate}
+.ico-sound i:nth-child(1){animation-delay:-.2s}.ico-sound i:nth-child(2){animation-delay:-.65s}
+.ico-sound i:nth-child(3){animation-delay:-.4s}.ico-sound i:nth-child(4){animation-delay:-.9s}
+.sound .ico-motion{position:relative;width:12px;height:12px;margin:0 1px;border:1.5px solid currentColor;border-radius:50%}
+.ico-motion i{position:absolute;left:50%;top:50%;width:4px;height:4px;margin:-2px 0 0 -2px;border-radius:50%;background:currentColor;transform:rotate(0deg) translateY(-6px)}
+.motion[aria-pressed="true"] .ico-motion i{animation:hud-orbit 3.2s linear infinite}
+.motion[aria-pressed="false"] .ico-motion i{transform:none}
+@keyframes hud-orbit{to{transform:rotate(360deg) translateY(-6px)}}
+/* the harnesses (?parity, ?capture; debug/parity.ts): no ornamental animation between their frames */
+html.parity :is(.ico-sound i,.ico-motion i,.gate-bars i){animation:none !important}
+/* nor the rail's fades (the chapter's name coming in): a fading layer is rasterised apart from its
+   neighbours, and the frame after it would not match the same rest reached another way (check:seams) */
+html.parity .timeline :is(button span,button i){transition:none}
+html.motion-off .sound[aria-pressed="true"] .ico-sound i{animation:none;transform:scaleY(var(--h,.5))}
+@media (prefers-reduced-motion:reduce){.sound[aria-pressed="true"] .ico-sound i{animation:none;transform:scaleY(var(--h,.5))}.motion[aria-pressed="true"] .ico-motion i{animation:none}}
+/* the rail: the chapter you are in keeps its name, the ones behind you are marked, its act lit */
+.timeline button[aria-current="step"] span{opacity:1;text-shadow:0 0 3px rgba(0,0,0,1),0 0 3px rgba(0,0,0,1),0 0 8px rgba(0,0,0,.85),0 0 16px rgba(0,0,0,.6)}
+.timeline button.done i{background:rgba(236,227,211,.55)}
+.timeline .group.here .label{color:var(--ink)}
+
+/* ---------- depth (Awwwards P1): the words sit a little nearer than the world and drift against the camera's
+   parallax (--px, --py: the smoothed pointer, -.5 to .5, set by main.ts; 0 with motion off or no mouse) ---------- */
+.story{translate:calc(var(--px,0) * -18px) calc(var(--py,0) * -10px)}
+
+/* ---------- the ending's last word (Awwwards P1; src/ui/outro.ts) ----------
+   Under the signature once it has had its time (html.outro-on). Not part of the card's layout before that: the
+   row hangs below the card, and the card rises by the row's height (--outro-lift) as it comes in. */
+.story{transition:transform 1.1s cubic-bezier(.16,.84,.24,1)}
+html.outro-on .story{transform:translateY(calc(var(--outro-lift,4.4rem) * -1))}
+html.motion-off .story{transition:none}
+/* as the card rises it meets brighter sand: the stage colour shows through behind it, a soft ellipse that
+   comes in with the row (the sentence keeps its AAA, the choices their AA; check:contrast) */
+.story::before{content:"";position:absolute;inset:-90px -280px -150px -140px;z-index:-1;pointer-events:none;opacity:0;transition:opacity 1.4s ease;
+  background:radial-gradient(closest-side,rgb(var(--stage-rgb,13 24 28) / .82),rgb(var(--stage-rgb,13 24 28) / .74) 45%,rgb(var(--stage-rgb,13 24 28) / .4) 75%,rgb(var(--stage-rgb,13 24 28) / 0))}
+html.outro-on .story::before{opacity:1}
+.outro{position:absolute;left:0;top:100%;display:flex;flex-wrap:wrap;align-items:center;gap:12px 26px;padding-top:1.4rem;width:max-content;max-width:calc(100vw - 2.5rem);
+  pointer-events:auto;opacity:0;visibility:hidden;transform:translateY(10px);
+  transition:opacity .5s ease,transform .6s ease,visibility 0s linear .6s}
+html.outro-on .outro{opacity:1;visibility:visible;transform:none;transition:opacity .9s ease .35s,transform 1.1s cubic-bezier(.16,.84,.24,1) .35s,visibility 0s}
+.outro button{all:unset;position:relative;cursor:pointer;box-sizing:border-box;color:var(--ink);font-family:var(--sans);font-size:.82rem;font-weight:500;font-stretch:112%;letter-spacing:.06em;line-height:1;
+  text-shadow:0 0 3px rgba(0,0,0,1),0 0 8px rgba(0,0,0,.8)}
+.outro .outro-again{display:inline-flex;align-items:center;gap:.65rem;min-height:46px;padding:0 1.4rem 0 1.15rem;border-radius:999px;text-shadow:none;
+  border:1px solid rgba(236,227,211,.55);background:rgba(13,24,28,.45);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);
+  transition:background .35s ease,color .35s ease,border-color .35s ease}
+.outro .outro-again:hover,.outro .outro-again:focus-visible{background:var(--ink);color:var(--stage);border-color:var(--ink)}
+.outro :is(.outro-share,.outro-credits){border-bottom:1px solid rgba(236,227,211,.45);padding-bottom:3px;transition:border-color .3s ease;
+  text-shadow:0 0 3px rgba(0,0,0,1),0 0 3px rgba(0,0,0,1),0 0 8px rgba(0,0,0,.85),0 0 16px rgba(0,0,0,.6)}
+.outro :is(.outro-share,.outro-credits)::after{content:"";position:absolute;inset:-14px -12px}
+.outro :is(.outro-share,.outro-credits):hover{border-color:var(--ink)}
+.outro button:focus-visible{outline:2px solid var(--ink);outline-offset:4px}
+.outro :is(.outro-share,.outro-credits):focus-visible{border-radius:2px}
+/* a circle that comes back to itself */
+.ico-again{position:relative;flex:none;width:12px;height:12px;border:1.5px solid currentColor;border-top-color:transparent;border-radius:50%;transform:rotate(-30deg);transition:transform .9s cubic-bezier(.16,.84,.24,1)}
+.ico-again::after{content:"";position:absolute;right:-3.5px;top:-1px;width:0;height:0;border:3.5px solid transparent;border-top-color:currentColor;transform:rotate(-12deg)}
+.outro-again:hover .ico-again{transform:rotate(-390deg)}
+html.motion-off .outro-again:hover .ico-again{transform:rotate(-30deg)}
+@media (max-width:479px){.outro{gap:10px 20px;padding-top:1.1rem}.outro .outro-again{padding:0 1.15rem 0 .95rem}}
+
+/* the credits: a native dialog over a dimmed stage */
+.credits{width:min(36rem,calc(100vw - 2rem));max-width:none;max-height:calc(100vh - 2rem);max-height:calc(100dvh - 2rem);margin:auto;padding:0;overflow:auto;
+  border:1px solid rgba(236,227,211,.16);border-radius:6px;background:rgba(9,16,19,.95);color:var(--ink);
+  -webkit-backdrop-filter:blur(16px);backdrop-filter:blur(16px);box-shadow:0 30px 90px rgba(0,0,0,.65)}
+.credits::backdrop{background:rgba(4,8,9,.6)}
+.credits[open]{animation:credits-in .7s cubic-bezier(.16,.84,.24,1)}
+@keyframes credits-in{from{opacity:0;transform:translateY(14px)}}
+html.motion-off .credits[open]{animation:none}
+@media (prefers-reduced-motion:reduce){.credits[open]{animation:none}}
+.credits-in{padding:clamp(1.5rem,5vw,2.75rem)}
+.credits-kicker{margin:0 0 .7rem;font:500 .72rem/1 var(--sans);letter-spacing:.16em;text-transform:uppercase;color:var(--muted)}
+.credits h2{margin:0 0 1.1rem;font-family:var(--sans);font-weight:330;font-size:clamp(2.1rem,6vw,3rem);line-height:.95;letter-spacing:-.005em}
+.credits .credits-kicker,.credits h2{font-stretch:125%}
+.credits-lede{margin:0 0 1.8rem;font-family:var(--serif);font-size:1.08rem;line-height:1.5;opacity:.92;font-variation-settings:"opsz" 16}
+.credits dl{margin:0 0 1.6rem}
+.credits dl div{display:grid;grid-template-columns:12.5rem 1fr;gap:1.1rem;padding:.8rem 0;border-top:1px solid var(--rule)}
+.credits dt{font:500 .7rem/1.5 var(--sans);letter-spacing:.12em;text-transform:uppercase;color:var(--muted);padding-top:.1rem}
+.credits dd{margin:0;font-family:var(--serif);font-size:1rem;line-height:1.45}
+.credits a{color:var(--ink)}
+.credits a:focus-visible{outline:2px solid var(--ink);outline-offset:3px;border-radius:2px}
+.credits-note{margin:0 0 1.6rem;font-family:var(--serif);font-style:italic;color:var(--muted)}
+.credits form{margin:0}
+.credits-close{all:unset;position:relative;cursor:pointer;color:var(--ink);font:500 .82rem/1 var(--sans);letter-spacing:.06em;border-bottom:1px solid rgba(236,227,211,.45);padding-bottom:3px}
+.credits-close::after{content:"";position:absolute;inset:-14px -14px}
+.credits-close:hover{border-color:var(--ink)}
+.credits-close:focus-visible{outline:2px solid var(--ink);outline-offset:4px;border-radius:2px}
+@media (max-width:520px){.credits dl div{grid-template-columns:1fr;gap:.3rem}}
+
+/* ---------- the cursor (Awwwards P1; src/ui/cursor.ts) ----------
+   A dot at the pointer and a ring trailing it, in the grain marker's language. Shown only for a mouse once it
+   has moved (html.has-cursor), and the system cursor hidden only then; never under a dialog (the top layer). */
+html.has-cursor:not(.dialog-open),html.has-cursor:not(.dialog-open) *{cursor:none !important}
+html.has-cursor:not(.dialog-open) .cursor{display:block}
+.cursor{position:fixed;left:0;top:0;z-index:9;pointer-events:none;opacity:0;transition:opacity .35s ease}
+.cursor.is-in{opacity:1}
+.cursor i{position:fixed;left:0;top:0;will-change:transform}
+.cursor i::before{content:"";position:absolute;left:0;top:0;border-radius:50%;transform:translate(-50%,-50%)}
+.cursor-dot::before{width:5px;height:5px;background:#fff;box-shadow:0 0 0 1px rgba(0,0,0,.5);transition:transform .3s ease}
+.cursor-ring::before{width:30px;height:30px;border:1.5px solid rgba(255,255,255,.92);box-shadow:0 0 0 1px rgba(0,0,0,.35),inset 0 0 0 1px rgba(0,0,0,.25);
+  transition:width .45s cubic-bezier(.16,.84,.24,1),height .45s cubic-bezier(.16,.84,.24,1),border-radius .45s ease,background-color .35s ease,border-color .35s ease,box-shadow .35s ease}
+.cursor.is-over .cursor-ring::before{width:58px;height:58px;background-color:rgba(236,227,211,.1);border-color:rgba(255,255,255,.7)}
+.cursor.is-over .cursor-dot::before{transform:translate(-50%,-50%) scale(0)}
+.cursor.is-down .cursor-ring::before{width:22px;height:22px}
+/* the hands-on holds: a broad soft brush on the dunes, a square probe that glows on the chip */
+.cursor.is-brush:not(.is-over) .cursor-ring::before{width:104px;height:104px;border-style:dashed;border-color:rgba(255,255,255,.6);background-color:rgba(255,240,214,.06)}
+.cursor.is-brush.is-down:not(.is-over) .cursor-ring::before{width:150px;height:150px}
+.cursor.is-light:not(.is-over) .cursor-ring::before{width:36px;height:36px;border-radius:5px;border-color:rgba(255,216,150,.95);box-shadow:0 0 16px rgba(255,186,90,.5),0 0 0 1px rgba(0,0,0,.35)}
+@media (forced-colors:active){.cursor{display:none !important}}

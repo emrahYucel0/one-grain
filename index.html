@@ -126,8 +126,8 @@ html:not(.js) .intro{display:none}
 .intro .loader-line{display:block;width:min(14rem,40vw);height:1px;margin-top:1.4rem;background:rgba(236,227,211,.22);overflow:hidden;transition:opacity .6s ease}
 .loader-line i{display:block;height:100%;background:#ece3d3;transform:scaleX(var(--load,0));transform-origin:left;transition:transform .3s ease-out}
 html.ready .intro .loader-line{opacity:0}
-/* the entry gate and its veil wait for the stylesheet and the scene (src/ui/gate.ts, main.css) */
-.gate,.veil{display:none}
+/* the entry gate, its veil and the cursor wait for the stylesheet and the scene (src/ui/gate.ts, cursor.ts, main.css) */
+.gate,.veil,.cursor{display:none}
 html.nogl :is(#scene,.scrim,.marker,.loupe,.loupe-line,.hud,.intro,.story,.timeline,.cut,#scroll-length){display:none}
 html.nogl #story{max-width:40rem;margin:0 auto;padding:2rem 1.25rem 4rem;font:1.0625rem/1.5 "Newsreader Variable",Georgia,serif}
 .fallback-note{display:none}
@@ -148,6 +148,8 @@ html.nogl #story .fallback-note{display:block;margin:0 0 2.5rem;font-style:itali
 <div class="marker" id="marker" aria-hidden="true"><span id="markerLabel">this grain</span></div>
 <div class="loupe" id="loupe" aria-hidden="true"><span class="loupe-cap">×200</span></div>
 <i class="loupe-line" id="loupeLine" aria-hidden="true"></i>
+<!-- the cursor (src/ui/cursor.ts): a fine pointer only; the ring speaks the grain marker's language -->
+<div class="cursor" id="cursor" aria-hidden="true"><i class="cursor-ring"></i><i class="cursor-dot"></i></div>
 
 <!-- translate="no": the HUD (brand, clock and its units, buttons) and the rail are updated by the
      script every frame or on every change; a page translator rewriting them would fight those updates.
@@ -159,9 +161,9 @@ html.nogl #story .fallback-note{display:block;margin:0 0 2.5rem;font-style:itali
       data-years="years" data-approx="≈ " data-million="million" data-now="Now" data-live-unit="on your screen" data-ms=" ms"><b id="clock">0</b><span id="clockUnit">years</span></div>
     <div class="controls">
       <button class="sound" id="sound" type="button" aria-pressed="false"
-        data-listen="Listen" data-on="Sound on" data-off="Sound off" data-unavailable="Sound unavailable">Listen</button>
+        data-listen="Listen" data-on="Sound on" data-off="Sound off" data-unavailable="Sound unavailable"><span class="ico ico-sound" aria-hidden="true"><i></i><i></i><i></i><i></i></span><span class="lbl">Listen</span></button>
       <button class="sound motion" id="motion" type="button" aria-pressed="true"
-        data-on="Motion on" data-off="Motion off">Motion on</button>
+        data-on="Motion on" data-off="Motion off"><span class="ico ico-motion" aria-hidden="true"><i></i></span><span class="lbl">Motion on</span></button>
     </div>
   </div>
 </header>
@@ -179,12 +181,37 @@ html.nogl #story .fallback-note{display:block;margin:0 0 2.5rem;font-style:itali
   </div>
 </div>
 
-<div class="story" aria-hidden="true">
-  <div class="chapter" id="chapter"><div class="idx"><span class="n"></span><span class="act"></span></div><h2></h2><p></p><p class="micro" id="micro"></p><p class="hint" id="hint"></p></div>
+<div class="story">
+  <div class="chapter" id="chapter" aria-hidden="true"><div class="idx"><span class="n"></span><span class="act"></span></div><h2></h2><p></p><p class="micro" id="micro"></p><p class="hint" id="hint"></p></div>
+  <!-- the ending's last word (src/ui/outro.ts): once the signature is there, start again, share, credits -->
+  <div class="outro" id="outro" role="group" aria-label="The end">
+    <button class="outro-again" type="button" id="again"><span class="ico ico-again" aria-hidden="true"></span>Start again</button>
+    <button class="outro-share" type="button" id="share" data-title="One Grain" data-text="One grain of sand, 300 million years: from magma to the screen you are looking at."
+      data-copied="Link copied" data-failed="Copy failed">Share</button>
+    <button class="outro-credits" type="button" id="creditsOpen" aria-haspopup="dialog" aria-controls="credits">Credits</button>
+  </div>
 </div>
 <nav class="timeline" id="timeline" translate="no" aria-label="Chapters" data-go="Go to {title}" data-go-final="Go to the end"></nav>
 
 <div class="cut" id="cut" aria-hidden="true"><p>One day,</p></div>
+
+<!-- the credits (src/ui/outro.ts): a native dialog, so Escape, focus and the backdrop are the browser's -->
+<dialog class="credits" id="credits" aria-labelledby="creditsTitle">
+  <div class="credits-in">
+    <p class="credits-kicker" aria-hidden="true">One Grain</p>
+    <h2 id="creditsTitle">Credits</h2>
+    <p class="credits-lede">A single grain of sand, followed for 300 million years: from magma, through rivers, coasts and deserts, into a furnace, a crystal, a chip, and the screen you are reading this on.</p>
+    <dl>
+      <div><dt>Concept, design and code</dt><dd><a href="https://yucelemrah.com">Emrah Y&uuml;cel</a></dd></div>
+      <div><dt>Grains</dt><dd>Up to 160,000 per world, fifteen worlds, every one of them moved on the GPU</dd></div>
+      <div><dt>Sound</dt><dd>Synthesised live in your browser; nothing is recorded</dd></div>
+      <div><dt>Type</dt><dd>Archivo and Newsreader, SIL Open Font License</dd></div>
+      <div><dt>Built with</dt><dd>three.js, GSAP, the Web Audio API</dd></div>
+    </dl>
+    <p class="credits-note">One plausible journey; real timescales vary widely.</p>
+    <form method="dialog"><button class="credits-close" type="submit">Close</button></form>
+  </div>
+</dialog>
 <p class="sr-only" id="status" role="status" data-format="{title}. {act}, chapter {n} of {total}."></p>
 
 <!-- The story itself. Read by the experience, read aloud by assistive tech, and the

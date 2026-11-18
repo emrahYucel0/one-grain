@@ -19,11 +19,14 @@ const writePref = (on: boolean): void => { try { localStorage.setItem(KEY, on ? 
 export class SoundToggle {
   sound: Sound | null = null;
   private readonly button: HTMLButtonElement;
+  /** the button's words (its icon beside them is aria-hidden and empty) */
+  private readonly label: HTMLElement;
   private disarm = (): void => {};
 
   constructor(button: HTMLButtonElement) {
     this.button = button;
-    button.textContent = attr(button, 'listen');
+    this.label = button.querySelector<HTMLElement>('.lbl') ?? button;
+    this.label.textContent = attr(button, 'listen');
     button.addEventListener('click', () => void this.set(!this.on));
     // fetched on intent (a pointer over the button, focus, a touch), so the click that follows still
     // counts as the gesture that starts the audio, and nobody who never asks for sound downloads it
@@ -57,13 +60,13 @@ export class SoundToggle {
     if (on && !this.sound) {
       const { Sound } = await load();
       this.sound = Sound.create(flags.parity);
-      if (!this.sound) { b.textContent = attr(b, 'unavailable'); return; }
+      if (!this.sound) { this.label.textContent = attr(b, 'unavailable'); return; }
       exposeAudio(this.sound);
     }
     if (!this.sound) return;
     this.sound.setOn(on);
     b.setAttribute('aria-pressed', String(on));
-    b.textContent = attr(b, on ? 'on' : 'off');
+    this.label.textContent = attr(b, on ? 'on' : 'off');
     writePref(on);
   }
 }

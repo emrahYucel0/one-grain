@@ -41,7 +41,7 @@ export class StageColour {
   private readonly scrim: HTMLElement | null;
   private readonly scrimTop: HTMLElement | null;
   private readonly scrimRight: HTMLElement | null;
-  /** the local scrims' owners (the controls, the rail, the loupe's caption): --stage-rgb, so those scrims melt into the stage */
+  /** the local scrims' owners (the controls, the rail, the loupe's caption, the ending's card): --stage-rgb, so those scrims melt into the stage */
   private readonly local: HTMLElement[];
   /** the page's stage colour as last written (8-bit hex) */
   hex = '';
@@ -51,7 +51,7 @@ export class StageColour {
     this.scrim = document.querySelector<HTMLElement>('.scrim:not(.scrim-top):not(.scrim-right)');
     this.scrimTop = document.querySelector<HTMLElement>('.scrim-top');
     this.scrimRight = document.querySelector<HTMLElement>('.scrim-right');
-    this.local = [...document.querySelectorAll<HTMLElement>('.controls, .timeline, .loupe')];
+    this.local = [...document.querySelectorAll<HTMLElement>('.controls, .timeline, .loupe, .story')];
   }
 
   /** the sky's amount the right scrim was last written for, in 1/64 steps */

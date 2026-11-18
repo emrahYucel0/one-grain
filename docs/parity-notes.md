@@ -31,6 +31,26 @@ was verified and how, and what was not.
 The reference is never edited. The harness serves a patched copy with three hooks: progress
 override, time override, and exposing the built texture (`scripts/lib/reference.mjs`).
 
+## Awwwards P0 and P1: beyond the reference
+
+Design work for an Awwwards submission, made in the port without a reference file:
+
+- **P0, the entry gate** (`src/ui/gate.ts`): a first visit waits on a veil with an opening around the
+  grain and two choices, "Enter with sound" and "Enter"; scrolling enters too. The harnesses skip it
+  (`?gate` shows it under `?parity`), so no parity position changes.
+- **P0, the words' choreography** (`src/ui/chapter.ts`): the title's letters rise through word masks
+  and the body comes in word by word, on the story's progress. At rest the card is the plain text
+  again, in the same place (check:text: 85/85 positions identical).
+- **P1, the ending's last word** (`src/ui/outro.ts`): 9.5 s into the ending, "Start again", "Share"
+  and "Credits" come in under the signature; the card rises by the row's height over a soft
+  stage-coloured ground. Position `29-hold-now` differs from the reference for that reason and is
+  listed as intentional. "Start again" closes the veil onto the grain and opens it on the first world.
+- **P1, the cursor and its touch** (`src/ui/cursor.ts`, `grains.vert.glsl`): a mouse only, so no
+  parity position changes; the grains' touch is off unless a mouse moves (`uTouch.w` = 0).
+- **P1, the HUD**: icons beside the sound and motion words, the current chapter named on the rail,
+  the chapters behind marked. Under the harnesses (`html.parity`) the icons' animations and the
+  rail's fades are stopped, so every frame is the same picture however it was reached (check:seams).
+
 ## Phase 7: skies, the loupe, the light chapter's pattern (reference v27)
 
 Only these three features come from v27; everything else stays as the port had it (the first screen,

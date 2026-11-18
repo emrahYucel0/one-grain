@@ -13,10 +13,15 @@ export class Pointer {
   press = 0;
   /** a tap is active until this time (performance.now) */
   until = 0;
+  /** how far a mouse moved since the last frame, in CSS px (smooth() moves it to `speed`) */
+  private moved = 0;
+  /** CSS px the mouse moved in the last frame */
+  speed = 0;
 
   constructor() {
     addEventListener('pointermove', (e) => {
       if (e.pointerType !== 'mouse') return;
+      if (this.hovering) this.moved += Math.hypot(e.clientX - (this.nx + 1) / 2 * innerWidth, e.clientY - (1 - this.ny) / 2 * innerHeight);
       this.hovering = true;
       this.x = e.clientX / innerWidth - .5; this.y = e.clientY / innerHeight - .5;
       this.nx = e.clientX / innerWidth * 2 - 1; this.ny = -(e.clientY / innerHeight) * 2 + 1;
@@ -29,7 +34,7 @@ export class Pointer {
   }
 
   /** Once per frame, before the camera is placed. */
-  smooth(): void { this.sx += (this.x - this.sx) * .05; this.sy += (this.y - this.sy) * .05; }
+  smooth(): void { this.sx += (this.x - this.sx) * .05; this.sy += (this.y - this.sy) * .05; this.speed = this.moved; this.moved = 0; }
 
   tapping(now: number): boolean { return now < this.until; }
 }
