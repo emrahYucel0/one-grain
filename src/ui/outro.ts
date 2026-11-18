@@ -1,7 +1,7 @@
 import { attr } from './copy';
 
 /** Seconds after resting on the ending (its own clock, ui/overlays.ts Ending) before the last word comes in. */
-const SHOW_S = 9.5;
+const SHOW_S = 3.2;
 /** How long the share button says what it did. */
 const SAID_MS = 2400;
 

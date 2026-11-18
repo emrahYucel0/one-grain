@@ -20,7 +20,7 @@ const VIEW = { width: 1440, height: 900 };
 const TIME = 10;
 const SETTLE_MS = 1600;      // CSS: clock font-size .5 s, punch .7 s
 const FINAL_EARLY_MS = 1500; // final chapter: the sentence is in (.4 s), the grain hovers in full light (it fades from 3 s)
-const FINAL_LATE_MS = 15000; // final chapter: the grain has landed (6.4 s), signature and footnote in (8 s)
+const FINAL_LATE_MS = 15000; // final chapter: the grain has landed (6.4 s), signature and footnote in (2.4 s)
 const REVIEW_PCT = 2;
 // Since Phase 6a the port has a top scrim behind the HUD (fading over 20vh) and since Phase 6c a right
 // scrim behind the rail (clamp(160px, 17vw, 280px)) that the reference lacks: positions are judged

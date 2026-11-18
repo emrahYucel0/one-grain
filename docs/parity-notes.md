@@ -41,7 +41,7 @@ Design work for an Awwwards submission, made in the port without a reference fil
 - **P0, the words' choreography** (`src/ui/chapter.ts`): the title's letters rise through word masks
   and the body comes in word by word, on the story's progress. At rest the card is the plain text
   again, in the same place (check:text: 85/85 positions identical).
-- **P1, the ending's last word** (`src/ui/outro.ts`): 9.5 s into the ending, "Start again", "Share"
+- **P1, the ending's last word** (`src/ui/outro.ts`): 3.2 s into the ending, just after the signature (2.4 s, brought forward from 8 s), "Start again", "Share"
   and "Credits" come in under the signature; the card rises by the row's height over a soft
   stage-coloured ground. Position `29-hold-now` differs from the reference for that reason and is
   listed as intentional. "Start again" closes the veil onto the grain and opens it on the first world.

@@ -48,11 +48,12 @@ export class Intro {
 /**
  * The ending. The screen arrives neutral, with "Now" on the clock; the sentence comes in 1.2 s
  * after resting on the last chapter; the sand image fades into the screen from 4 s to 8 s while
- * the end's stage colour comes in (the reveal); the signature and footnote at 8.5 s.
+ * the end's stage colour comes in (the reveal); the signature and footnote at 2.4 s, just after the
+ * sentence has risen (Awwwards P1; the reference waited for 8 s, after the reveal).
  */
 export class Ending {
   static readonly TITLE_S = .4;
-  static readonly SIGNATURE_S = 8;
+  static readonly SIGNATURE_S = 2.4;
   /** keyboard focus on the signature link: the end state at once */
   static readonly FORCED_S = 99;
   private since = -1;

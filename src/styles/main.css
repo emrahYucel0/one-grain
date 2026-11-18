@@ -181,7 +181,7 @@ html{scrollbar-width:none}html::-webkit-scrollbar{display:none}
 .timeline .label{font-family:var(--sans);font-size:var(--rail-size);letter-spacing:var(--rail-track)}
 /* ---------- end of ported block ---------- */
 
-/* The signature waits for the ending's 8.5 s like the footnote. In the reference, the v8 rule
+/* The signature waits for its time in the ending (2.4 s, ui/overlays.ts) like the footnote. In the reference, the v8 rule
    ".chapter.final p:not(.micro)" ties in specificity with ".chapter.final:not(.sig) p" and comes
    later, so its signature shows from the start; this restores the intended order. */
 .chapter.final:not(.sig) p:not(.micro){opacity:0}
