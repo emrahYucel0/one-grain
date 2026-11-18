@@ -29,8 +29,11 @@ for (const [targetName, start] of targets) {
     page.on('console', (m) => { if (m.type() === 'warning' || m.type() === 'error') messages.push(`${m.type()}: ${m.text()}`); });
     page.on('pageerror', (e) => messages.push(`pageerror: ${e.message}`));
     await page.goto(server.origin + '/');
-    await page.waitForFunction(() => document.documentElement.classList.contains('nogl') || document.getElementById('introHint').textContent.includes('Scroll'), null, { timeout: 90000 });
+    // ready: the fallback, or the scene with its first screen (behind the entry gate, src/ui/gate.ts, on a first visit)
+    await page.waitForFunction(() => document.documentElement.classList.contains('nogl') || (document.documentElement.classList.contains('ready') && !document.getElementById('introHint').textContent.includes('…')), null, { timeout: 90000 });
     const mode = await page.evaluate(() => (document.documentElement.classList.contains('gl') ? 'webgl2' : 'fallback'));
+    // through the gate with sound, so the sound starts from it too
+    if (mode === 'webgl2') { await page.locator('#gate button[data-sound-choice="on"]').click(); await page.waitForTimeout(3200); }
 
     if (mode === 'webgl2') {
       for (const v of stops) {

@@ -36,13 +36,20 @@ export class SoundToggle {
     });
     if (readPref()) {
       void load(); // they chose sound before: it will start on their first gesture
-      const arm = (e: Event): void => { if (!button.contains(e.target as Node)) void this.set(true); };
+      // a gesture on the button, or on the entry gate's choice (ui/gate.ts), is left to them
+      const arm = (e: Event): void => { if (!button.contains(e.target as Node) && !(e.target as Element | null)?.closest?.('[data-sound-choice]')) void this.set(true); };
       addEventListener('pointerdown', arm); addEventListener('keydown', arm);
       this.disarm = () => { removeEventListener('pointerdown', arm); removeEventListener('keydown', arm); this.disarm = () => {}; };
     }
   }
 
   get on(): boolean { return !!this.sound?.on; }
+
+  /** The sound's code, fetched ahead of a click that may ask for it (the entry gate's "with sound"). */
+  preload(): void { void load(); }
+
+  /** The visitor chose: sound on or off, as if they had pressed the button (the entry gate). */
+  choose(on: boolean): void { if (on !== this.on) void this.set(on); else { this.disarm(); if (!on) writePref(false); } }
 
   private async set(on: boolean): Promise<void> {
     this.disarm();

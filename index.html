@@ -126,6 +126,8 @@ html:not(.js) .intro{display:none}
 .intro .loader-line{display:block;width:min(14rem,40vw);height:1px;margin-top:1.4rem;background:rgba(236,227,211,.22);overflow:hidden;transition:opacity .6s ease}
 .loader-line i{display:block;height:100%;background:#ece3d3;transform:scaleX(var(--load,0));transform-origin:left;transition:transform .3s ease-out}
 html.ready .intro .loader-line{opacity:0}
+/* the entry gate and its veil wait for the stylesheet and the scene (src/ui/gate.ts, main.css) */
+.gate,.veil{display:none}
 html.nogl :is(#scene,.scrim,.marker,.loupe,.loupe-line,.hud,.intro,.story,.timeline,.cut,#scroll-length){display:none}
 html.nogl #story{max-width:40rem;margin:0 auto;padding:2rem 1.25rem 4rem;font:1.0625rem/1.5 "Newsreader Variable",Georgia,serif}
 .fallback-note{display:none}
@@ -138,6 +140,8 @@ html.nogl #story .fallback-note{display:block;margin:0 0 2.5rem;font-style:itali
 <body>
 <div class="loader" id="loader" aria-hidden="true" translate="no"><div class="brand">One Grain</div></div>
 <canvas id="scene" aria-hidden="true"></canvas>
+<!-- the entry gate's veil: the stage colour with an opening around the grain (src/ui/gate.ts) -->
+<div class="veil" id="veil" aria-hidden="true"></div>
 <div class="scrim" aria-hidden="true"></div>
 <div class="scrim scrim-top" aria-hidden="true"></div>
 <div class="scrim scrim-right" aria-hidden="true"></div>
@@ -165,13 +169,18 @@ html.nogl #story .fallback-note{display:block;margin:0 0 2.5rem;font-style:itali
 <!-- The first screen: painted by this HTML and the critical styles, above the loader, and still there
      when the scene fades in behind it. The title and its line are one paragraph, so the browser
      measures them as one block of text: the largest on the page, at the first paint. -->
-<div class="intro" id="intro" aria-hidden="true">
-  <p class="intro-head"><span class="intro-title" translate="no">One Grain</span><br><span class="intro-line" id="introHint" data-ready="Scroll to follow it.">Gathering sand…</span></p>
-  <span class="loader-line"><i id="loaderFill"></i></span>
+<div class="intro" id="intro">
+  <p class="intro-head" aria-hidden="true"><span class="intro-title" translate="no">One Grain</span><br><span class="intro-line" id="introHint" data-ready="Scroll to follow it." data-gate="One grain of sand, 300 million years.">Gathering sand…</span></p>
+  <span class="loader-line" aria-hidden="true"><i id="loaderFill"></i></span>
+  <!-- the entry gate (src/ui/gate.ts): shown once the scene is ready; scrolling enters too -->
+  <div class="gate" id="gate">
+    <button class="gate-enter" type="button" data-sound-choice="on"><span class="gate-bars" aria-hidden="true"><i></i><i></i><i></i><i></i></span>Enter with sound</button>
+    <button class="gate-quiet" type="button" data-sound-choice="off">Enter</button>
+  </div>
 </div>
 
 <div class="story" aria-hidden="true">
-  <div class="chapter" id="chapter"><h2></h2><p></p><p class="micro" id="micro"></p><p class="hint" id="hint"></p></div>
+  <div class="chapter" id="chapter"><div class="idx"><span class="n"></span><span class="act"></span></div><h2></h2><p></p><p class="micro" id="micro"></p><p class="hint" id="hint"></p></div>
 </div>
 <nav class="timeline" id="timeline" translate="no" aria-label="Chapters" data-go="Go to {title}" data-go-final="Go to the end"></nav>
 

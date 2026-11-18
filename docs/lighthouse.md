@@ -6,17 +6,17 @@ Lighthouse 12, headless Chrome on this machine's GPU. Mobile = Lighthouse's defa
 
 | | Mobile | Desktop |
 |---|---|---|
-| performance | 82 | 97 |
+| performance | 79 | 100 |
 | accessibility | 100 | 100 |
 | best-practices | 100 | 100 |
 | seo | 100 | 100 |
-| LCP | 3.20 s | 0.69 s |
-| FCP | 3.20 s | 0.65 s |
+| LCP | 3.46 s | 0.69 s |
+| FCP | 3.31 s | 0.69 s |
 | CLS | 0.000 | 0.000 |
-| TBT | 237 ms | 150 ms |
-| JavaScript transferred | 176 kB | 176 kB |
-| Fonts transferred | 222 kB | 222 kB |
-| Everything transferred | 424 kB | 424 kB |
+| TBT | 254 ms | 58 ms |
+| JavaScript transferred | 188 kB | 188 kB |
+| Fonts transferred | 223 kB | 223 kB |
+| Everything transferred | 440 kB | 440 kB |
 
 Binary audits not passed: mobile valid-source-maps; desktop valid-source-maps.
 
@@ -37,13 +37,13 @@ Requests of the first view at 1440×900 (bytes on the wire, Brotli where it appl
 
 | Request | Type | Bytes |
 |---|---|---|
-| / | document | 5 kB |
-| /assets/index-CcpX8bqg.js | script | 30 kB |
-| /assets/three-gZT1U6LH.js | script | 105 kB |
+| / | document | 7 kB |
+| /assets/index-UMOI_6ub.js | script | 43 kB |
+| /assets/archivo-wdth-BZh53edk.woff2 | font | 51 kB |
 | /assets/gsap-BJZ90ViQ.js | script | 40 kB |
-| /assets/archivo-wdth-C1H61SF-.woff2 | font | 51 kB |
-| /assets/newsreader-opsz-italic-CPndpBRZ.woff2 | font | 91 kB |
-| /assets/newsreader-opsz-Bfeafxts.woff2 | font | 80 kB |
-| /assets/main-Bs8HiJUh.css | stylesheet | 5 kB |
+| /assets/newsreader-opsz-Cd6xRf31.woff2 | font | 80 kB |
+| /assets/newsreader-opsz-italic-SxWM2TE-.woff2 | font | 91 kB |
+| /assets/three-DPSMDZzh.js | script | 105 kB |
+| /assets/main-CdpG3KEv.css | stylesheet | 5 kB |
 | /assets/sim.worker-8Ol1L2VB.js | script | 1 kB |
 | /favicon.svg | other | 1 kB |

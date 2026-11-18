@@ -29,6 +29,7 @@ const BLOCKS = [
   ['brand', '.hud .brand', false], ['clock', '#clock', false], ['unit', '#clockUnit', false],
   ['sound', '#sound', false], ['motion', '#motion', false],
   ['intro title', '.intro-title', true], ['intro hint', '#introHint', false],
+  ['chapter number', '#chapter .idx .n', false], ['chapter act', '#chapter .idx .act', false],
   ['title', '#chapter h2', true], ['body', '#chapter > p:not(.hint):not(.micro)', true],
   ['micro / footnote', '#micro', false], ['hint', '#hint', false],
   ['rail label', '.timeline .label', false], ['loupe caption', '.loupe-cap', false],

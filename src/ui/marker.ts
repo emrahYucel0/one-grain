@@ -17,6 +17,9 @@ export class HeroMarker {
   private opacity = '';
   private transform = '';
   private label = '';
+  /** where the ring is this frame, in CSS px (the entry gate's iris opens around it) */
+  x = innerWidth / 2;
+  y = innerHeight / 2;
   /** the canvas's box on screen, cached on resize (reading layout after the frame's style writes would
    * force it; and on mobile the canvas, sized to the largest viewport, is not the visible viewport) */
   private box = { left: 0, top: 0, width: innerWidth, height: innerHeight };
@@ -33,7 +36,8 @@ export class HeroMarker {
     proj.copy(hero).project(camera);
     const vis = proj.z < 1 && Math.abs(proj.x) < 1.1 && Math.abs(proj.y) < 1.1 && heroVisible;
     const b = this.box;
-    const transform = `translate(${(b.left + (proj.x + 1) / 2 * b.width).toFixed(1)}px, ${(b.top + (1 - proj.y) / 2 * b.height).toFixed(1)}px)`;
+    this.x = b.left + (proj.x + 1) / 2 * b.width; this.y = b.top + (1 - proj.y) / 2 * b.height;
+    const transform = `translate(${this.x.toFixed(1)}px, ${this.y.toFixed(1)}px)`;
     if (transform !== this.transform) { this.transform = transform; this.el.style.transform = transform; }
     if (hold < 0) this.holdAt = this.holdSince = -1;
     else if (hold !== this.holdAt) { this.holdAt = hold; this.holdSince = now; }

@@ -20,11 +20,13 @@ import { HashRouter } from './timeline/hash';
 import { bindChapterKeys } from './timeline/keys';
 import { ScrollTimeline } from './timeline/scroll';
 import { transitionMidpoint } from './timeline/segments';
+import { ss } from './core/ease';
 import { StoryA11y } from './ui/a11y';
 import { TextBlock } from './ui/text-block';
 import { ChapterView } from './ui/chapter';
 import { ClockView, clockProgress } from './ui/clock';
 import { readCopy, type Copy } from './ui/copy';
+import { Gate } from './ui/gate';
 import { revealWhenFontsReady } from './ui/fonts';
 import { Loader } from './ui/loader';
 import { guard } from './ui/guard';
@@ -111,6 +113,12 @@ function boot(): void {
   const cut = $('cut');
   const sound = new SoundToggle($<HTMLButtonElement>('sound'));
   new MotionToggle($<HTMLButtonElement>('motion'));
+  // the entry gate: a first visit at the start of the story; not for #slug links, nor the harnesses (unless ?gate)
+  const gated = (!flags.parity || flags.gate) && !(location.hash.length > 1 && location.hash !== `#${WORLDS[0]!.slug}`);
+  const gate = new Gate({
+    enabled: gated, gate: $('gate'), veil: $('veil'), hint: $('introHint'), reduced: () => env.reduced,
+    onChoice: (on) => sound.choose(on), preloadSound: () => sound.preload(),
+  });
   const a11y = new StoryA11y($('story'), $('status'), copy, {
     go,
     onSignatureFocus: (focused) => { ending.forced = focused; chapter.setSignatureFocus(focused); },
@@ -128,14 +136,17 @@ function boot(): void {
     updateInteraction(loop.interaction, pointer, { hold, reduced: env.reduced, heroes: loop.heroes, camera: stage.camera, now });
     if (chapter.show(t < .5 ? a : b)) nav.setCurrent(chapter.current);
     nav.setProgress(v);
-    const op = textOpacity;
-    chapter.setOpacity(op);
+    marker.update(heroPos, stage.camera, heroVisible, v, hold, now, heroLight);
+    const leaving = hold < 0 && t < .5;
+    // the ending's sentence rises on the ending's own clock (seconds since resting there: pinned by ?parity, virtual under ?capture)
+    const endingRise = chapter.current === LAST && !leaving ? (loop.finalTime < 0 ? 0 : ss(Ending.TITLE_S, Ending.TITLE_S + 1.8, loop.finalTime)) : 1;
+    const op = textOpacity * gate.update(v, now, marker.x, marker.y) * endingRise;
+    chapter.setProgress(op, leaving, !env.reduced);
     typeAxes.showTitle(op > 0);
     clock.update(a, b, clockProgress(tr, t, eg), t, tr);
     const cutOp = cutOpacity(tr, t).toFixed(3);
     if (cutOp !== cut.style.opacity) cut.style.opacity = cutOp;
     intro.update(v);
-    marker.update(heroPos, stage.camera, heroVisible, v, hold, now, heroLight);
     a11y.rest(hold);
     if (sound.on) sound.sound!.frame({ a, b, t, eg, tr, hold });
     record?.({ a, b, t, eg, tr, hold });
@@ -158,7 +169,7 @@ function boot(): void {
     if (layers.on('loupe') && (flags.parity || !pipeline.parallelCompile)) pipeline.prepareLoupe(true);
     exposePack(pack);
     if (guard.failed) return; // the guard gave up on this load and the article is the page
-    intro.ready();
+    intro.ready(gate.waiting);
     hash.restore();
     if (!flags.capture) loop.start();
   }, fallBack);

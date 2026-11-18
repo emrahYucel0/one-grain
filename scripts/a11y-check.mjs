@@ -28,7 +28,23 @@ try {
   // --- the experience
   const page = await newPage(browser, { viewport: { width: 1440, height: 900 } });
   await page.goto(url);
-  await page.waitForFunction(() => document.getElementById('introHint').textContent.includes('Scroll'), null, { timeout: 60000 });
+  // the entry gate (src/ui/gate.ts): a first visit waits on two choices, reachable and named, the first stops
+  // in the tab order; choosing by keyboard opens it, and focus lands on the story's own controls
+  await page.waitForFunction(() => document.documentElement.classList.contains('ready') && getComputedStyle(document.getElementById('gate')).visibility === 'visible' && getComputedStyle(document.getElementById('gate')).opacity === '1', null, { timeout: 60000 });
+  await axe(page, 'entry gate');
+  const names = await page.evaluate(() => [...document.querySelectorAll('#gate button')].map((b) => b.textContent.trim()));
+  check('entry gate: two named choices', names.join(' | ') === 'Enter with sound | Enter', names.join(' | '));
+  await page.keyboard.press('Tab'); const tab1 = await page.evaluate(() => document.activeElement?.textContent.trim());
+  await page.keyboard.press('Tab'); const tab2 = await page.evaluate(() => document.activeElement?.textContent.trim());
+  check('entry gate: the first stops in the tab order', tab1 === 'Enter with sound' && tab2 === 'Enter', `${tab1} → ${tab2}`);
+  const gateRing = await page.evaluate(() => { const s = getComputedStyle(document.activeElement); return `${s.outlineStyle} ${s.outlineWidth}`; });
+  check('entry gate: visible focus ring', /solid 2px/.test(gateRing), gateRing);
+  await page.keyboard.press('Enter');
+  await page.waitForTimeout(400);
+  const opening = await page.evaluate(() => ({ cls: document.documentElement.className, focus: document.activeElement?.id, sound: document.getElementById('sound').getAttribute('aria-pressed') }));
+  check('entry gate: Enter by keyboard opens it, focus on the sound button, sound stays off', /gate-opening/.test(opening.cls) && opening.focus === 'sound' && opening.sound === 'false', JSON.stringify(opening));
+  await page.waitForFunction(() => !document.documentElement.classList.contains('gated'), null, { timeout: 8000 });
+  await page.waitForFunction(() => document.getElementById('introHint').textContent.includes('Scroll'), null, { timeout: 8000 });
   await axe(page, 'experience');
 
   const tree = await page.evaluate(() => {

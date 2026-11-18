@@ -108,6 +108,11 @@ async function visit(ctx, { query = '?debug', inject = '', strip = null, init = 
   await page.goto(`${origin}/${query}`);
   const state = await page.waitForFunction(() => /\bready\b|\bfailed\b/.test(document.documentElement.className), null, { timeout: 45000 })
     .then(() => page.evaluate(() => (document.documentElement.classList.contains('failed') ? 'fallback' : 'scene')), () => 'neither within 45 s');
+  // a first visit waits at the entry gate (src/ui/gate.ts): through it, silently, as a visitor would
+  if (state === 'scene') {
+    await page.evaluate(() => document.querySelector('#gate button[data-sound-choice="off"]')?.click()).catch(() => {});
+    await page.waitForFunction(() => !document.documentElement.classList.contains('gated'), null, { timeout: 8000 }).catch(() => {});
+  }
   if (during) await during(page);
   await page.waitForTimeout(1500);
   const report = await page.evaluate(() => document.querySelector('.og-errors')?.textContent ?? '').catch(() => '');

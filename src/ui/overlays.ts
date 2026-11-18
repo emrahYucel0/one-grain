@@ -36,7 +36,8 @@ export class Intro {
   private readonly el: HTMLElement;
   private readonly hint: HTMLElement;
   constructor(el: HTMLElement, hint: HTMLElement) { this.el = el; this.hint = hint; }
-  ready(): void { this.hint.textContent = attr(this.hint, 'ready'); }
+  /** Sand is ready: the line invites the scroll, or, behind the entry gate, says what this is (ui/gate.ts). */
+  ready(gated = false): void { this.hint.textContent = attr(this.hint, gated ? 'gate' : 'ready'); }
   private opacity = '';
   update(v: number): void {
     const opacity = (1 - ss(0, INTRO_END, v)).toFixed(2);

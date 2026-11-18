@@ -12,6 +12,7 @@
 //   ?shadowevery=N   at rest the shadow map refreshes every N-th frame (default 3; every 2nd in transitions), measurements only
 //   ?capture         the submission video's offline render (src/capture/, scripts/capture.mjs): implies
 //                    ?parity and the high tier; the page runs on a virtual clock, one frame per step
+//   ?gate            the entry gate (ui/gate.ts) even under ?parity, which otherwise skips it
 //   ?off=a,b         switch render layers off (light, shadows, dof, bloom, grade, sky, loupe), for measurements
 //   with ?parity, window.__AT = { tr, t, lean } renders transition tr at t with that camera lean
 //   with ?parity, window.__LIVE = ms pins the display's live clock (it counts real time otherwise)
@@ -57,6 +58,7 @@ export const flags = {
   parity: params.has('parity') || capture,
   debug: params.has('debug'),
   tier: capture ? 'high' : params.get('tier'),
+  gate: params.has('gate'),
   noSnap: params.has('nosnap'),
   noSafe: params.has('nosafe'),
   perf: params.has('perf'),

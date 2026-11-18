@@ -98,7 +98,7 @@ One responsibility per module:
 | `src/shaders` | GLSL as raw-imported files: resting behaviours, palette, transition styles, interaction, main, hero/halo |
 | `src/camera` | The shot director (bezier flights with per-style handles, orbit, cut, the hold lean, an optional subject to aim at) and the camera rig |
 | `src/timeline` | Uneven scroll segments, `locate()`, ScrollTrigger scrub and snap to holds, `#slug` routing, keyboard chapter steps |
-| `src/ui` | Clock, chapter card, act label, timeline nav, hero marker, cut card, intro, timed ending, accessibility glue |
+| `src/ui` | Clock, chapter card (its letters and words choreographed on the story's progress), act label, timeline nav, hero marker, cut card, intro, entry gate (`gate.ts`: the veil around the grain and the iris that opens it), timed ending, accessibility glue |
 | `src/input` | Mouse hover and touch tap state; projecting the pointer onto the scene for the desert and chip holds |
 | `src/audio` | The sound (v23): `engine` (context, buses, limiter, room, noise), `score` (pads, notes, motif, pulse), `ambience` (primitives, the water rush, the event scheduler), `frame` (the story → the sound, per frame), `toggle` (the button). Its data is `story/sound.ts`. Off by default; nothing is created before the visitor asks |
 | `src/debug` | URL switches for testing (below) |
@@ -412,6 +412,7 @@ Everything is synthesised with Web Audio (no files), ported from `reference/v23-
 | `?grains=N` · `?pointcap=N` · `?shadowstride=N` | Measurements: grains per world, largest grain in pixels, every N-th grain casts shadows (default 1: all) |
 | `?parity` | Let a harness drive progress (`window.__V`) and shader time (`window.__T`), or render a transition point directly (`window.__AT = { tr, t, lean }`); pin the display's live clock (`window.__LIVE`, ms) and the seconds spent in the current hold (`window.__FT`: ring fade, final hold); the rendered progress is published as `window.__progress` |
 | `?nosnap` | Scrolling does not settle on chapters, so a position mid-transition can be held |
+| `?gate` | The entry gate even under `?parity`, which otherwise skips it (as do `#slug` links) |
 | `?nosafe` | No hero safe area: the camera as composed for 16:9, for comparison (`camera/safe-area.ts`) |
 | `#magma` … `#now` | Open at that chapter |
 
