@@ -50,6 +50,8 @@ export interface FrameUniforms {
    * sand catching the sub-pixels' colours as it passes: its radius (world units) and strength (0: none)
    */
   ring: readonly [radius: number, strength: number];
+  /** the final world's sand taking the screen's proportions (Awwwards P4): x and y scale, and how far (0..1) */
+  screen: readonly [sx: number, sy: number, k: number];
   /** the light chapter's pattern: centred on that chapter's hero grain (story/pattern.ts) */
   patternAt: Vector3;
   /** 0 none · 1 brush the dunes · 2 light the switches */

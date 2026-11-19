@@ -27,7 +27,7 @@
   --body-size:clamp(1.1rem,.55vw + .82rem,1.32rem);--body-line:1.5;--body-opacity:.92;--body-measure:38ch;--body-opsz:16;
   --micro-size:clamp(.95rem,1.1vw,1.02rem);--micro-opacity:.62;--micro-gap:.7rem;
   --hint-size:.9rem;--hint-gap:.9rem;--hint-track:.01em;
-  --signature-size:.95rem;--signature-opacity:.9;
+  --signature-size:1.0625rem;--signature-opacity:.9;
 
   --clock-years:clamp(1.8rem,3.4vw,3rem);--clock-label:clamp(1.2rem,2.2vw,1.8rem);
   --clock-prod:clamp(2rem,3.8vw,3.4rem);--clock-now:clamp(2.8rem,6vw,5.2rem);
@@ -38,7 +38,7 @@
   --cut-weight:300;--cut-size:clamp(2.6rem,7vw,6rem);--cut-opsz:72;
   --rail-size:clamp(.8125rem,.22vw + .6rem,.9375rem);--rail-track:.01em;
   /* the HUD's controls, the marker and the small labels over the scene (Awwwards P3: 13 px at least, 15 px on large screens) */
-  --ui-size:clamp(.8125rem,.22vw + .6rem,.9375rem);--ui-small:clamp(.75rem,.16vw + .58rem,.84rem);
+  --ui-size:clamp(.8125rem,.22vw + .6rem,.9375rem);--ui-small:clamp(.8125rem,.16vw + .62rem,.9rem);
 }
 
 /* ---------- ported from reference/blockout-v8.html (keep in sync for parity) ---------- */
@@ -474,19 +474,21 @@ html.has-cursor:not(.dialog-open) .cursor{display:block}
 .cursor.is-light:not(.is-over) .cursor-ring::before{width:36px;height:36px;border-radius:5px;border-color:rgba(255,216,150,.95);box-shadow:0 0 16px rgba(255,186,90,.5),0 0 0 1px rgba(0,0,0,.35)}
 @media (forced-colors:active){.cursor{display:none !important}}
 
-/* ---------- confinement made visible (Awwwards P3; ui/type-axes.ts) ----------
-   The titles' width follows the grain's confinement (camera/confinement.ts): wide in nature, condensed as
-   industry closes in on it, open again at the end. The width used to change while the title was hidden, so
-   each chapter simply arrived narrower or wider, which can read as a font failing to load. Now the title
-   comes in at the width it left with and is squeezed (or let go) to its own in front of the reader, over
-   the time its letters take to rise. Not in the harnesses (their frames must not depend on timing), nor
-   with motion off. */
-.chapter h2{transition:font-stretch 1.7s cubic-bezier(.65,0,.2,1) .15s}
-html:is(.parity,.motion-off) .chapter h2{transition:none}
-@media (prefers-reduced-motion:reduce){.chapter h2{transition:none}}
 /* starting again (ui/rewind.ts): the words stay out of the way while the story runs back */
 html.rewinding :is(.story,.marker span){opacity:0;transition:opacity .4s ease}
 
 /* the ending's choices are larger now (P3) and reach further over the sand: a soft ground of the stage colour under the row (check:contrast) */
-.outro::before{content:"";position:absolute;inset:-.2rem -6rem -2rem -4rem;z-index:-1;pointer-events:none;
-  background:radial-gradient(closest-side,rgb(var(--stage-rgb,13 24 28) / .9),rgb(var(--stage-rgb,13 24 28) / .84) 62%,rgb(var(--stage-rgb,13 24 28) / .35) 85%,rgb(var(--stage-rgb,13 24 28) / 0))}
+.outro::before{content:"";position:absolute;inset:-.6rem -7rem -2.4rem -4rem;z-index:-1;pointer-events:none;
+  background:radial-gradient(closest-side,rgb(var(--stage-rgb,13 24 28) / .94),rgb(var(--stage-rgb,13 24 28) / .88) 66%,rgb(var(--stage-rgb,13 24 28) / .35) 85%,rgb(var(--stage-rgb,13 24 28) / 0))}
+
+/* ---------- the ending's words (Awwwards P4) ----------
+   The sentence, the signature and the footnote stand on the sand from the moment they come in: a soft
+   ground of the stage colour behind them from the start of the ending (the one behind the choices comes
+   later, with them), and the footnote at full strength rather than the asides' .62. */
+.chapter.final::before{content:"";position:absolute;inset:-6rem -14rem -5rem -8rem;z-index:-1;pointer-events:none;opacity:0;transition:opacity 1.4s ease;
+  background:radial-gradient(closest-side,rgb(var(--stage-rgb,13 24 28) / .86),rgb(var(--stage-rgb,13 24 28) / .74) 50%,rgb(var(--stage-rgb,13 24 28) / .32) 78%,rgb(var(--stage-rgb,13 24 28) / 0))}
+.chapter.final.in::before{opacity:1}
+.chapter.final .micro{--o:.9;opacity:.9}
+html.motion-off .chapter.final .micro{opacity:.9}
+@media (max-width:479px){.chapter.final::before{inset:-4rem -5rem -4rem -3rem}}
+

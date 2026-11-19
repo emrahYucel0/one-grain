@@ -62,7 +62,7 @@ export const LIGHTS: Readonly<Record<string, LightRig>> = {
   // thin-film colour on the polished discs (Awwwards P2)
   wafer: { key: [[-.5, .75, .45], [1.15, 1.18, 1.25]], sky: [.04, .045, .055], ground: [.015, .015, .02], rim: [.3, .32, .36], point: NONE, spec: .95, shadow: 10, film: .55 },
   // softer violet, half-strength exposure rays
-  light: { key: [[-.3, .9, .3], [.85, .76, 1.12]], sky: [.03, .025, .05], ground: [.01, .008, .02], rim: [.25, .2, .4], point: [[0, 2.5, 0], [.7, .52, 1.3], 3.5], spec: .7, shadow: 8, rays: .5 },
+  light: { key: [[-.3, .9, .3], [.85, .76, 1.12]], sky: [.03, .025, .05], ground: [.01, .008, .02], rim: [.25, .2, .4], point: [[0, 2.5, 0], [.7, .52, 1.3], 3.5], spec: .7, shadow: 8, rays: .16 }, // Awwwards P4: the exposure a fine rain of light, so the pattern it prints is what the eye goes to
   chip: { key: [[-.4, .85, .3], [.45, .5, .62]], sky: [.02, .025, .035], ground: [.01, .01, .012], rim: [.12, .14, .2], point: NONE, spec: .55, shadow: 16 },
   // brighter sub-pixels
   display: { key: [[.3, .6, .75], [.3, .32, .38]], sky: [.02, .02, .03], ground: [.01, .01, .01], rim: [.05, .05, .06], point: NONE, spec: .2, shadow: 16, pix: 1.8 },

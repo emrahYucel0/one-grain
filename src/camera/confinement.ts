@@ -12,8 +12,13 @@ export const lensFor = (c: number): number => 48 - 18 * c;
 export const PORTRAIT_EXTRA_DEG = 9;
 /** Wider screens than this crop top and bottom instead of showing more of the sides (and the worlds' edges). */
 export const MAX_ASPECT = 2;
-/** Title and clock axes: wide and light while time is slow, condensed and heavy as it compresses. */
-export const typeAxesFor = (c: number): { wdth: number; wght: number } => ({ wdth: 125 - 63 * c, wght: 380 + 250 * c }); // width carries the story; weight only compensates, so titles keep a steady density (v15)
+/**
+ * Title and clock axes. They used to follow confinement (wide and light while time is slow, condensed and
+ * heavy as it compresses, v15), but two outside reviews read the narrowing through industry as a font
+ * failing to load, even once it was animated in view (Awwwards P3): since Awwwards P4 one width and
+ * weight for every chapter; confinement is carried by the lens and the framing alone.
+ */
+export const typeAxesFor = (): { wdth: number; wght: number } => ({ wdth: 115, wght: 400 });
 /** How restless resting matter is (world units of drift). */
 export const jitterFor = (c: number): number => (1 - c) * .022;
 
@@ -25,7 +30,7 @@ export interface Confinement { fov: number; wdth: number; wght: number; jitter: 
  * applying the framing factor.
  */
 export const CONFINEMENT: readonly Confinement[] = WORLDS.map((w: WorldDef) => {
-  const fov = lensFor(w.conf), { wdth, wght } = typeAxesFor(w.conf);
+  const fov = lensFor(w.conf), { wdth, wght } = typeAxesFor();
   const k = (Math.tan(MathUtils.degToRad(20)) / Math.tan(MathUtils.degToRad(fov / 2))) * w.frame;
   const cam = w.look.map((l, i) => l + (w.cam[i]! - l) * k) as unknown as Vec3;
   return { fov, wdth, wght, jitter: jitterFor(w.conf), cam };

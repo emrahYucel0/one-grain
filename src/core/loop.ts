@@ -1,5 +1,5 @@
 import { SHADOW_EVERY } from '../render/shadow';
-import { Vector3 } from 'three';
+import { MathUtils, Vector3 } from 'three';
 import { frameShot } from '../camera/rig';
 import { SAFE, keepInSafeArea } from '../camera/safe-area';
 import { CONFINEMENT, towards } from '../camera/confinement';
@@ -40,9 +40,25 @@ const PATTERN_WORLD = WORLDS.findIndex((w) => w.slug === PATTERN.world);
 const PULL_NEAR = 2.1;
 const PULL_TURN = 1.3;
 const PULL_LIFT = .05;
-/** The ending (Awwwards P3): how far the grain's last light spreads (world units), how far the camera draws back (× its distance). */
+/** The ending (Awwwards P3): how far the grain's last light spreads (world units). */
 const ENDING_RING = 19;
-const ENDING_BACK = .95;
+/**
+ * The ending's last shot (Awwwards P4): the final world's sand, half its width and height (world units,
+ * worlds/now.ts: the display × 1.36); the share of the screen's height it fills once framed, and where its
+ * centre sits (NDC y, above the words).
+ */
+const SAND_HALF = [13.5, 8] as const;
+const ENDING_FILL = .46;
+const ENDING_AT = .4;
+/**
+ * How much wider (> 1) or narrower the sand becomes to take the proportions of the visitor's screen, its
+ * area kept: the device's screen as it is held (a phone upright is tall), clamped to sane shapes.
+ */
+function screenShape(): number {
+  let r = screen.width / Math.max(1, screen.height);
+  if ((innerWidth > innerHeight) !== (r > 1)) r = 1 / r;
+  return Math.min(1.5, Math.max(.5, Math.sqrt(r / (SAND_HALF[0] / SAND_HALF[1]))));
+}
 const UP = new Vector3(0, 1, 0);
 
 export interface LoopDeps {
@@ -128,6 +144,8 @@ export class Loop {
   /** set while the story runs back to its start: no loupe */
   rewinding = false;
   private readonly pullDir = new Vector3();
+  private readonly endPos = new Vector3();
+  private readonly endLook = new Vector3();
 
   constructor(deps: LoopDeps) { this.d = deps; }
 
@@ -171,7 +189,7 @@ export class Loop {
     for (const fn of this.listeners.story) fn(info);
     // the final hold (v15): the grain hovers, loses its light (3–5.6 s), then lands among the others
     // (5–6.4 s, a soft ease); under reduced motion it simply becomes matte in place
-    let landed = 0, ringR = 0, ringK = 0;
+    let landed = 0, ringR = 0, ringK = 0, back = 0;
     if (L.hold === WORLDS.length - 1 && this.finalTime >= 0) {
       const ft = this.finalTime;
       info.heroLight = 1 - ss(3, 5.6, ft);
@@ -181,9 +199,8 @@ export class Loop {
         // Awwwards P3: as the grain's light goes, it passes into the sand as a ring (2.6–7.4 s) ...
         const r = ss(2.6, 7.4, ft);
         ringR = 1.4 + r * ENDING_RING; ringK = ss(2.6, 3.2, ft) * (1 - r * r);
-        // ... and the camera draws back until the sand shows its shape: the screen it was (from 5 s on)
-        const back = ss(5, 17, ft);
-        S.pos.sub(S.look).multiplyScalar(1 + ENDING_BACK * back).add(S.look);
+        // ... and the camera draws back until the sand shows its shape: the screen it was (from 5 s on; framed below)
+        back = ss(5, 16, ft);
       }
     }
 
@@ -191,6 +208,16 @@ export class Loop {
     // (and uScale), type axes, jitter
     stageColour.update(a, b, S.eg, layers.on('sky') ? skyAmount(a, b, S.eg) : 0);
     projection.setLens(towards(ca.fov, cb.fov, S.eg));
+    // the ending's last shot (Awwwards P4): as the camera draws back the sand takes this screen's own
+    // proportions (the shader scales it, area kept) and is framed whole, centred across the screen and
+    // above the ending's words, straight on: a screen made of sand, the shape of the one it is seen on
+    const sx = back > 0 ? screenShape() : 1;
+    if (back > 0) {
+      const tan = Math.tan(MathUtils.degToRad(stage.camera.fov / 2)), hy = SAND_HALF[1] / sx;
+      const d = hy / (ENDING_FILL * tan), yc = -ENDING_AT * d * tan;
+      S.pos.lerp(this.endPos.set(0, yc, d), back);
+      S.look.lerp(this.endLook.set(0, yc, 0), back);
+    }
     // light rigs, eased like the camera unless the transition delays them (the loupe's look follows them)
     const rigK = tr.rig ? ss(tr.rig[0], tr.rig[1], t) : S.eg;
     this.rigState = this.rig.update(a, b, rigK, this.heroes);
@@ -240,7 +267,7 @@ export class Loop {
       style: tr.g, k: tr.k ?? 1, span: tr.span ?? .45, spread: tr.spread ?? 30, dir: tr.dir ?? [1, 0, 0],
       heroA: this.heroes[a]!, heroB: this.heroes[b]!,
       loA: wa.lo, hiA: wa.hi, loB: wb.lo, hiB: wb.hi, grain, jitter: towards(ca.jitter, cb.jitter, S.eg),
-      fog: stageColour.fog, fogLinear: layers.on('sky') ? this.sky.fog : stageColour.fogLinear, rig: this.rigState, camera: stage.camera, light, shadows, lightVP: pipeline.shadow.viewProjection, shadowPx: pipeline.shadow.pxPerUnit, land: landed, landPos: S.hero, ring: [ringR, ringK], patternAt: this.heroes[PATTERN_WORLD]!, interact: ix.mode, mouse: ix.mode ? ix.at : this.mouse, press: ix.press, touch: this.touch,
+      fog: stageColour.fog, fogLinear: layers.on('sky') ? this.sky.fog : stageColour.fogLinear, rig: this.rigState, camera: stage.camera, light, shadows, lightVP: pipeline.shadow.viewProjection, shadowPx: pipeline.shadow.pxPerUnit, land: landed, landPos: S.hero, ring: [ringR, ringK], screen: [sx, 1 / sx, back], patternAt: this.heroes[PATTERN_WORLD]!, interact: ix.mode, mouse: ix.mode ? ix.at : this.mouse, press: ix.press, touch: this.touch,
     };
     const overdraw = overdrawView();
     grains.setOverdrawView(overdraw);

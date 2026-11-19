@@ -83,9 +83,19 @@ Design work for an Awwwards submission, made in the port without a reference fil
 - **P3, the ending's image** (`core/loop.ts`, `grains.vert.glsl` `uRing`): before the grain's light goes,
   it passes into the sand as a ring, each grain it crosses lit for a moment in its sub-pixel's colour;
   then the camera draws back until the sand shows its shape, the screen it was (`29-hold-now`).
-- **P3, confinement made visible**: a title comes in at the width it left with and is squeezed (or let
-  go) to its own as its letters rise, so the narrowing through industry reads as meant. Not under the
-  harnesses, nor with motion off.
+- **P4, one width for the titles and the clock** (`camera/confinement.ts` `typeAxesFor`): they no longer
+  narrow through industry (v15's confinement axes). Reviewers read the narrowing as a font failing to
+  load even once it was animated in view (P3); confinement stays in the lens and the framing.
+- **P4, the ending's words**: a soft stage-coloured ground behind the sentence, the signature and the
+  footnote from the moment they come in; the footnote at .9 rather than .62; the signature and the
+  smallest labels a little larger again (13 px at least).
+- **P4, the light chapter**: the exposure is a fine rain of light (a third of its emission, finer
+  grains) instead of a blooming cloud, so the pattern it prints is the focus (`23-hold-light`).
+- **P4, burial as sedimentation** (`shaders/transitions.glsl` style 4): grain by grain the dunes are
+  lifted off and fall onto the block, settling into its layers from the lowest up (`10-tr-desert-again`).
+- **P4, the ending's last shot** (`core/loop.ts`, `uScreen`): as the camera draws back, the sand takes the
+  proportions of the visitor's own screen (area kept) and is framed whole, centred across the screen
+  above the words, so the text never sits on its corner (`29-hold-now`).
 
 ## Phase 7: skies, the loupe, the light chapter's pattern (reference v27)
 

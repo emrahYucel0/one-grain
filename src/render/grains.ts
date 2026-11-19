@@ -41,7 +41,7 @@ export class GrainCloud {
       uTime: { value: 0 }, uT: { value: 0 }, uMotion: { value: 1 }, uScale: { value: 1 }, uGrain: { value: .1 },
       uStyle: { value: 0 }, uK: { value: 1 }, uSpan: { value: .45 }, uSpread: { value: 30 }, uDir: { value: new Vector3(1, 0, 0) },
       uHeroA: { value: new Vector3() }, uHeroB: { value: new Vector3() },
-      uInteract: { value: 0 }, uLand: { value: 0 }, uLandPos: { value: new Vector3() }, uRing: { value: new Vector2() }, uMouseW: { value: new Vector3(0, -99, 0) }, uPress: { value: 0 }, uTouch: { value: new Vector4(0, 0, TOUCH_RADIUS, 0) },
+      uInteract: { value: 0 }, uLand: { value: 0 }, uLandPos: { value: new Vector3() }, uRing: { value: new Vector2() }, uScreen: { value: new Vector3(1, 1, 0) }, uMouseW: { value: new Vector3(0, -99, 0) }, uPress: { value: 0 }, uTouch: { value: new Vector4(0, 0, TOUCH_RADIUS, 0) },
       uLoA: { value: new Color() }, uHiA: { value: new Color() }, uLoB: { value: new Color() }, uHiB: { value: new Color() },
       uFog: { value: new Color() }, uFogD: { value: .02 }, uJitter: { value: 0 },
       // lighting (v10)
@@ -144,6 +144,7 @@ export class GrainCloud {
     u.uGrain!.value = f.grain; u.uJitter!.value = f.jitter;
     u.uLand!.value = f.land; (u.uLandPos!.value as Vector3).copy(f.landPos);
     (u.uRing!.value as Vector2).set(f.ring[0], f.ring[1]);
+    (u.uScreen!.value as Vector3).set(f.screen[0], f.screen[1], f.screen[2]);
     u.uInteract!.value = f.interact; u.uPress!.value = f.press;
     (u.uPatC!.value as Vector3).copy(f.patternAt);
     if (f.interact) (u.uMouseW!.value as Vector3).copy(f.mouse);

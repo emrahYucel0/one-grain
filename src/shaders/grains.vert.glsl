@@ -77,6 +77,8 @@ void main(){
   }
   // resting restlessness: natural matter never quite settles (confinement)
   p += vec3(sin(uTime * 1.3 + R.x * 40.), sin(uTime * 1.1 + R.y * 40.), sin(uTime * 1.7 + R.z * 40.)) * uJitter * uMotion;
+  // the ending's last shot: the sand takes the proportions of the screen it is seen on (core/loop.ts)
+  if (uScreen.z > 0. && uRest == 2) p.xy *= mix(vec2(1.), uScreen.xy, uScreen.z);
   // the final grain lands: its nearest neighbours move aside a little (v15)
   if (uLand > 0.) { vec2 dl = p.xy - uLandPos.xy; float l = length(dl); if (l < .14) p.xy += dl / (l + 1e-4) * (.14 - l) * .45 * uLand; }
 #ifdef SHADOW

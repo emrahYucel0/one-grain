@@ -13,6 +13,6 @@ vec3 animate(vec4 P, vec3 R, out float sz){
   else if (f > 12.5 && f < 13.5) { float rc = length(p.xz), an = atan(p.z, p.x), ph = t * .5 + R.x * 6.2832, r2 = rc + .5 * cos(ph); p = vec3(cos(an) * r2, p.y - .2 + .3 * sin(ph), sin(an) * r2); } // convection
   else if (f > 13.5 && f < 14.5) { float ph = fract(t * .15 + R.y), a = R.x * 6.2832; p += vec3(cos(a), (R.z - .5) * .6, sin(a)) * (1. - ph) * (1. - ph) * 1.1; sz = smoothstep(0., .15, ph); } // deposition (Awwwards P3: closer in, so the rods keep their edges)
   else if (f > 14.5 && f < 15.5) { float a = t * .15, c = cos(a), s = sin(a); p.xz = vec2(p.x * c - p.z * s, p.x * s + p.z * c); }                                       // turning crystal
-  else if (f > 16.5 && f < 17.5) { float ph = fract(t * (.6 + .4 * R.x) + R.y * 10.); p.y -= ph * 2.8; sz = 1. - ph * .7; }                                              // light ray
+  else if (f > 16.5 && f < 17.5) { float ph = fract(t * (.6 + .4 * R.x) + R.y * 10.); p.y -= ph * 2.8; sz = (1. - ph * .7) * .55; } // (finer since Awwwards P4)                                              // light ray
   return p;
 }

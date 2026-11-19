@@ -76,24 +76,26 @@ try {
   await page.goto(`${dev.origin}/?parity&tier=mid`);
   await page.waitForFunction(() => window.__PACK && !document.documentElement.classList.contains('fonts-pending'), null, { timeout: 90000 });
   const { SNAP_POINTS: SNAP } = await (await import('vite')).createServer({ server: { middlewareMode: true }, appType: 'custom', logLevel: 'error' }).then(async (v) => { const m = await v.ssrLoadModule('/src/timeline/segments.ts'); await v.close(); return m; });
-  const measure = async (i, name) => {
+  // since Awwwards P4 every chapter's title has one width (camera/confinement.ts): the axis itself is probed
+  // in the title's face, at the clock's narrowest (62 %) and the intro's widest (125 %)
+  const measure = async (i, name, stretch) => {
     await page.evaluate((v) => { window.__V = v; window.__T = 10; }, i === 0 ? 0.001 : SNAP[i]);
     await page.waitForTimeout(1200);
     await page.locator('#chapter h2').screenshot({ path: `${OUT}title-${name}.png`, animations: 'disabled' });
-    return page.evaluate(() => {
+    return page.evaluate((stretch) => {
       const h2 = document.querySelector('#chapter h2'), cs = getComputedStyle(h2);
       const probe = document.createElement('span');
       probe.textContent = 'Crystal Magma';
-      probe.style.cssText = `font-family:${cs.fontFamily};font-size:100px;font-weight:${cs.fontWeight};font-stretch:${cs.fontStretch};position:absolute;white-space:nowrap;visibility:hidden`;
+      probe.style.cssText = `font-family:${cs.fontFamily};font-size:100px;font-weight:${cs.fontWeight};font-stretch:${stretch};position:absolute;white-space:nowrap;visibility:hidden`;
       document.body.append(probe);
       const width = probe.getBoundingClientRect().width; probe.remove();
       const face = [...document.fonts].find((f) => f.family.includes('Archivo') && f.status === 'loaded');
-      return { stretch: cs.fontStretch, weight: cs.fontWeight, width, face: face ? `${face.family} ${face.stretch}` : 'none' };
-    });
+      return { stretch, weight: cs.fontWeight, width, face: face ? `${face.family} ${face.stretch}` : 'none' };
+    }, stretch);
   };
-  const magma = await measure(0, 'magma'), crystal = await measure(9, 'crystal');
+  const magma = await measure(0, 'magma', '125%'), crystal = await measure(9, 'crystal', '62%');
   const ratio = crystal.width / magma.width;
-  check('wdth axis renders: crystal title condensed against magma', ratio < .8, `probe width ${magma.width.toFixed(0)} px at ${magma.stretch}/${magma.weight} vs ${crystal.width.toFixed(0)} px at ${crystal.stretch}/${crystal.weight}, ratio ${ratio.toFixed(2)}; face ${crystal.face}`);
+  check('wdth axis renders: the title face at 62 % condensed against 125 %', ratio < .8, `probe width ${magma.width.toFixed(0)} px at ${magma.stretch}/${magma.weight} vs ${crystal.width.toFixed(0)} px at ${crystal.stretch}/${crystal.weight}, ratio ${ratio.toFixed(2)}; face ${crystal.face}`);
 } finally { await browser.close(); }
 
 // the readable fallback (no WebGL2): no gate, metric-matched fallbacks only

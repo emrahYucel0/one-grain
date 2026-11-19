@@ -39,7 +39,6 @@ vec3 travel(vec4 A, vec4 B, vec3 pa, vec3 pb, vec3 R, out float e, out float arc
   p = blend(pa, pb, e);
   if (uStyle == 0) { p.y += arc * (.6 + 2.4 * R.y) * amt * uK; p += arc * vec3(sin(e * 8. + R.x * 30.), cos(e * 6. + R.z * 20.), sin(e * 7. + R.y * 25.)) * .6 * amt; } // rise
   else if (uStyle == 2) { p += uDir * arc * (2. + 4. * R.y) * uK; p.y += arc * .4 * R.z; }                                                                               // flow
-  else if (uStyle == 4) { p = blend(pa - vec3(0., uK * e * (.6 + R.y), 0.), pb + vec3(0., uK * (1. - e) * (.6 + R.y), 0.), e); }                                         // bury
   else if (uStyle == 9) { p.y += arc * .08; }                                                                                                                             // slice
   else if (uStyle == 11) { if (e <= 0.) p = pa; else if (e >= 1.) p = pb; else if (e < .5) { float k = e * 2.; p = uHeroA + (pa - uHeroA) * (1. + k * k * k * 25.); } else { float k = (e - .5) * 2.; p = uHeroB + (pb - uHeroB) * mix(.01, 1., k * k); } } // dive
   else if (uStyle == 12) { p.y += arc * (4. + 10. * R.y) * uK; p.xz = mix(p.xz, e < .5 ? pa.xz : pb.xz, arc); }                                                        // beam
@@ -107,6 +106,17 @@ vec3 travel(vec4 A, vec4 B, vec3 pa, vec3 pb, vec3 R, out float e, out float arc
       m.whiten = inC * (1. - inC) * 3.2;   // the crystallisation front glows as grains lock in
     } else { float k = smoothstep(.3, .7, uT); p = blend(molten, pb, k); e = max(melt * .49, k); inC = k; }
     arc = hump(uT, 3.14159) * .4 * uMotion; m.burn = melt * (1. - inC);
+  }
+  else if (uStyle == 4) { // bury, as sedimentation (Awwwards P4): grain by grain the dunes are lifted off and rain
+    // down onto the block, where they settle into its layers, the lowest first, so the strata visibly stack up
+    float lay = clamp((pb.y - uHeroB.y + 5.) / 10., 0., 1.);       // the block's height: bottom 0, top 1
+    float st = .82 * lay + .1 * R.x;                                 // lower layers settle first
+    float tl = clamp((uT - st * .7) / .3, 0., 1.);                 // this grain's own move
+    float lift = smoothstep(0., .22, tl), fall = smoothstep(.22, 1., tl); fall *= fall;   // lifted quickly, then a long fall (gravity)
+    vec3 above = vec3(pb.x + (R.z - .5) * .4, uHeroB.y + 6.5 + R.y * 1.5, pb.z);
+    p = tl <= 0. ? pa : fall > 0. ? blend(above, pb, fall) : mix(pa, above, lift);
+    e = fall; arc = hump(tl, 3.14159265) * .3 * uMotion;
+    m.size = 1. - .62 * hump(tl, 3.14159265);                          // smaller in the air: a rain, not a cloud
   }
   else if (uStyle == 21) { // become: the light goes out, the glass vanishes, sub-pixel clusters loosen and spread into the area they lit
     float fa = floor(A.w + .001), sub = step(8.5, fa) * step(fa, 9.5);

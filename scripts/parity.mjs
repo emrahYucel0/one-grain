@@ -43,18 +43,19 @@ const HEAT = "the industry's own colours (Awwwards P2): purity's rods and the cr
 const FILM = "the industry's own colours (Awwwards P2): thin-film colour on the polished wafers";
 const RIVER = 'the river (Awwwards P3): seen down its valley, ripples running downstream';
 const SOUP = 'no blur soup (Awwwards P3): the camera stays outside the sand, the vapour close to the rods';
+const P4 = "Awwwards P4: one type width, the light chapter's finer exposure, burial as sedimentation, the ending framed to the screen";
 const LEGIBLE = 'legibility (Awwwards P3): the HUD, the rail, the index and the figures at 13 px or more, the rail brighter';
 const LAST = "the ending's image (Awwwards P3): the grain's last light through the sand, the camera drawing back";
 const DEVIATIONS = {
-  '01-hold-magma': LEGIBLE, '31-hover-chip': LEGIBLE,
+  '01-hold-magma': LEGIBLE, '31-hover-chip': LEGIBLE, '46-final-1.5s': `${LEGIBLE}; ${P4}`,
   '13-hold-quarry': `${QUARRY}; ${LOUPE}`, '14-tr-quarry-furnace': `${QUARRY}; ${LOUPE}`, '35-tr-quarry-furnace-t30': QUARRY, '36-tr-quarry-furnace-t55': `${QUARRY}; ${LOUPE}`, '37-tr-quarry-furnace-t80': `${QUARRY}; ${LOUPE}`,
   '02-tr-magma-granite': LOUPE, '03-hold-granite': LOUPE, '04-tr-granite-river': `${SKY}; ${LOUPE}; ${RIVER}`,
   '05-hold-river': `${SKY}; ${RIVER}`, '06-tr-river-coast': `${SKY}; ${LOUPE}; ${RIVER}`, '07-hold-coast': `${SKY}; ${LOUPE}`, '08-tr-coast-desert': `${SKY}; ${LOUPE}`,
   '32-tr-coast-desert-t30': `${SKY}; ${LOUPE}`, '33-tr-coast-desert-t55': SKY, '34-tr-coast-desert-t80': SKY,
-  '09-hold-desert': SKY, '30-hover-desert': SKY, '10-tr-desert-again': `${SKY}; ${SOUP}`,
+  '09-hold-desert': SKY, '30-hover-desert': SKY, '10-tr-desert-again': `${SKY}; ${SOUP}; ${P4}`,
   '17-hold-purity': `${HEAT}; ${SOUP}`, '19-hold-crystal': HEAT,
-  '20-tr-crystal-wafer': `${LOUPE}; ${HEAT}; ${FILM}`, '21-hold-wafer': `${LOUPE}; ${FILM}`, '22-tr-wafer-light': `${PATTERN}; ${LOUPE}`, '23-hold-light': PATTERN, '24-tr-light-chip': PATTERN,
-  '27-hold-display': LOUPE, '29-hold-now': `${ENDING}; ${LAST}`,
+  '20-tr-crystal-wafer': `${LOUPE}; ${HEAT}; ${FILM}`, '21-hold-wafer': `${LOUPE}; ${FILM}`, '22-tr-wafer-light': `${PATTERN}; ${LOUPE}`, '23-hold-light': `${PATTERN}; ${P4}`, '24-tr-light-chip': PATTERN,
+  '27-hold-display': LOUPE, '29-hold-now': `${ENDING}; ${LAST}; ${P4}`,
 };
 // harness only: the reference's layer panel, benchmark box and version label are not part of the look
 const HIDE_REFERENCE_TOOLS = ['</head>', '<style>.fx,.bench,.brand span{display:none !important}</style></head>'];
