@@ -379,12 +379,12 @@ html.motion-off .sound[aria-pressed="true"] .ico-sound i{animation:none;transfor
    the pointer is on it, so it reads as a table of contents rather than as a hidden menu */
 .timeline .label{color:rgba(236,227,211,.8)}
 .timeline button{color:rgba(236,227,211,.84)}
-.timeline button i{background:rgba(236,227,211,.42)}
+.timeline button i{background:rgba(236,227,211,.62)} /* (.42 in P3; brighter again in P5) */
 .timeline:hover button span{opacity:.86}
 .timeline button:hover span,.timeline button:focus-visible span{opacity:1}
 .timeline button span{text-shadow:0 0 3px rgba(0,0,0,1),0 0 3px rgba(0,0,0,1),0 0 8px rgba(0,0,0,.85),0 0 16px rgba(0,0,0,.6)}
 .timeline button[aria-current="step"] span{opacity:1;text-shadow:0 0 3px rgba(0,0,0,1),0 0 3px rgba(0,0,0,1),0 0 8px rgba(0,0,0,.85),0 0 16px rgba(0,0,0,.6)}
-.timeline button.done i{background:rgba(236,227,211,.72)}
+.timeline button.done i{background:rgba(236,227,211,.85)}
 .timeline .group.here .label{color:var(--ink)}
 
 /* ---------- depth (Awwwards P1): the words sit a little nearer than the world and drift against the camera's
@@ -492,3 +492,9 @@ html.rewinding :is(.story,.marker span){opacity:0;transition:opacity .4s ease}
 html.motion-off .chapter.final .micro{opacity:.9}
 @media (max-width:479px){.chapter.final::before{inset:-4rem -5rem -4rem -3rem}}
 
+/* ---------- "One day," (Awwwards P5) ----------
+   The card between the acts was solid black for a second and a half: it could be taken for loading. Now the
+   world behind it shows through, faint and blurred (the last of the again's strata, then the quarry). */
+.cut{background:rgba(6,9,10,.84);-webkit-backdrop-filter:blur(5px);backdrop-filter:blur(5px)}
+/* phones: the ending's choices wrap wider than the row's ellipse reaches; a denser ground under them (check:contrast) */
+@media (max-width:479px){.outro::before{inset:-1rem -3rem -2.8rem -2.5rem;background:radial-gradient(closest-side,rgb(var(--stage-rgb,13 24 28) / .95),rgb(var(--stage-rgb,13 24 28) / .92) 72%,rgb(var(--stage-rgb,13 24 28) / .4) 90%,rgb(var(--stage-rgb,13 24 28) / 0))}}

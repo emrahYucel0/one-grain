@@ -30,7 +30,7 @@ vec3 travel(vec4 A, vec4 B, vec3 pa, vec3 pb, vec3 R, out float e, out float arc
   else if (uStyle == 13) { dd = 1. - clamp((pb.y - uHeroB.y) / 12. + .5, 0., 1.); w = .94; }
   else dd = clamp(length(A.xyz - uHeroA) / 25., 0., 1.);
   float d = w * dd + (1. - w) * R.x;
-  if (uStyle == 11) d = R.x * .3;
+  if (uStyle == 11) d = R.x; // (Awwwards P5: spread across the move, so the chip builds up grain by grain)
   float t = clamp((uT - d * (1. - uSpan)) / uSpan, 0., 1.);
   float q = -2. * t + 2.;
   e = t < .5 ? 4. * t * t * t : 1. - q * q * q * .5;
@@ -40,7 +40,13 @@ vec3 travel(vec4 A, vec4 B, vec3 pa, vec3 pb, vec3 R, out float e, out float arc
   if (uStyle == 0) { p.y += arc * (.6 + 2.4 * R.y) * amt * uK; p += arc * vec3(sin(e * 8. + R.x * 30.), cos(e * 6. + R.z * 20.), sin(e * 7. + R.y * 25.)) * .6 * amt; } // rise
   else if (uStyle == 2) { p += uDir * arc * (2. + 4. * R.y) * uK; p.y += arc * .4 * R.z; }                                                                               // flow
   else if (uStyle == 9) { p.y += arc * .08; }                                                                                                                             // slice
-  else if (uStyle == 11) { if (e <= 0.) p = pa; else if (e >= 1.) p = pb; else if (e < .5) { float k = e * 2.; p = uHeroA + (pa - uHeroA) * (1. + k * k * k * 25.); } else { float k = (e - .5) * 2.; p = uHeroB + (pb - uHeroB) * mix(.01, 1., k * k); } } // dive
+  else if (uStyle == 11) { // dive (Awwwards P5): the exposed layer flies apart and goes as we dive, while the chip is
+    // built in place around us, grain by grain, its circuit lit from the first grains on (it used to burst out of
+    // one point past the lens, the one moment in the story without a form)
+    if (e <= 0.) p = pa; else if (e >= 1.) p = pb;
+    else if (e < .5) { float k = e * 2.; p = uHeroA + (pa - uHeroA) * (1. + k * k * k * 25.); m.size = (1. - k) * (1. - k); }
+    else { float k = (e - .5) * 2.; p = pb + vec3(0., (1. - k) * (1. - k) * .5, 0.); m.size = k; }
+  }
   else if (uStyle == 12) { p.y += arc * (4. + 10. * R.y) * uK; p.xz = mix(p.xz, e < .5 ? pa.xz : pb.xz, arc); }                                                        // beam
   else if (uStyle == 13) { p.z += arc * 1.5; }                                                                                                                            // raster
   else if (uStyle == 15) { p.x += sign(pa.x - uHeroA.x + .001) * arc * (1.5 + 2.5 * R.y) * uK; p.y -= arc * arc * (2. + 4. * R.z); }                                  // crack

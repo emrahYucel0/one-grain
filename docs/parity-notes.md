@@ -96,6 +96,13 @@ Design work for an Awwwards submission, made in the port without a reference fil
 - **P4, the ending's last shot** (`core/loop.ts`, `uScreen`): as the camera draws back, the sand takes the
   proportions of the visitor's own screen (area kept) and is framed whole, centred across the screen
   above the words, so the text never sits on its corner (`29-hold-now`).
+- **P5, the dive into the chip** (`shaders/transitions.glsl` style 11): the exposed layer flies apart
+  and goes while the chip is built in place grain by grain, its circuit lit from the first grains, instead
+  of bursting out of one point past the lens (`24-tr-light-chip`).
+- **P5, the first world centred** (`story/worlds.ts` magma `look`): the crystals and the melt sit in the
+  middle of the frame from the gate on (`01-hold-magma`).
+- **P5, "One day,"**: the card lets the world behind it show through, faint and blurred, so the pause
+  between the acts does not read as loading; the rail's marks brighter again.
 
 ## Phase 7: skies, the loupe, the light chapter's pattern (reference v27)
 
