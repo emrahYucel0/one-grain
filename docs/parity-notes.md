@@ -103,6 +103,14 @@ Design work for an Awwwards submission, made in the port without a reference fil
   middle of the frame from the gate on (`01-hold-magma`).
 - **P5, "One day,"**: the card lets the world behind it show through, faint and blurred, so the pause
   between the acts does not read as loading; the rail's marks brighter again.
+- **P6, scroll and story apart** (`timeline/scroll.ts`, `timeline/config.ts`): the wheel is smoothed by
+  Lenis, and the story no longer follows the scroll position itself but a shown value that chases it under
+  a speed limit (0.8 chapters a second, halved through "One day," and the quarry's break; lowered through
+  every transition's middle), so a hard flick cannot carry a transition past in a few frames or skip one.
+  Every chapter's scroll length is shared 35 % still world, 65 % transition, and a transition's pace along
+  the scroll is eased, slower while the grains are in the air. Nothing scrolls on its own any more: the
+  snap to holds is gone. A jump (rail, keys, a link) lifts the limit until it lands; with motion off
+  neither the smoothing nor the limit applies.
 
 ## Phase 7: skies, the loupe, the light chapter's pattern (reference v27)
 
@@ -293,7 +301,7 @@ Where the port does not copy the file:
 - **Chapter jumps snap exactly.** With v15's scrub of 1.6 s, ScrollTrigger's directional snap
   carries a jump on to the next chapter (it measures velocity on the lagging scrubbed progress). A
   jump the port makes itself (keys, rail, hash, focus) snaps to its target; free scrolling keeps
-  GSAP's directional snap.
+  GSAP's directional snap. (Awwwards P6 removed the snap and the scrub; see above.)
 - **The square-pixel stage is deleted**, not left unreachable as in v15 (`uLast = -1`).
 - **The marker's `!important`.** v10 pinned the ring's opacity with `opacity:.95 !important`, and the
   port had copied it; v15 removed it. Without it the ring fades as designed.

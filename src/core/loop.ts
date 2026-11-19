@@ -174,6 +174,7 @@ export class Loop {
   private frame(draw = true): void {
     const { stage, grains, hero, timeline, hash, projection, typeAxes, stageColour, pipeline, timer, layers } = this.d;
     const reduced = env.reduced;
+    timeline.advance(performance.now());
     const v = progressOverride() ?? this.progressHook?.(performance.now()) ?? timeline.state.v;
     reportProgress(v);
     const dt = this.clock.tick(reduced);

@@ -1,7 +1,7 @@
 // Reverse scrub (npm run check:reverse): for the transitions added from blockout v6, a position
 // reached by scrolling backwards must look exactly like the same position reached forwards.
 //
-// Real scrolling (scroll events through ScrollTrigger's scrub), snapping off (?nosnap) so the page
+// Real scrolling (scroll events through Lenis and the speed limit, timeline/scroll.ts), so the page
 // can rest mid-transition, shader time frozen. Each position is approached from the hold before
 // the transition (forwards) and from the hold after it (backwards), in small steps, one per frame.
 import pixelmatch from 'pixelmatch';
@@ -12,7 +12,7 @@ import { startDev } from './lib/servers.mjs';
 
 const STYLES = new Set([17, 18, 19, 20, 21]);  // drift, break, separate, grow
 const TS = [.2, .45, .75];
-const SETTLE_MS = 2200;                     // scrub (1 s) plus CSS transitions
+const SETTLE_MS = 1200;                     // CSS transitions, once the story has caught up with the scroll
 const MAX_PCT = .05;                        // capture noise is ~0.02 %
 
 const vite = await createServer({ server: { middlewareMode: true }, appType: 'custom', logLevel: 'error' });
@@ -32,10 +32,19 @@ await page.evaluate(() => { window.__T = 10; window.__LIVE = 0; window.__FT = 0;
 
 const max = await page.evaluate(() => document.documentElement.scrollHeight - innerHeight);
 const px = (v) => Math.round(v * max);
+/** The story follows the scroll under a speed limit (timeline/scroll.ts): wait until it has caught up. */
+const settle = async () => {
+  await page.waitForFunction(() => {
+    const w = window, v = w.__progress;
+    if (v !== w.__settleV) { w.__settleV = v; w.__settleAt = performance.now(); return false; }
+    return performance.now() - w.__settleAt > 600;
+  }, null, { polling: 100, timeout: 60000 });
+  await page.waitForTimeout(SETTLE_MS);
+};
 /** Scroll to `from` at once, then glide to `to` in ~40 px steps (one per frame), then settle. */
 const approach = async (from, to) => {
   await page.evaluate((y) => scrollTo({ top: y, behavior: 'instant' }), from);
-  await page.waitForTimeout(SETTLE_MS);
+  await settle();
   await page.evaluate((target) => new Promise((done) => {
     const step = () => {
       const d = target - scrollY;
@@ -45,7 +54,7 @@ const approach = async (from, to) => {
     };
     requestAnimationFrame(step);
   }), to);
-  await page.waitForTimeout(SETTLE_MS);
+  await settle();
   return { shot: PNG.sync.read(await page.screenshot()), v: await page.evaluate(() => window.__progress), y: await page.evaluate(() => scrollY) };
 };
 

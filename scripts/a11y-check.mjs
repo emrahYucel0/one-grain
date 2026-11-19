@@ -127,7 +127,13 @@ try {
   const rm = await newPage(browser, { viewport: { width: 1440, height: 900 }, reducedMotion: 'reduce' });
   await rm.goto(`${url}?parity`);
   await rm.waitForFunction(() => window.__PACK, null, { timeout: 60000 });
-  const seg = await rm.evaluate(async () => { const m = await import('/src/timeline/segments.ts'); const s = m.SEGMENTS[1]; return { quarter: (s.start + s.len * .25) / m.TOTAL, mid: (s.start + s.len * .5) / m.TOTAL }; });
+  // where the transition is a quarter through (its pace along the scroll is eased: timeline/segments.ts midEase)
+  const seg = await rm.evaluate(async () => {
+    const m = await import('/src/timeline/segments.ts'), s = m.SEGMENTS[1];
+    let lo = s.start, hi = s.start + s.len / 2;
+    for (let k = 0; k < 40; k++) { const x = (lo + hi) / 2; if (m.locate(x / m.TOTAL).t < .25) lo = x; else hi = x; }
+    return { quarter: hi / m.TOTAL, mid: (s.start + s.len * .5) / m.TOTAL };
+  });
   await rm.evaluate((v) => { window.__V = v; }, seg.quarter); await rm.waitForTimeout(300);
   const q = await rm.evaluate(() => +document.getElementById('scene').style.opacity);
   await rm.evaluate((v) => { window.__V = v; }, seg.mid); await rm.waitForTimeout(300);

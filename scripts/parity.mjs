@@ -64,25 +64,42 @@ const SUBJECT_REASON = 'purity → crystal reframe (Phase 2): the pool centred, 
 
 // Story layout, straight from the source (no copy of the numbers here).
 const vite = await createServer({ server: { middlewareMode: true }, appType: 'custom', logLevel: 'error' });
-const { SEGMENTS, SNAP_POINTS, TOTAL, transitionMidpoint } = await vite.ssrLoadModule('/src/timeline/segments.ts');
+const { SEGMENTS, SNAP_POINTS, TOTAL, locate, transitionMidpoint } = await vite.ssrLoadModule('/src/timeline/segments.ts');
 const { WORLDS } = await vite.ssrLoadModule('/src/story/worlds.ts');
 const { TRANSITIONS } = await vite.ssrLoadModule('/src/story/transitions.ts');
 await vite.close();
 
+// Each page is driven to the same place in the story (a world, or a transition at t). The reference is
+// driven as it always was, along the authored track (each world's hold, each transition's length, t
+// even); the port shares a chapter's scroll out between hold and transition and eases a transition's
+// pace along it (Awwwards P6, timeline/segments.ts), so it is driven to the same (world, t) on its own track.
+const refAt = (i, t) => { // hold i (t null) or transition i at t, on the authored track
+  let total = 0, start = 0;
+  WORLDS.forEach((w, k) => { if (k === i) start = total; total += w.hold; if (k < TRANSITIONS.length) total += TRANSITIONS[k].len; });
+  if (t === null) return i === 0 ? 0 : i === WORLDS.length - 1 ? 1 : (start + WORLDS[i].hold / 2) / total;
+  return (start + WORLDS[i].hold + TRANSITIONS[i].len * t) / total;
+};
+const portAt = (i, t) => { // transition i at t on the port's track
+  const g = SEGMENTS.find((x) => x.type === 'tr' && x.i === i);
+  let lo = g.start, hi = g.start + g.len;
+  for (let k = 0; k < 60; k++) { const x = (lo + hi) / 2; if (locate(x / TOTAL).t < t) lo = x; else hi = x; }
+  return hi / TOTAL;
+};
+
 const shots = [];
 WORLDS.forEach((w, i) => {
-  shots.push({ id: `${String(shots.length + 1).padStart(2, '0')}-hold-${w.slug}`, kind: 'hold', label: `Hold · ${w.slug}`, v: SNAP_POINTS[i], wait: i === WORLDS.length - 1 ? FINAL_LATE_MS : SETTLE_MS });
+  shots.push({ id: `${String(shots.length + 1).padStart(2, '0')}-hold-${w.slug}`, kind: 'hold', label: `Hold · ${w.slug}`, v: SNAP_POINTS[i], refV: refAt(i, null), wait: i === WORLDS.length - 1 ? FINAL_LATE_MS : SETTLE_MS });
   if (i < WORLDS.length - 1) {
     const tr = TRANSITIONS[i];
-    shots.push({ id: `${String(shots.length + 1).padStart(2, '0')}-tr-${w.slug}-${WORLDS[i + 1].slug}`, kind: 'transition', label: `Transition midpoint · ${w.slug} → ${WORLDS[i + 1].slug} (${tr.cam}, style ${tr.g})`, v: transitionMidpoint(i), wait: SETTLE_MS, intentional: !!tr.subject });
+    shots.push({ id: `${String(shots.length + 1).padStart(2, '0')}-tr-${w.slug}-${WORLDS[i + 1].slug}`, kind: 'transition', label: `Transition midpoint · ${w.slug} → ${WORLDS[i + 1].slug} (${tr.cam}, style ${tr.g})`, v: transitionMidpoint(i), refV: refAt(i, .5), wait: SETTLE_MS, intentional: !!tr.subject });
   }
 });
 // hands-on holds, with the pointer parked over the scene. Captured last (once a mouse has moved,
 // it adds camera parallax to every later shot) and given time: pointer smoothing advances a fixed
 // fraction per frame, so each page converges at its own frame rate
 const hover = [
-  { id: '30-hover-desert', kind: 'interaction', label: 'Desert · cursor brushing the dunes', v: SNAP_POINTS[4], mouse: [760, 560], wait: 6500 },
-  { id: '31-hover-chip', kind: 'interaction', label: 'Chip · cursor lighting the switches', v: SNAP_POINTS[12], mouse: [640, 520], wait: 6500 },
+  { id: '30-hover-desert', kind: 'interaction', label: 'Desert · cursor brushing the dunes', v: SNAP_POINTS[4], refV: refAt(4, null), mouse: [760, 560], wait: 6500 },
+  { id: '31-hover-chip', kind: 'interaction', label: 'Chip · cursor lighting the switches', v: SNAP_POINTS[12], refV: refAt(12, null), mouse: [640, 520], wait: 6500 },
 ];
 
 // the transitions added from blockout v6, at three more points each
@@ -94,7 +111,7 @@ for (const seg of SEGMENTS.filter((x) => x.type === 'tr' && REWORKED.has(TRANSIT
     extra.push({
       id: `${32 + extra.length}-tr-${a}-${b}-t${Math.round(t * 100)}`, kind: 'transition',
       label: `Transition · ${a} → ${b} at t = ${t} (${tr.cam}, style ${tr.g})`,
-      v: (seg.start + seg.len * t) / TOTAL, wait: SETTLE_MS, intentional: !!tr.subject,
+      v: portAt(seg.i, t), refV: refAt(seg.i, t), wait: SETTLE_MS, intentional: !!tr.subject,
     });
   }
 }
@@ -106,13 +123,13 @@ for (const seg of SEGMENTS.filter((x) => x.type === 'tr' && TRANSITIONS[x.i].g =
     extra.push({
       id: `${32 + extra.length}-tr-${a}-${b}-t${Math.round(t * 100)}`, kind: 'transition',
       label: `Transition · ${a} → ${b} at t = ${t} (${tr.cam}, style ${tr.g})`,
-      v: (seg.start + seg.len * t) / TOTAL, wait: SETTLE_MS,
+      v: portAt(seg.i, t), refV: refAt(seg.i, t), wait: SETTLE_MS,
     });
   }
 }
 
 // the final chapter early in its sequence (the 15 s state is the standard final hold)
-extra.push({ id: `${32 + extra.length}-final-1.5s`, kind: 'hold', label: 'Final chapter at 1.5 s (sentence in, the grain hovering in full light)', v: 1, wait: FINAL_EARLY_MS });
+extra.push({ id: `${32 + extra.length}-final-1.5s`, kind: 'hold', label: 'Final chapter at 1.5 s (sentence in, the grain hovering in full light)', v: 1, refV: 1, wait: FINAL_EARLY_MS });
 
 for (const s of [...shots, ...hover, ...extra]) {
   if (DEVIATIONS[s.id]) { s.intentional = true; s.reason = DEVIATIONS[s.id]; }
@@ -139,7 +156,7 @@ try {
   console.log(`grains per world: port ${n}, reference texture sized for ${refN}`);
 
   for (const s of [...shots, ...extra, ...hover]) {
-    for (const p of [ref, port]) await p.evaluate(([v, t]) => { window.__V = v; window.__T = t; }, [s.v, TIME]);
+    for (const [p, v] of [[ref, s.refV], [port, s.v]]) await p.evaluate(([v, t]) => { window.__V = v; window.__T = t; }, [v, TIME]);
     if (s.mouse) for (const p of [ref, port]) await p.mouse.move(s.mouse[0], s.mouse[1]);
     await ref.waitForTimeout(s.wait);
     // CSS transitions are fast-forwarded: the two pages' timers are not in step to the millisecond

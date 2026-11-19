@@ -2,6 +2,7 @@ import { ss } from '../core/ease';
 import { TRANSITIONS } from '../story/transitions';
 import type { TransitionDef } from '../story/types';
 import { WORLDS } from '../story/worlds';
+import { SCROLL } from './config';
 
 // The scroll track is a chain of uneven segments: hold(0) tr(0) hold(1) tr(1) … hold(14).
 // Lengths are in screen heights; progress v ∈ [0, 1] maps onto the whole chain.
@@ -9,11 +10,17 @@ import { WORLDS } from '../story/worlds';
 export interface Segment { type: 'hold' | 'tr'; i: number; start: number; len: number }
 
 const CH = WORLDS.length;
+/**
+ * Each chapter keeps its authored scroll length (its world's hold and the transition out of it), shared
+ * out in favour of the transition (timeline/config.ts holdShare). The last world is a hold only.
+ */
 export const SEGMENTS: readonly Segment[] = (() => {
   const segs: Segment[] = []; let total = 0;
   WORLDS.forEach((w, i) => {
-    segs.push({ type: 'hold', i, start: total, len: w.hold }); total += w.hold;
-    if (i < CH - 1) { segs.push({ type: 'tr', i, start: total, len: TRANSITIONS[i]!.len }); total += TRANSITIONS[i]!.len; }
+    if (i === CH - 1) { segs.push({ type: 'hold', i, start: total, len: w.hold }); return; }
+    const len = w.hold + TRANSITIONS[i]!.len, hold = len * SCROLL.holdShare;
+    segs.push({ type: 'hold', i, start: total, len: hold }, { type: 'tr', i, start: total + hold, len: len - hold });
+    total += len;
   });
   return segs;
 })();
@@ -29,17 +36,17 @@ export const SNAP_POINTS: readonly number[] = WORLDS.map((_, i) => {
   return (h.start + h.len / 2) / TOTAL;
 });
 
-/**
- * Where scrolling settles: every hold, and the middle of the cut, so the "One day," card can be
- * rested on (v15). Chapter navigation (nav, hash, keys) uses SNAP_POINTS: one per chapter, by index.
- */
-export const SCROLL_SNAP: readonly number[] = [...SNAP_POINTS, ...SEGMENTS.filter((s) => s.type === 'tr' && TRANSITIONS[s.i]!.cam === 'cut').map((s) => (s.start + s.len / 2) / TOTAL)].sort((a, b) => a - b);
-
 /** Progress at the middle of transition i (used by the parity harness). */
 export const transitionMidpoint = (i: number): number => {
   const s = SEGMENTS.find((x) => x.type === 'tr' && x.i === i)!;
   return (s.start + s.len / 2) / TOTAL;
 };
+
+/**
+ * A transition's pace along its scroll (timeline/config.ts midEase): slower through the middle, where the
+ * grains are in the air, quicker at the ends; 0, ½ and 1 stay where they are.
+ */
+const midEase = (u: number): number => u + SCROLL.midEase * Math.sin(2 * Math.PI * u) / (2 * Math.PI);
 
 export interface Located {
   /** blending world a → b by t */
@@ -59,7 +66,7 @@ export interface Located {
 export function locate(v: number): Located {
   const s = Math.min(TOTAL - 1e-6, Math.max(0, v * TOTAL));
   const seg = SEGMENTS.find((x) => s >= x.start && s < x.start + x.len) ?? last;
-  if (seg.type === 'tr') return { a: seg.i, b: seg.i + 1, t: (s - seg.start) / seg.len, tr: TRANSITIONS[seg.i]!, hold: -1, lean: 1 };
+  if (seg.type === 'tr') return { a: seg.i, b: seg.i + 1, t: midEase((s - seg.start) / seg.len), tr: TRANSITIONS[seg.i]!, hold: -1, lean: 1 };
   if (seg.i === CH - 1) return { a: CH - 2, b: CH - 1, t: 1, tr: TRANSITIONS[CH - 2]!, hold: CH - 1, lean: 0 };
   return { a: seg.i, b: seg.i + 1, t: 0, tr: TRANSITIONS[seg.i]!, hold: seg.i, lean: ss(0, 1, (s - seg.start) / seg.len) };
 }
@@ -79,3 +86,41 @@ export const nearestChapter = (v: number): number => {
   SNAP_POINTS.forEach((p, i) => { if (Math.abs(p - v) < Math.abs(SNAP_POINTS[best]! - v)) best = i; });
   return best;
 };
+
+// Chapter space: c ∈ [0, CH], chapter i spanning [i, i + 1) (its hold, then its transition; the last world
+// a hold only). The story's speed limit is measured in it (timeline/scroll.ts), so every chapter, long or
+// short on the track, takes as long at the limit.
+const CHAPTER_START = WORLDS.map((_, i) => SEGMENTS.find((x) => x.type === 'hold' && x.i === i)!.start);
+const chapterLen = (i: number): number => (i < CH - 1 ? CHAPTER_START[i + 1]! : TOTAL) - CHAPTER_START[i]!;
+
+/** Story progress (0..1) to chapter space. */
+export function toChapters(v: number): number {
+  const s = Math.min(TOTAL, Math.max(0, v * TOTAL));
+  let i = CH - 1; while (i > 0 && CHAPTER_START[i]! > s) i--;
+  return Math.min(CH, i + (s - CHAPTER_START[i]!) / chapterLen(i));
+}
+
+/** Chapter space to story progress (0..1). */
+export function fromChapters(c: number): number {
+  const i = Math.min(CH - 1, Math.max(0, Math.floor(c)));
+  return Math.min(1, Math.max(0, (CHAPTER_START[i]! + (c - i) * chapterLen(i)) / TOTAL));
+}
+
+const CRITICAL = new Set(SCROLL.critical.from.map((slug) => WORLDS.findIndex((w) => w.slug === slug)));
+
+/**
+ * The share of the speed limit allowed at chapter-space position c: lower through a transition's middle
+ * (midSlow), and lower again through the transitions that must never be hurried (critical), eased in
+ * before them and out after them.
+ */
+export function speedAt(c: number): number {
+  const i = Math.min(CH - 1, Math.floor(c)), f = c - i, h = SCROLL.holdShare;
+  let k = 1;
+  if (i < CH - 1 && f > h) k *= 1 - SCROLL.midSlow * Math.sin(Math.PI * (f - h) / (1 - h));
+  const { ramp, speed } = SCROLL.critical;
+  for (const j of CRITICAL) {
+    const a = j + h, b = j + 1, w = c < a ? ss(a - ramp, a, c) : c > b ? 1 - ss(b, b + ramp, c) : 1;
+    if (w > 0) k *= 1 - (1 - speed) * w;
+  }
+  return k;
+}

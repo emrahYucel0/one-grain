@@ -20,12 +20,28 @@ const HOOKS = [['    fxTick();\n  }', '    fxTick(); window.__progress = state.v
 
 const vite = await createServer({ server: { middlewareMode: true }, appType: 'custom', logLevel: 'error' });
 const { WORLDS } = await vite.ssrLoadModule('/src/story/worlds.ts');
-const { TRANSITIONS } = await vite.ssrLoadModule('/src/story/transitions.ts');
 const holds = WORLDS.map((w) => w.hold);
 // the reference's transition lengths, read from its TR table
 const refLens = [...(await readFile(referenceFile(TEXT_REFERENCE), 'utf8')).matchAll(/\{ g: \d+,\s*cam: '\w+',\s*len: ([\d.]+)/g)].map((m) => +m[1]);
 if (refLens.length !== WORLDS.length - 1) throw new Error(`expected ${WORLDS.length - 1} reference transitions, found ${refLens.length}`);
-const portLens = TRANSITIONS.map((t) => t.len);
+// the port's own track (timeline/segments.ts: chapters shared out between hold and transition, and a
+// transition's pace along the scroll eased), so its positions are found by locate() itself
+const { SEGMENTS, SNAP_POINTS, TOTAL, locate } = await vite.ssrLoadModule('/src/timeline/segments.ts');
+// `side`: the reference's own t at that point lands a hair below (-1) or at/above (1) the nominal t, and
+// thresholds sit exactly there (the words switch at t = 0.5), so the port's point lands on the same side
+const portAt = (i, t, kind, side) => {
+  if (kind === 'hold') return SNAP_POINTS[i];
+  const g = SEGMENTS.find((x) => x.type === 'tr' && x.i === i);
+  let lo = g.start, hi = g.start + g.len;
+  for (let k = 0; k < 60; k++) { const x = (lo + hi) / 2; if (locate(x / TOTAL).t < t) lo = x; else hi = x; }
+  return (side < 0 ? lo : hi) / TOTAL;
+};
+const refSide = (i, t) => { // the reference's locate(), its segments summed in its order
+  let total = 0, start = 0;
+  holds.forEach((h, k) => { total += h; if (k === i) start = total; if (k < refLens.length) total += refLens[k]; });
+  const s = Math.min(total - 1e-6, Math.max(0, progress(refLens, i, t, 'tr') * total));
+  return (s - start) / refLens[i] < t ? -1 : 1;
+};
 await vite.close();
 const dev = await startDev(5189);
 const progress = (lens, i, t, kind) => { // kind: hold → middle of hold i; tr → transition i at t
@@ -61,7 +77,7 @@ for (const [kind, i, t] of cases) {
     await p.evaluate(() => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r))));
     return { text: await read(p), rendered, v: await p.evaluate(() => window.__progress) };
   };
-  const px = await at(port, progress(portLens, i, t, kind)), py = await at(ref, progress(refLens, i, t, kind));
+  const px = await at(port, portAt(i, t, kind, kind === 'tr' ? refSide(i, t) : 1)), py = await at(ref, progress(refLens, i, t, kind));
   const x = px.text, y = py.text;
   n++;
   // a page that never rendered the position fails it too, with the progress it is stuck at

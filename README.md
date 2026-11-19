@@ -83,7 +83,7 @@ story/worlds.ts, transitions.ts (typed data)           │ per frame
         └─► timeline/segments ─► core/loop ──► camera/shot ─────┘
               (scroll → a,b,t)      ▲   └────► input/*, audio/*, core/tiers
                                     │
-                    timeline/scroll (ScrollTrigger scrub + snap)
+                    timeline/scroll (Lenis, the shown progress, its speed limit)
 ```
 
 One responsibility per module:
@@ -97,7 +97,7 @@ One responsibility per module:
 | `src/render` | How grains are drawn: the grain material and uniforms, the hero grain, and binding pack layers to textures |
 | `src/shaders` | GLSL as raw-imported files: resting behaviours, palette, transition styles, interaction, main, hero/halo |
 | `src/camera` | The shot director (bezier flights with per-style handles, orbit, cut, the hold lean, an optional subject to aim at) and the camera rig |
-| `src/timeline` | Uneven scroll segments, `locate()`, ScrollTrigger scrub and snap to holds, `#slug` routing, keyboard chapter steps |
+| `src/timeline` | Uneven scroll segments, `locate()`, the scroll (Lenis) and the story's shown progress, which follows it under a speed limit (`config.ts`: every scroll setting in one place), `#slug` routing, keyboard chapter steps |
 | `src/ui` | Clock, chapter card (its letters and words choreographed on the story's progress, the chapter's figures under its index), act label, timeline nav (the current chapter named, the ones behind marked), hero marker, cut card, intro, entry gate (`gate.ts`: the veil around the grain and the iris that opens it, the opening shot's pull-back from the grain), starting again (`rewind.ts`: the story run back to its start), timed ending and its last word (`outro.ts`: start again, share, credits dialog), the cursor (`cursor.ts`: a mouse only; the brush and the probe on the hands-on holds), accessibility glue |
 | `src/input` | Mouse hover and touch tap state and the mouse's speed (the cursor's touch: grains stirred under a moving mouse in every world without hands-on play); projecting the pointer onto the scene for the desert and chip holds |
 | `src/audio` | The sound (v23): `engine` (context, buses, limiter, room, noise), `score` (pads, notes, motif, pulse), `ambience` (primitives, the water rush, the event scheduler), `frame` (the story → the sound, per frame), `toggle` (the button). Its data is `story/sound.ts`. Off by default; nothing is created before the visitor asks |
@@ -144,7 +144,7 @@ Drawing changes (materials, lighting) stay inside `render/` and `shaders/`, with
 
 `core/loop.ts` does the following each frame:
 
-1. Reads progress (the ScrollTrigger-scrubbed scroll position).
+1. Reads progress (`timeline/scroll.ts`: the scroll's target, followed under a speed limit).
 2. `locate()`s it to worlds *a → b* at *t*.
 3. Asks `camera/shot` for the camera and the hero grain. While resting, the camera already
    leans towards the next move (up to 0.6 units by the end of the hold); the lean fades out as
@@ -412,7 +412,6 @@ Everything is synthesised with Web Audio (no files), ported from `reference/v23-
 | `?off=a,b` | Switch render layers off (light, shadows, dof, bloom, grade, sky, loupe), for measurements |
 | `?grains=N` · `?pointcap=N` · `?shadowstride=N` | Measurements: grains per world, largest grain in pixels, every N-th grain casts shadows (default 1: all) |
 | `?parity` | Let a harness drive progress (`window.__V`) and shader time (`window.__T`), or render a transition point directly (`window.__AT = { tr, t, lean }`); pin the display's live clock (`window.__LIVE`, ms) and the seconds spent in the current hold (`window.__FT`: ring fade, final hold); the rendered progress is published as `window.__progress` |
-| `?nosnap` | Scrolling does not settle on chapters, so a position mid-transition can be held |
 | `?gate` | The entry gate even under `?parity`, which otherwise skips it (as do `#slug` links) |
 | `?nosafe` | No hero safe area: the camera as composed for 16:9, for comparison (`camera/safe-area.ts`) |
 | `#magma` … `#now` | Open at that chapter |

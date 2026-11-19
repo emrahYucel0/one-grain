@@ -41,7 +41,13 @@ export async function wcag22(browser, url, check) {
     check('motion button: "Motion on", pressed, beside the sound button', s0.label === 'Motion on' && s0.pressed === 'true' && !s0.off && together, JSON.stringify(s0));
     await p.getByRole('button', { name: 'Motion on' }).click();
     const s1 = await state();
-    const quarter = await p.evaluate(async () => { const m = await import('/src/timeline/segments.ts'); const g = m.SEGMENTS[1]; return (g.start + g.len * .25) / m.TOTAL; });
+    // a quarter through the transition (its pace along the scroll is eased: timeline/segments.ts midEase)
+    const quarter = await p.evaluate(async () => {
+      const m = await import('/src/timeline/segments.ts'), g = m.SEGMENTS[1];
+      let lo = g.start, hi = g.start + g.len / 2;
+      for (let k = 0; k < 40; k++) { const x = (lo + hi) / 2; if (m.locate(x / m.TOTAL).t < .25) lo = x; else hi = x; }
+      return hi / m.TOTAL;
+    });
     await rest(p, quarter);
     const fade = await p.evaluate(() => +document.getElementById('scene').style.opacity);
     check('motion off: the reduced-motion experience (the canvas fades instead of morphing)', s1.label === 'Motion off' && s1.pressed === 'false' && s1.off && Math.abs(fade - .293) < .02, `${JSON.stringify(s1)}, canvas ${fade}`);
