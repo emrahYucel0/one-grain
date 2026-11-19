@@ -27,6 +27,7 @@ import { ChapterView } from './ui/chapter';
 import { ClockView, clockProgress } from './ui/clock';
 import { fillLiveFacts, readCopy, type Copy } from './ui/copy';
 import { Cursor } from './ui/cursor';
+import { FigureView } from './ui/figure';
 import { Gate } from './ui/gate';
 import { Outro } from './ui/outro';
 import { Rewind } from './ui/rewind';
@@ -117,6 +118,7 @@ function boot(): void {
   const ending = new Ending($('chapter'));
   const marker = new HeroMarker($('marker'), $('markerLabel'), stage.renderer.domElement);
   const cut = $('cut');
+  const figure = new FigureView($('figure'), copy);
   const sound = new SoundToggle($<HTMLButtonElement>('sound'));
   new MotionToggle($<HTMLButtonElement>('motion'));
   const gate = new Gate({
@@ -185,6 +187,7 @@ function boot(): void {
     const cutOp = (rewind.active ? 0 : cutOpacity(tr, t)).toFixed(3);
     if (cutOp !== cut.style.opacity) cut.style.opacity = cutOp;
     intro.update(v);
+    figure.update(hold, now, env.reduced, rewind.active);
     // starting again passes every chapter on its way back: no announcements, no chapter motifs
     const rest = rewind.active ? -1 : hold;
     a11y.rest(rest);

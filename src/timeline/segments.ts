@@ -10,6 +10,10 @@ import { SCROLL } from './config';
 export interface Segment { type: 'hold' | 'tr'; i: number; start: number; len: number }
 
 const CH = WORLDS.length;
+const CRITICAL = new Set(SCROLL.critical.from.map((slug) => WORLDS.findIndex((w) => w.slug === slug)));
+/** Act II's worlds, told as a montage (timeline/config.ts staccato); not the critical ones' moves. */
+export const STACCATO: ReadonlySet<number> = new Set(SCROLL.staccato.worlds.map((slug) => WORLDS.findIndex((w) => w.slug === slug)).filter((i) => !CRITICAL.has(i)));
+const holdShareOf = (i: number): number => (STACCATO.has(i) ? SCROLL.staccato.holdShare : SCROLL.holdShare);
 /**
  * Each chapter keeps its authored scroll length (its world's hold and the transition out of it), shared
  * out in favour of the transition (timeline/config.ts holdShare). The last world is a hold only.
@@ -18,7 +22,7 @@ export const SEGMENTS: readonly Segment[] = (() => {
   const segs: Segment[] = []; let total = 0;
   WORLDS.forEach((w, i) => {
     if (i === CH - 1) { segs.push({ type: 'hold', i, start: total, len: w.hold }); return; }
-    const len = w.hold + TRANSITIONS[i]!.len, hold = len * SCROLL.holdShare;
+    const len = w.hold + TRANSITIONS[i]!.len, hold = len * holdShareOf(i);
     segs.push({ type: 'hold', i, start: total, len: hold }, { type: 'tr', i, start: total + hold, len: len - hold });
     total += len;
   });
@@ -66,7 +70,7 @@ export interface Located {
 export function locate(v: number): Located {
   const s = Math.min(TOTAL - 1e-6, Math.max(0, v * TOTAL));
   const seg = SEGMENTS.find((x) => s >= x.start && s < x.start + x.len) ?? last;
-  if (seg.type === 'tr') return { a: seg.i, b: seg.i + 1, t: midEase((s - seg.start) / seg.len), tr: TRANSITIONS[seg.i]!, hold: -1, lean: 1 };
+  if (seg.type === 'tr') { const u = (s - seg.start) / seg.len; return { a: seg.i, b: seg.i + 1, t: STACCATO.has(seg.i) ? u : midEase(u), tr: TRANSITIONS[seg.i]!, hold: -1, lean: 1 }; }
   if (seg.i === CH - 1) return { a: CH - 2, b: CH - 1, t: 1, tr: TRANSITIONS[CH - 2]!, hold: CH - 1, lean: 0 };
   return { a: seg.i, b: seg.i + 1, t: 0, tr: TRANSITIONS[seg.i]!, hold: seg.i, lean: ss(0, 1, (s - seg.start) / seg.len) };
 }
@@ -106,20 +110,19 @@ export function fromChapters(c: number): number {
   return Math.min(1, Math.max(0, (CHAPTER_START[i]! + (c - i) * chapterLen(i)) / TOTAL));
 }
 
-const CRITICAL = new Set(SCROLL.critical.from.map((slug) => WORLDS.findIndex((w) => w.slug === slug)));
-
 /**
  * The share of the speed limit allowed at chapter-space position c: lower through a transition's middle
  * (midSlow), and lower again through the transitions that must never be hurried (critical), eased in
  * before them and out after them.
  */
 export function speedAt(c: number): number {
-  const i = Math.min(CH - 1, Math.floor(c)), f = c - i, h = SCROLL.holdShare;
+  const i = Math.min(CH - 1, Math.floor(c)), f = c - i, h = holdShareOf(i);
   let k = 1;
-  if (i < CH - 1 && f > h) k *= 1 - SCROLL.midSlow * Math.sin(Math.PI * (f - h) / (1 - h));
+  if (STACCATO.has(i)) { if (f > h) k *= SCROLL.staccato.speed; }
+  else if (i < CH - 1 && f > h) k *= 1 - SCROLL.midSlow * Math.sin(Math.PI * (f - h) / (1 - h));
   const { ramp, speed } = SCROLL.critical;
   for (const j of CRITICAL) {
-    const a = j + h, b = j + 1, w = c < a ? ss(a - ramp, a, c) : c > b ? 1 - ss(b, b + ramp, c) : 1;
+    const a = j + SCROLL.holdShare, b = j + 1, w = c < a ? ss(a - ramp, a, c) : c > b ? 1 - ss(b, b + ramp, c) : 1;
     if (w > 0) k *= 1 - (1 - speed) * w;
   }
   return k;

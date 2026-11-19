@@ -101,6 +101,7 @@ export class ChapterView {
     if (n) n.textContent = String(i + 1).padStart(2, '0');
     if (act) act.textContent = c.actLabel;
     this.el.classList.toggle('final', c.final);
+    this.el.classList.toggle('figured', !!c.figure);
     this.el.classList.remove('in', 'sig');
     const hint = this.touchOnly ? c.hintTouch : c.hintMouse;
     this.hint.textContent = hint;

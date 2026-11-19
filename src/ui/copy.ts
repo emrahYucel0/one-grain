@@ -19,6 +19,8 @@ export interface ChapterCopy {
   micro: string;
   /** a few figures for the chapter (Awwwards P2): label and value, from its data-facts list */
   facts: { label: string; value: string }[];
+  /** Act II's one figure (Awwwards P7, ui/figure.ts): value, unit and what it measures; null for none */
+  figure: { value: string; unit: string; label: string } | null;
   /** clock label for this chapter (years: shown only while resting; prod: always) and its sub-line */
   clockLabel: string;
   clockSub: string;
@@ -52,6 +54,7 @@ export function readCopy(story: HTMLElement): Copy {
         hintTouch: text(s.querySelector('[data-hint="touch"]')),
         micro: text(s.querySelector('[data-micro]')),
         facts: [...s.querySelectorAll('[data-facts] > div')].map((d) => ({ label: text(d.querySelector('dt')), value: text(d.querySelector('dd')) })),
+        figure: s.dataset.figure ? { value: s.dataset.figure, unit: s.dataset.figureUnit ?? '', label: s.dataset.figureLabel ?? '' } : null,
         clockLabel: s.dataset.clock ?? '',
         clockSub: s.dataset.clockSub ?? '',
         navLabel: s.dataset.nav ?? title,

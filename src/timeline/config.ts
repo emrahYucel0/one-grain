@@ -37,6 +37,14 @@ export const SCROLL = {
     ramp: .15,
   },
 
+  /**
+   * Act II as a montage (Awwwards P7): out of these worlds the moves are quick and the stops firm. A larger
+   * share of each chapter is the still world; the move runs at an even pace along the scroll (no slow
+   * middle) and up to `speed` × the speed limit; the camera leaves and lands hard (ease quint). Transitions
+   * marked critical keep their own pace.
+   */
+  staccato: { worlds: ['quarry', 'furnace', 'purity', 'crystal', 'wafer', 'light'] as readonly string[], holdShare: .5, speed: 1.8 },
+
   /** a jump (the right-hand rail, keys, a #link): Lenis's smoothing for it; the speed limit is off until it lands */
   jumpLerp: .1,
 } as const;

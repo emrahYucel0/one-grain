@@ -2,6 +2,7 @@ import { Vector3 } from 'three';
 import { easeCubic, easeQuint, ss } from '../core/ease';
 import type { TransitionDef, Vec3 } from '../story/types';
 import { WORLDS } from '../story/worlds';
+import { STACCATO } from '../timeline/segments';
 import { CONFINEMENT } from './confinement';
 
 /** Where the camera is, what it looks at, and where the hero grain is, partway through a transition. */
@@ -35,7 +36,8 @@ export function shot(tr: TransitionDef, a: number, b: number, t: number, heroes:
   const hA = heroes[a]!, hB = heroes[b]!, wa = WORLDS[a]!, wb = WORLDS[b]!;
   // resting cameras as framed for each world's lens (camera/confinement.ts)
   const camA = off(hA, CONFINEMENT[a]!.cam), camB = off(hB, CONFINEMENT[b]!.cam), lookA = off(hA, wa.look), lookB = off(hB, wb.look);
-  let eg = easeCubic(t);
+  // Act II's montage (Awwwards P7): the camera leaves and lands hard
+  let eg = STACCATO.has(a) ? easeQuint(t) : easeCubic(t);
   if (tr.cam === 'cut') eg = t < .5 ? 0 : 1; else if (tr.cam === 'slide') eg = ss(0, 1, t); else if (tr.cam === 'zoom') eg = easeQuint(t);
   const arc = eg <= 0 || eg >= 1 ? 0 : Math.sin(Math.PI * eg), hc = tr.hero ?? NO_HERO; // exactly 0 at rest
   const hero = tr.cam === 'cut' ? (eg < .5 ? hA.clone() : hB.clone()) : bez(hA, off(hA, hc[0]), off(hB, hc[1]), hB, eg);
