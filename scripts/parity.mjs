@@ -39,13 +39,16 @@ const SKY = 'sky (Phase 7, reference v27): the surface worlds under their skies,
 const LOUPE = 'loupe (Phase 7, reference v27): the hero grain magnified beside it';
 const PATTERN = "light chapter's pattern (Phase 7, reference v27): the circuit exposed onto the layer";
 const ENDING = "the ending's last word (Awwwards P1): start again, share and credits under the signature, the card raised for them over a soft stage-coloured ground";
+const HEAT = "the industry's own colours (Awwwards P2): purity's rods and the crystal's melt line incandescent";
+const FILM = "the industry's own colours (Awwwards P2): thin-film colour on the polished wafers";
 const DEVIATIONS = {
   '13-hold-quarry': `${QUARRY}; ${LOUPE}`, '14-tr-quarry-furnace': `${QUARRY}; ${LOUPE}`, '35-tr-quarry-furnace-t30': QUARRY, '36-tr-quarry-furnace-t55': `${QUARRY}; ${LOUPE}`, '37-tr-quarry-furnace-t80': `${QUARRY}; ${LOUPE}`,
   '02-tr-magma-granite': LOUPE, '03-hold-granite': LOUPE, '04-tr-granite-river': `${SKY}; ${LOUPE}`,
   '05-hold-river': SKY, '06-tr-river-coast': `${SKY}; ${LOUPE}`, '07-hold-coast': `${SKY}; ${LOUPE}`, '08-tr-coast-desert': `${SKY}; ${LOUPE}`,
   '32-tr-coast-desert-t30': `${SKY}; ${LOUPE}`, '33-tr-coast-desert-t55': SKY, '34-tr-coast-desert-t80': SKY,
   '09-hold-desert': SKY, '30-hover-desert': SKY, '10-tr-desert-again': SKY,
-  '20-tr-crystal-wafer': LOUPE, '21-hold-wafer': LOUPE, '22-tr-wafer-light': `${PATTERN}; ${LOUPE}`, '23-hold-light': PATTERN, '24-tr-light-chip': PATTERN,
+  '17-hold-purity': HEAT, '19-hold-crystal': HEAT,
+  '20-tr-crystal-wafer': `${LOUPE}; ${HEAT}; ${FILM}`, '21-hold-wafer': `${LOUPE}; ${FILM}`, '22-tr-wafer-light': `${PATTERN}; ${LOUPE}`, '23-hold-light': PATTERN, '24-tr-light-chip': PATTERN,
   '27-hold-display': LOUPE, '29-hold-now': ENDING,
 };
 // harness only: the reference's layer panel, benchmark box and version label are not part of the look

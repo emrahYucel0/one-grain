@@ -25,7 +25,7 @@ import { StoryA11y } from './ui/a11y';
 import { TextBlock } from './ui/text-block';
 import { ChapterView } from './ui/chapter';
 import { ClockView, clockProgress } from './ui/clock';
-import { readCopy, type Copy } from './ui/copy';
+import { fillLiveFacts, readCopy, type Copy } from './ui/copy';
 import { Cursor } from './ui/cursor';
 import { Gate } from './ui/gate';
 import { Outro } from './ui/outro';
@@ -47,6 +47,7 @@ const actBoundaries = (copy: Copy): number[] =>
 const LAST = WORLDS.length - 1;
 
 function boot(): void {
+  fillLiveFacts($('story'));
   const gpu = probeGpu();
   guard.log('gpu', `WebGL2 ${gpu.webgl2 ? 'yes' : 'no'}${gpu.performant ? '' : ' (not performant)'} · ${gpu.renderer || 'renderer hidden'} · max texture ${gpu.maxTextureSize}`);
   if (!gpu.webgl2) { root.classList.add('nogl'); guard.fail('no WebGL2'); return; }

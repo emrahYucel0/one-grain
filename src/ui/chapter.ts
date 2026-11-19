@@ -11,6 +11,7 @@ import type { Copy } from './copy';
 const TITLE = { from: .04, to: .34, span: .58 };
 const BODY = { from: .3, to: .5, span: .46 };
 const INDEX = { a: 0, span: .5 };
+const FACTS = { from: .06, to: .2, span: .46 };
 const MICRO = { a: .52, span: .46 };
 const HINT = { a: .56, span: .44 };
 
@@ -62,6 +63,7 @@ export class ChapterView {
   private readonly hint: HTMLElement;
   private readonly micro: HTMLElement;
   private readonly index: HTMLElement;
+  private readonly facts: HTMLElement;
   private readonly copy: Copy;
   private readonly touchOnly: boolean;
   /** the overlay's copy of the signature link, if the final chapter is showing */
@@ -75,6 +77,7 @@ export class ChapterView {
     this.hint = el.querySelector('.hint')!;
     this.micro = el.querySelector('.micro')!;
     this.index = el.querySelector('.idx')!;
+    this.facts = el.querySelector('.facts')!;
     timing(this.index, INDEX.a, INDEX.span);
     timing(this.micro, MICRO.a, MICRO.span);
     timing(this.hint, HINT.a, HINT.span);
@@ -102,6 +105,15 @@ export class ChapterView {
     const hint = this.touchOnly ? c.hintTouch : c.hintMouse;
     this.hint.textContent = hint;
     this.hint.style.display = hint ? '' : 'none';
+    // the chapter's figures under its index, one after another (Awwwards P2)
+    this.facts.replaceChildren(...c.facts.map((f, k) => {
+      const s = document.createElement('span'); s.className = 'f';
+      const l = document.createElement('span'); l.className = 'k'; l.textContent = f.label;
+      const v = document.createElement('span'); v.className = 'v'; v.textContent = f.value;
+      s.append(l, v); timing(s, spread(k, c.facts.length, FACTS), FACTS.span);
+      return s;
+    }));
+    this.facts.style.display = c.facts.length ? '' : 'none';
     this.micro.textContent = c.micro;
     this.micro.style.display = c.micro ? '' : 'none';
     return true;

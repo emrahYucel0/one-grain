@@ -29,6 +29,13 @@ export interface LightRig {
   water?: number;
   /** depth-of-field scale: below 1 widens the in-focus range (less blur); default 1 */
   dof?: number;
+  /**
+   * heat (Awwwards P2): the world's base grains incandescent around a height: [amount 0..1, centre y,
+   * half-width in world units]. Purity's Siemens rods (~1,100 °C), the crystal's melt line; default none
+   */
+  heat?: readonly [amount: number, y: number, span: number];
+  /** thin-film colour on the polished wafers, 0..1, turning with the angle they are seen at (Awwwards P2); default 0 */
+  film?: number;
 }
 
 const NONE: LightRig['point'] = [[0, 0, 0], [0, 0, 0], 1];
@@ -48,9 +55,12 @@ export const LIGHTS: Readonly<Record<string, LightRig>> = {
   again: { key: [[.92, .3, .25], [1.35, 1.08, .82]], sky: [.05, .045, .04], ground: [.03, .02, .015], rim: [.22, .16, .12], point: NONE, spec: .2, shadow: 24 },
   quarry: { key: [[-.2, .9, .35], [.85, .88, .92]], sky: [.09, .095, .1], ground: [.04, .04, .04], rim: [.06, .06, .07], point: NONE, spec: .15, shadow: 30 },
   furnace: { key: [[-.3, .9, .2], [.18, .2, .25]], sky: [.02, .02, .025], ground: [.05, .02, .008], rim: [.1, .06, .03], point: [[0, .6, -1], [4.5, 1.7, .45], 6.5], spec: .2, shadow: 18 },
-  purity: { key: [[-.3, .9, .25], [1.05, 1.1, 1.18]], sky: [.05, .055, .065], ground: [.02, .02, .025], rim: [.2, .22, .26], point: NONE, spec: .8, shadow: 18 },
-  crystal: { key: [[-.6, .72, .38], [1.05, 1.1, 1.2]], sky: [.02, .024, .032], ground: [.012, .01, .009], rim: [.3, .34, .4], point: [[0, -1.25, -1.63], [3.6, 1.5, .45], 3.2], spec: .92, shadow: 14 },
-  wafer: { key: [[-.5, .75, .45], [1.15, 1.18, 1.25]], sky: [.04, .045, .055], ground: [.015, .015, .02], rim: [.3, .32, .36], point: NONE, spec: .95, shadow: 10 },
+  // the Siemens reactor (Awwwards P2): the rods held at ~1,100 °C glow; the cool vapour settles on them
+  purity: { key: [[-.3, .9, .25], [1.05, 1.1, 1.18]], sky: [.05, .055, .065], ground: [.02, .02, .025], rim: [.2, .22, .26], point: NONE, spec: .8, shadow: 18, heat: [.72, 1, 100] },
+  // the ingot comes out of the melt still glowing; the crucible's rim too (Awwwards P2)
+  crystal: { key: [[-.6, .72, .38], [1.05, 1.1, 1.2]], sky: [.02, .024, .032], ground: [.012, .01, .009], rim: [.3, .34, .4], point: [[0, -1.25, -1.63], [3.6, 1.5, .45], 3.2], spec: .92, shadow: 14, heat: [1, -.6, 4.2] },
+  // thin-film colour on the polished discs (Awwwards P2)
+  wafer: { key: [[-.5, .75, .45], [1.15, 1.18, 1.25]], sky: [.04, .045, .055], ground: [.015, .015, .02], rim: [.3, .32, .36], point: NONE, spec: .95, shadow: 10, film: .55 },
   // softer violet, half-strength exposure rays
   light: { key: [[-.3, .9, .3], [.85, .76, 1.12]], sky: [.03, .025, .05], ground: [.01, .008, .02], rim: [.25, .2, .4], point: [[0, 2.5, 0], [.7, .52, 1.3], 3.5], spec: .7, shadow: 8, rays: .5 },
   chip: { key: [[-.4, .85, .3], [.45, .5, .62]], sky: [.02, .025, .035], ground: [.01, .01, .012], rim: [.12, .14, .2], point: NONE, spec: .55, shadow: 16 },

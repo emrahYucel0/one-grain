@@ -182,7 +182,7 @@ html.nogl #story .fallback-note{display:block;margin:0 0 2.5rem;font-style:itali
 </div>
 
 <div class="story">
-  <div class="chapter" id="chapter" aria-hidden="true"><div class="idx"><span class="n"></span><span class="act"></span></div><h2></h2><p></p><p class="micro" id="micro"></p><p class="hint" id="hint"></p></div>
+  <div class="chapter" id="chapter" aria-hidden="true"><div class="idx"><span class="n"></span><span class="act"></span></div><div class="facts" id="facts"></div><h2></h2><p></p><p class="micro" id="micro"></p><p class="hint" id="hint"></p></div>
   <!-- the ending's last word (src/ui/outro.ts): once the signature is there, start again, share, credits -->
   <div class="outro" id="outro" role="group" aria-label="The end">
     <button class="outro-again" type="button" id="again"><span class="ico ico-again" aria-hidden="true"></span>Start again</button>
@@ -217,7 +217,8 @@ html.nogl #story .fallback-note{display:block;margin:0 0 2.5rem;font-style:itali
 <!-- The story itself. Read by the experience, read aloud by assistive tech, and the
      whole page when WebGL2 is not available.
      data-clock: what the clock reads in this chapter (years chapters: shown only while resting;
-     production chapters: always). data-clock-sub: the line under it. -->
+     production chapters: always). data-clock-sub: the line under it. data-facts: a few figures for the
+     chapter, shown under its index (Awwwards P2); data-live: filled in from this screen (ui/facts.ts). -->
 <main id="story">
   <h1>One Grain</h1>
   <p class="fallback-note">The animated version could not start on this device, so here is the story as text.</p>
@@ -227,28 +228,34 @@ html.nogl #story .fallback-note{display:block;margin:0 0 2.5rem;font-style:itali
     <section data-slug="magma" aria-labelledby="ch-magma">
       <h3 id="ch-magma">Magma</h3>
       <p>Deep underground, molten rock cools slowly. Quartz begins to crystallize.</p>
+      <dl class="facts" data-facts><div><dt>Temperature</dt><dd>~700 °C</dd></div><div><dt>Depth</dt><dd>5–20 km</dd></div></dl>
     </section>
     <section data-slug="granite" data-clock="hundreds of thousands" aria-labelledby="ch-granite">
       <h3 id="ch-granite">Granite</h3>
       <p>The crystal is locked inside granite, waiting for uplift and erosion.</p>
+      <dl class="facts" data-facts><div><dt>Quartz</dt><dd>20–60 % of the rock</dd></div><div><dt>Hardness</dt><dd>7 on the Mohs scale</dd></div></dl>
     </section>
     <section data-slug="river" aria-labelledby="ch-river">
       <h3 id="ch-river">River</h3>
       <p>Weathering frees the grain. Running water carries it downstream.</p>
+      <dl class="facts" data-facts><div><dt>Sand</dt><dd>0.06–2 mm across</dd></div><div><dt>Edges</dt><dd>still angular</dd></div></dl>
     </section>
     <section data-slug="coast" aria-labelledby="ch-coast">
       <h3 id="ch-coast">Coast</h3>
       <p>Waves sort and tumble it, moving it along the shore.</p>
+      <dl class="facts" data-facts><div><dt>Waves</dt><dd>~8,000 a day</dd></div><div><dt>Edges</dt><dd>rounding</dd></div></dl>
     </section>
     <section data-slug="desert" aria-labelledby="ch-desert">
       <h3 id="ch-desert">Desert</h3>
       <p>Wind lifts it in short hops, rounding and frosting its surface.</p>
+      <dl class="facts" data-facts><div><dt>Lift-off wind</dt><dd>~5 m/s</dd></div><div><dt>Hops</dt><dd>centimetres high</dd></div></dl>
       <p data-hint="mouse" hidden>Move your cursor across the dunes.</p>
       <p data-hint="touch" hidden>Tap the dunes.</p>
     </section>
     <section data-slug="again" aria-labelledby="ch-again">
       <h3 id="ch-again">Again</h3>
       <p>Buried. Cemented into stone. Lifted. Freed. Buried again, until heat and pressure turn the sandstone into quartzite.</p>
+      <dl class="facts" data-facts><div><dt>Quartzite</dt><dd>over 90 % quartz</dd></div></dl>
     </section>
   </div>
 
@@ -257,26 +264,32 @@ html.nogl #story .fallback-note{display:block;margin:0 0 2.5rem;font-style:itali
     <section data-slug="quarry" data-clock="Day 1" data-clock-sub="of production" aria-labelledby="ch-quarry">
       <h3 id="ch-quarry">Quarry</h3>
       <p>The cycle breaks. Silica-rich rock is taken from the ground.</p>
+      <dl class="facts" data-facts><div><dt>Feed</dt><dd>over 98 % silica</dd></div></dl>
     </section>
     <section data-slug="furnace" data-clock="Days later" aria-labelledby="ch-furnace">
       <h3 id="ch-furnace">Furnace</h3>
       <p>Quartz meets carbon at extreme heat. Oxygen leaves; silicon remains.</p>
+      <dl class="facts" data-facts><div><dt>Arc</dt><dd>~2,000 °C</dd></div><div><dt>Silicon out</dt><dd>98–99 % pure</dd></div></dl>
     </section>
     <section data-slug="purity" data-clock="Weeks later" aria-labelledby="ch-purity">
       <h3 id="ch-purity">Purity</h3>
       <p>Converted, distilled, deposited again. The silicon becomes hyperpure.</p>
+      <dl class="facts" data-facts><div><dt>Rods</dt><dd>~1,100 °C</dd></div><div><dt>Purity</dt><dd>99.9999999 %</dd></div></dl>
     </section>
     <section data-slug="crystal" data-clock="Days later" aria-labelledby="ch-crystal">
       <h3 id="ch-crystal">Crystal</h3>
       <p>Melted above 1,414 °C, it is drawn upward from a single seed.</p>
+      <dl class="facts" data-facts><div><dt>Pull rate</dt><dd>~1 mm a minute</dd></div><div><dt>Ingot</dt><dd>300 mm across</dd></div></dl>
     </section>
     <section data-slug="wafer" data-clock="Days later" aria-labelledby="ch-wafer">
       <h3 id="ch-wafer">Wafer</h3>
       <p>The ingot is ground, sliced, etched, and polished into mirror-flat wafers.</p>
+      <dl class="facts" data-facts><div><dt>Diameter</dt><dd>300 mm</dd></div><div><dt>Thickness</dt><dd>0.775 mm</dd></div></dl>
     </section>
     <section data-slug="light" data-clock="Weeks later" aria-labelledby="ch-light">
       <h3 id="ch-light">Light</h3>
       <p>Light projects a pattern onto a photosensitive layer.</p>
+      <dl class="facts" data-facts><div><dt>Wavelength</dt><dd>13.5 nm</dd></div><div><dt>Exposures</dt><dd>dozens per chip</dd></div></dl>
     </section>
   </div>
 
@@ -285,6 +298,7 @@ html.nogl #story .fallback-note{display:block;margin:0 0 2.5rem;font-style:itali
     <section data-slug="chip" data-clock="≈ 6 months" aria-labelledby="ch-chip">
       <h3 id="ch-chip">Chip</h3>
       <p>Layer by layer, patterns become transistors and the connections between them.</p>
+      <dl class="facts" data-facts><div><dt>Transistors</dt><dd>billions</dd></div><div><dt>Switching</dt><dd>billions of times a second</dd></div></dl>
       <p data-hint="mouse" hidden>Move your cursor over the circuit.</p>
       <p data-hint="touch" hidden>Tap the circuit.</p>
       <p class="micro" data-micro>Millions of years to arrive. Nanoseconds to act.</p>
@@ -292,6 +306,7 @@ html.nogl #story .fallback-note{display:block;margin:0 0 2.5rem;font-style:itali
     <section data-slug="display" aria-labelledby="ch-display">
       <h3 id="ch-display">Display</h3>
       <p>Silicon computes. Pixels turn its signals into light.</p>
+      <dl class="facts" data-facts><div><dt>Your screen</dt><dd data-live="screen">its own pixels</dd></div><div><dt>Sub-pixels</dt><dd data-live="subpixels">three per pixel</dd></div></dl>
       <p class="micro" data-micro>Even the glass in front of the pixels is mostly silica.</p>
     </section>
     <section data-slug="now" data-final data-nav="You" aria-labelledby="ch-now">

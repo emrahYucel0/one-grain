@@ -10,6 +10,7 @@ uniform vec3 uLandPos; // where it lands
 uniform float uPointMax; // largest grain, in pixels, before the per-grain size factor
 uniform float uSpecA, uSpecB; // each world's gloss
 uniform float uGlowA, uGlowB, uRaysA, uRaysB, uPixA, uPixB, uWaterA, uWaterB; // each world's material look (story/lights.ts)
+uniform vec4 uAccentA, uAccentB; // each world's accent (story/lights.ts heat, film): heat amount, its centre y, half-width; film
 uniform float uPx;            // shadow map pixels per world unit
 uniform float uShadowGrow;    // disc size factor in the shadow map (1; ?shadowgrow for measurements)
 uniform mat4 uLightVP;        // the key light's view-projection (shadow map)

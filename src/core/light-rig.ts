@@ -1,4 +1,4 @@
-import { Vector3 } from 'three';
+import { Vector3, Vector4 } from 'three';
 import { LIGHTS, type LightRig } from '../story/lights';
 import type { Vec3 } from '../story/types';
 import { WORLDS } from '../story/worlds';
@@ -23,6 +23,8 @@ export interface RigState {
   raysA: number; raysB: number;
   pixA: number; pixB: number;
   waterA: number; waterB: number;
+  /** each world's accent (Awwwards P2): heat amount, centre y, half-width; film */
+  accentA: Vector4; accentB: Vector4;
   /** depth-of-field scale, blended with the rig */
   dof: number;
 }
@@ -39,6 +41,7 @@ const mix = (out: Vector3, a: Vec3 | Vector3, b: Vec3 | Vector3, k: number): Vec
   return k >= 1 ? out.set(bx, by, bz) : out.set(ax + (bx - ax) * k, ay + (by - ay) * k, az + (bz - az) * k);
 };
 const num = (a: number, b: number, k: number): number => (k >= 1 ? b : a + (b - a) * k);
+const accent = (out: Vector4, r: LightRig): Vector4 => out.set(r.heat?.[0] ?? 0, r.heat?.[1] ?? 0, r.heat?.[2] ?? 1, r.film ?? 0);
 
 /**
  * Blends the light rigs of worlds a and b by k (the camera's easing; transitions may delay it,
@@ -48,7 +51,7 @@ export class LightRigBlend {
   readonly state: RigState = {
     keyDir: new Vector3(0, 1, 0), keyCol: new Vector3(), sky: new Vector3(), ground: new Vector3(), rim: new Vector3(),
     pointPos: new Vector3(), pointCol: new Vector3(), pointRange: 1, specA: .3, specB: .3, shadow: 16,
-    glowA: 0, glowB: 0, raysA: 1, raysB: 1, pixA: 1, pixB: 1, waterA: 0, waterB: 0, dof: 1,
+    glowA: 0, glowB: 0, raysA: 1, raysB: 1, pixA: 1, pixB: 1, waterA: 0, waterB: 0, accentA: new Vector4(), accentB: new Vector4(), dof: 1,
   };
   private readonly ka = new Vector3();
   private readonly kb = new Vector3();
@@ -69,6 +72,7 @@ export class LightRigBlend {
     s.shadow = num(ra.shadow, rb.shadow, k);
     s.glowA = ra.glow ?? 0; s.glowB = rb.glow ?? 0; s.raysA = ra.rays ?? 1; s.raysB = rb.rays ?? 1;
     s.pixA = ra.pix ?? 1; s.pixB = rb.pix ?? 1; s.waterA = ra.water ?? 0; s.waterB = rb.water ?? 0;
+    accent(s.accentA, ra); accent(s.accentB, rb);
     s.dof = num(ra.dof ?? 1, rb.dof ?? 1, k);
     return s;
   }

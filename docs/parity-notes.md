@@ -31,7 +31,7 @@ was verified and how, and what was not.
 The reference is never edited. The harness serves a patched copy with three hooks: progress
 override, time override, and exposing the built texture (`scripts/lib/reference.mjs`).
 
-## Awwwards P0 and P1: beyond the reference
+## Awwwards P0, P1 and P2: beyond the reference
 
 Design work for an Awwwards submission, made in the port without a reference file:
 
@@ -41,15 +41,25 @@ Design work for an Awwwards submission, made in the port without a reference fil
 - **P0, the words' choreography** (`src/ui/chapter.ts`): the title's letters rise through word masks
   and the body comes in word by word, on the story's progress. At rest the card is the plain text
   again, in the same place (check:text: 85/85 positions identical).
-- **P1, the ending's last word** (`src/ui/outro.ts`): 3.2 s into the ending, just after the signature (2.4 s, brought forward from 8 s), "Start again", "Share"
-  and "Credits" come in under the signature; the card rises by the row's height over a soft
-  stage-coloured ground. Position `29-hold-now` differs from the reference for that reason and is
+- **P1, the ending's last word** (`src/ui/outro.ts`): 3.2 s into the ending, just after the signature
+  (2.4 s, brought forward from the reference's 8 s), "Start again", "Share" and "Credits" come in
+  under the signature; the card rises by the row's height over a soft stage-coloured ground. Position `29-hold-now` differs from the reference for that reason and is
   listed as intentional. "Start again" closes the veil onto the grain and opens it on the first world.
 - **P1, the cursor and its touch** (`src/ui/cursor.ts`, `grains.vert.glsl`): a mouse only, so no
   parity position changes; the grains' touch is off unless a mouse moves (`uTouch.w` = 0).
 - **P1, the HUD**: icons beside the sound and motion words, the current chapter named on the rail,
   the chapters behind marked. Under the harnesses (`html.parity`) the icons' animations and the
   rail's fades are stopped, so every frame is the same picture however it was reached (check:seams).
+- **P2, the industry's own colours** (`story/lights.ts` `heat` and `film`, `grains.vert.glsl`): purity's
+  rods glow as a Siemens reactor's do (~1,100 °C) under the cool vapour settling on them; the crystal's
+  ingot comes out of the melt still glowing, and the crucible's rim with it; the polished wafers take
+  thin-film colour by radius and viewing angle, so it turns with the camera. Shading only: the grain
+  data is unchanged (check:data). The purity, crystal and wafer positions differ from the reference for
+  this reason and are listed as intentional.
+- **P2, the chapter's figures** (`data-facts` in `index.html`, `src/ui/chapter.ts`): one or two figures
+  per chapter under its index (temperatures, sizes, purity; the display's are read from the visitor's
+  own screen). The card is anchored at its foot, so the title and the text keep their places
+  (check:text); the article carries the same figures as a list for assistive tech and the fallback.
 
 ## Phase 7: skies, the loupe, the light chapter's pattern (reference v27)
 

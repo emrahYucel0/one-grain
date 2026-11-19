@@ -318,6 +318,32 @@ html.motion-off .chapter:not(.final) .micro{opacity:var(--micro-opacity)}
 /* narrow phones: a tighter index, so the card stays as compact as it was (the loupe's room, check:responsive) */
 @media (max-width:479px){.chapter .idx{margin-bottom:.5rem;font-size:.66rem;gap:.55rem}.chapter .idx .act{gap:.55rem}.chapter .idx .act::before{width:1.1rem}}
 
+/* ---------- the chapter's figures (Awwwards P2; src/ui/chapter.ts, data-facts in index.html) ----------
+   Under the index, above the title, one after another like the index: a small label and its value. The
+   card is anchored at its foot, so the title and the text keep their places; the index moves up a line. */
+.chapter .facts{display:flex;flex-wrap:wrap;gap:.35rem 1.6rem;margin:-.25rem 0 1rem;font-family:var(--sans);font-size:.8rem;line-height:1.3;color:var(--ink)}
+/* the index and the figures sit higher on the card, over more of the scene: a deeper halo (check:contrast) */
+.chapter :is(.idx,.facts){text-shadow:0 0 2px rgba(0,0,0,1),0 0 3px rgba(0,0,0,1),0 0 4px rgba(0,0,0,1),0 0 8px rgba(0,0,0,.9),0 0 16px rgba(0,0,0,.7),0 0 28px rgba(0,0,0,.45)}
+.chapter .facts .f{display:inline-flex;align-items:baseline;gap:.55rem;white-space:nowrap;--l:clamp(0,calc((var(--p,1) - var(--a,0)) / var(--w,1)),1);
+  opacity:var(--l);transform:translateY(calc((1 - var(--l)) * (1 - var(--l)) * .6em * var(--dir,1)))}
+.chapter .facts .k{font-size:.66rem;font-weight:400;font-stretch:112%;letter-spacing:.14em;text-transform:uppercase}
+.chapter .facts .v{font-weight:500;font-variant-numeric:tabular-nums;letter-spacing:.01em}
+.chapter.final .facts{display:none}
+/* the index and the figures stand higher on the card, over brighter parts of some worlds (the chip's
+   circuit, the light chapter's pattern): a soft local ground in the stage colour behind them, coming
+   and going with the card (check:contrast) */
+.chapter{position:relative}
+.chapter:not(.final)::before{content:"";position:absolute;left:-5rem;top:-3.2rem;width:min(40rem,95vw);height:8.5rem;z-index:-1;pointer-events:none;opacity:var(--p,1);
+  background:radial-gradient(closest-side,rgb(var(--stage-rgb,13 24 28) / .7),rgb(var(--stage-rgb,13 24 28) / .55) 40%,rgb(var(--stage-rgb,13 24 28) / .25) 72%,rgb(var(--stage-rgb,13 24 28) / 0))}
+@media (max-width:479px){.chapter:not(.final)::before{left:-3rem;top:-2.6rem;height:7.5rem}}
+html.motion-off .chapter .facts .f{transform:none;opacity:1}
+@media (max-width:479px){.chapter .facts{gap:.25rem 1.1rem;margin:-.1rem 0 .6rem;font-size:.74rem}.chapter .facts .k{font-size:.6rem}}
+/* the readable fallback: the figures as a quiet list under each chapter */
+#story dl.facts{display:flex;flex-wrap:wrap;gap:.2rem 1.4rem;margin:.6rem 0 0;font-family:var(--sans);font-size:.85rem;color:var(--muted)}
+#story dl.facts div{display:flex;gap:.45rem}
+#story dl.facts dt{text-transform:uppercase;letter-spacing:.12em;font-size:.7rem;align-self:center}
+#story dl.facts dd{margin:0;color:var(--ink)}
+
 
 /* ---------- the HUD (Awwwards P1) ----------
    The controls carry a small icon each beside their words: the sound's bars move while it plays, the
@@ -377,7 +403,7 @@ html.outro-on .outro{opacity:1;visibility:visible;transform:none;transition:opac
   transition:background .35s ease,color .35s ease,border-color .35s ease}
 .outro .outro-again:hover,.outro .outro-again:focus-visible{background:var(--ink);color:var(--stage);border-color:var(--ink)}
 .outro :is(.outro-share,.outro-credits){border-bottom:1px solid rgba(236,227,211,.45);padding-bottom:3px;transition:border-color .3s ease;
-  text-shadow:0 0 3px rgba(0,0,0,1),0 0 3px rgba(0,0,0,1),0 0 8px rgba(0,0,0,.85),0 0 16px rgba(0,0,0,.6)}
+  text-shadow:0 0 2px rgba(0,0,0,1),0 0 3px rgba(0,0,0,1),0 0 4px rgba(0,0,0,1),0 0 8px rgba(0,0,0,.9),0 0 16px rgba(0,0,0,.7),0 0 28px rgba(0,0,0,.45)}
 .outro :is(.outro-share,.outro-credits)::after{content:"";position:absolute;inset:-14px -12px}
 .outro :is(.outro-share,.outro-credits):hover{border-color:var(--ink)}
 .outro button:focus-visible{outline:2px solid var(--ink);outline-offset:4px}

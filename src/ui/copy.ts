@@ -17,6 +17,8 @@ export interface ChapterCopy {
   hintTouch: string;
   /** a small aside under the text (empty if none) */
   micro: string;
+  /** a few figures for the chapter (Awwwards P2): label and value, from its data-facts list */
+  facts: { label: string; value: string }[];
   /** clock label for this chapter (years: shown only while resting; prod: always) and its sub-line */
   clockLabel: string;
   clockSub: string;
@@ -49,6 +51,7 @@ export function readCopy(story: HTMLElement): Copy {
         hintMouse: text(s.querySelector('[data-hint="mouse"]')),
         hintTouch: text(s.querySelector('[data-hint="touch"]')),
         micro: text(s.querySelector('[data-micro]')),
+        facts: [...s.querySelectorAll('[data-facts] > div')].map((d) => ({ label: text(d.querySelector('dt')), value: text(d.querySelector('dd')) })),
         clockLabel: s.dataset.clock ?? '',
         clockSub: s.dataset.clockSub ?? '',
         navLabel: s.dataset.nav ?? title,
@@ -62,6 +65,20 @@ export function readCopy(story: HTMLElement): Copy {
     if (w.clock.unit === 'prod' && !chapters[i]!.clockLabel) throw new Error(`chapter "${w.slug}" needs a data-clock label (production time)`);
   });
   return { chapters, acts };
+}
+
+/**
+ * The figures that come from this screen (data-live in the article): its size in device pixels and its
+ * sub-pixels, three to a pixel. Filled in the article itself, so the words read aloud and the card agree.
+ */
+export function fillLiveFacts(story: HTMLElement): void {
+  const dpr = devicePixelRatio || 1, w = Math.round(screen.width * dpr), h = Math.round(screen.height * dpr);
+  if (!(w > 0 && h > 0)) return;
+  const n = (v: number): string => v.toLocaleString('en');
+  for (const dd of story.querySelectorAll<HTMLElement>('[data-live]')) {
+    if (dd.dataset.live === 'screen') dd.textContent = `${n(w)} × ${n(h)} px`;
+    else if (dd.dataset.live === 'subpixels') dd.textContent = n(w * h * 3);
+  }
 }
 
 /** Fills {placeholders} in a microcopy template. */

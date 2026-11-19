@@ -99,6 +99,31 @@ void main(){
     em += m.burn * 1.9;
   }
   em += m.heat * 2.2 + m.whiten * .5;
+  // the industry's own colours (Awwwards P2; story/lights.ts heat, film). Heat: the base grains (and the
+  // ingot's) incandescent around a height, cherry through amber, breathing a little: purity's rods, the
+  // crystal's melt line. Film: the polished wafers take thin-film colour by their radius and the angle
+  // they are seen at, so it turns as the camera moves (the discs: centre k × (.25, 1.3, 0), radius 1.6).
+  if (fl < .5 || (fl > 14.5 && fl < 15.5)) {
+    float hA = uAccentA.x * (1. - smoothstep(0., uAccentA.z, abs(p.y - uAccentA.y)));
+    float hB = uAccentB.x * (1. - smoothstep(0., uAccentB.z, abs(p.y - uAccentB.y)));
+    float h = blend(hA, hB, e) * (1. - m.fade);
+    if (h > 0.) {
+      float b = .9 + .1 * sin(uTime * uMotion * .8 + R.x * 30.);
+      float w = clamp(h * (.75 + .5 * tn) + R.y * .2 - .1, 0., 1.); // hotter grains whiter
+      vec3 hot = w < .5 ? mix(vec3(.8, .22, .04), vec3(1., .5, .12), w * 2.) : mix(vec3(1., .5, .12), vec3(1., .84, .58), w * 2. - 1.);
+      c = mix(c, hot * b, smoothstep(0., .4, h));
+      em += h * 2. * b;
+    }
+    float film = blend(uAccentA.w, uAccentB.w, e);
+    if (film > 0. && fl < .5 && p.y > -.3) {
+      float k = floor(p.y / 1.3 + .5);
+      float r = length(p.xz - vec2(k * .25, 0.)) / 1.6;
+      float ndv = abs(dot(n, normalize(uCamPos - p)));
+      float hue = r * .85 + (1. - ndv) * 1.4 + k * .11;
+      vec3 irid = .5 + .5 * cos(6.2832 * (hue + vec3(0., .33, .67)));
+      c = mix(c, c * .5 + irid * .6, film);
+    }
+  }
   if (fl < .5) em += blend(uGlowA, uGlowB, e); // the world's inner glow for its base material (magma's quartz)
   // the light chapter (v27): the circuit pattern lands on the layer, its traces lit, the rest darkened;
   // the light rays themselves (behaviour 17) are not part of the layer
