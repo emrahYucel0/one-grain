@@ -7,6 +7,7 @@ uniform int uRows, uFrom, uTo, uStyle, uInteract;
 uniform int uRest; // 0 moving · 1 resting in world A (t = 0) · 2 resting in world B (t = 1)
 uniform float uLand;   // the final grain landing, 0..1 (its neighbours make room)
 uniform vec3 uLandPos; // where it lands
+uniform vec2 uRing;    // the grain's last light through the final world's sand: radius, strength (Awwwards P3)
 uniform float uPointMax; // largest grain, in pixels, before the per-grain size factor
 uniform float uSpecA, uSpecB; // each world's gloss
 uniform float uGlowA, uGlowB, uRaysA, uRaysB, uPixA, uPixB, uWaterA, uWaterB; // each world's material look (story/lights.ts)

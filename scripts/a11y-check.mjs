@@ -114,10 +114,11 @@ try {
   check('credits: Escape closes it, focus back on its button', !closed.open && closed.focus === 'creditsOpen', JSON.stringify(closed));
   await page.locator('#again').focus(); await page.keyboard.press('Enter'); await page.waitForTimeout(300);
   const again = await page.evaluate(() => ({ cls: document.documentElement.className, focus: document.activeElement?.id }));
-  check('start again: the veil closes, focus on the sound button', /gate-closing/.test(again.cls) && again.focus === 'sound', JSON.stringify(again));
-  await page.waitForFunction(() => !document.documentElement.classList.contains('gated'), null, { timeout: 10000 }).catch(() => {});
+  // Awwwards P3: the story runs back to its start (ui/rewind.ts), the choices gone at once
+  check('start again: the story runs back, focus on the sound button', /rewinding/.test(again.cls) && !/outro-on/.test(again.cls) && again.focus === 'sound', JSON.stringify(again));
+  await page.waitForFunction(() => !/rewinding|gated/.test(document.documentElement.className), null, { timeout: 10000 }).catch(() => {});
   const back = await page.evaluate(() => ({ cls: document.documentElement.className, hash: location.hash, y: scrollY, current: [...document.querySelectorAll('#timeline button')].findIndex((b) => b.getAttribute('aria-current') === 'step') }));
-  check('start again: back at the first chapter, the veil open', !/gated|outro-on/.test(back.cls) && back.y === 0 && back.current === 0, JSON.stringify(back));
+  check('start again: back at the first chapter', !/gated|outro-on/.test(back.cls) && back.y === 0 && back.current === 0, JSON.stringify(back));
   await page.close();
 
   await wcag22(browser, url, check);

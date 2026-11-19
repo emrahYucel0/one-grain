@@ -17,6 +17,7 @@
 //   with ?parity, window.__AT = { tr, t, lean } renders transition tr at t with that camera lean
 //   with ?parity, window.__LIVE = ms pins the display's live clock (it counts real time otherwise)
 //   with ?parity, window.__FT = s pins the seconds spent in the current hold (ring fade, final hold)
+//   with ?parity, window.__PULL = 0..1 pins how close the camera is on the grain (the opening shot, core/loop.ts)
 import { Vector3, type Camera } from 'three';
 import type { GpuTimes } from '../core/gpu-timer';
 import type { GrainPack } from '../sim/pack';
@@ -33,6 +34,7 @@ declare global {
     __overdraw?: boolean;
     __LIVE?: number | null;
     __FT?: number | null;
+    __PULL?: number | null;
     /** ?capture: the virtual clock (ms) that performance.now() returns */
     __VNOW?: number;
     /** ?parity: the tier picked at startup and the rule that chose it (check:tiers) */
@@ -88,6 +90,8 @@ export const transitionOverride = (): { tr: number; t: number; lean: number } | 
 export const restPathAllowed = (): boolean => !(flags.parity && window.__noRest);
 /** ?parity or ?debug: window.__overdraw shows how many grains cover each pixel. */
 /** ?parity: window.__FT pins the seconds spent in the current hold. */
+/** ?parity: window.__PULL pins the opening shot's closeness to the grain (0..1). */
+export const pullOverride = (): number | null => (flags.parity && typeof window.__PULL === 'number' ? window.__PULL : null);
 export const holdTimeOverride = (): number | null => (flags.parity && typeof window.__FT === 'number' ? window.__FT : null);
 /** ?parity: window.__LIVE pins the live clock's count, in milliseconds. */
 export const liveOverride = (): number | null => (flags.parity && typeof window.__LIVE === 'number' ? window.__LIVE : null);

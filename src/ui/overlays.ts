@@ -17,14 +17,17 @@ export function chapterOpacity(tr: TransitionDef, t: number): number {
 const INTRO_END = .02;
 
 /**
- * Phones: the opening chapter's words wait for the first scroll and come in as the title fades (the
- * title is the first screen, and the largest thing on it). A multiplier for the chapter text's opacity
- * while the opening chapter is shown: the title's fade mirrored, until the story has passed it once;
- * from then on 1. Elsewhere (desktops, tablets), always 1.
+ * Phones, and every first visit through the entry gate (Awwwards P3): the opening chapter's words wait
+ * for the first scroll and come in as the title fades, so the title and the chapter never stand on the
+ * screen together (the title is the first screen, and the largest thing on it). A multiplier for the
+ * chapter text's opacity while the opening chapter is shown: the title's fade mirrored, until the story
+ * has passed it once; from then on 1. Elsewhere (a #slug link on a desktop), always 1. Starting again
+ * (ui/rewind.ts) brings the title back, and the words wait again.
  */
 export class Opening {
   private open: boolean;
-  constructor(phone: boolean) { this.open = !phone; }
+  constructor(wait: boolean) { this.open = !wait; }
+  reset(): void { this.open = false; }
   factor(v: number, chapter: number): number {
     if (v >= INTRO_END) this.open = true;
     return this.open || chapter !== 0 ? 1 : ss(0, INTRO_END, v);

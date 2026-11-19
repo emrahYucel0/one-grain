@@ -46,7 +46,7 @@ export const LIGHTS: Readonly<Record<string, LightRig>> = {
   // a cool rim on the outcrop
   granite: { key: [[-.6, .42, .45], [1.45, 1.15, .9]], sky: [.07, .09, .12], ground: [.03, .025, .02], rim: [.32, .4, .55], point: NONE, spec: .3, shadow: 34, dof: .7 },
   // a lower sun from the front; the water glints more; a brighter fill from the morning sky (v27)
-  river: { key: [[-.35, .55, .75], [1.15, 1.12, 1.05]], sky: [.1, .13, .17], ground: [.03, .03, .025], rim: [.14, .18, .24], point: NONE, spec: .35, shadow: 18, water: 1 },
+  river: { key: [[-.35, .55, .75], [1.15, 1.12, 1.05]], sky: [.1, .13, .17], ground: [.03, .03, .025], rim: [.14, .18, .24], point: NONE, spec: .35, shadow: 18, water: 1, dof: .45 }, // the valley in focus (Awwwards P3: a wide shot)
   // the sunset (v27): a low, warm key from the sun's side, warm light from the sky, a pink rim
   coast: { key: [[.78, .26, .45], [1.7, .98, .62]], sky: [.13, .09, .11], ground: [.05, .035, .03], rim: [.38, .2, .22], point: NONE, spec: .3, shadow: 18 },
   // more of the dunes in focus; a higher, brighter sun and a blue sky's fill (v27)

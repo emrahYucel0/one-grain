@@ -7,9 +7,16 @@ const OPEN_S = 2.6;
 const FADE_S = .8;
 /** Scrolling this far into the story counts as entering (silently). */
 const SCROLL_ENTERS = .003;
+/** The waiting gate's opening around the grain, as a share of the screen's shorter side. */
+const WAIT_R = .3;
 /** Starting again (the ending, ui/outro.ts): the iris closes onto the grain, rests shut, opens on the first world. */
 const CLOSE_S = 1.6;
 const SHUT_S = .45;
+/**
+ * The opening shot (Awwwards P3): while the gate waits the camera is close on the grain; as it opens
+ * the camera pulls back over this long (s) to the first world's own framing (core/loop.ts pull).
+ */
+const PULL_S = 5.2;
 
 const easeInOut = (t: number): number => t < .5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
 
@@ -21,9 +28,11 @@ const easeInOut = (t: number): number => t < .5 ? 4 * t * t * t : 1 - Math.pow(-
  * behind it. The gate is never in the way: scrolling, chapter keys and #slug links all go straight
  * through, and the harnesses (?parity, ?capture) skip it unless ?gate asks for it.
  *
- * Starting again from the ending runs it the other way first: the iris closes onto the landed grain until
- * the veil is whole, the story goes back to its start behind it, and the iris opens again on the first
- * world's grain (rewind).
+ * The opening shot (Awwwards P3): while it waits the camera is close on the grain, and as the iris opens it
+ * pulls back to the first world's framing (pull(), applied in core/loop.ts); after starting again
+ * (ui/rewind.ts) the same pull-back plays (startPull()). With motion off, starting again runs the iris the
+ * other way instead: it closes onto the landed grain until the veil is whole, the story goes back to its
+ * start behind it, and it opens again on the first world's grain (rewind).
  *
  * html.gated: the gate is up (waiting, opening or closing); html.gate-opening: opening; html.gate-closing:
  * closing or shut. They all go once it is open.
@@ -39,6 +48,8 @@ export class Gate {
   private replay = false;
   private onShut: (() => void) | null = null;
   private last = '';
+  /** when the camera's pull-back started (-1: not pulling) */
+  private pullAt = -1;
 
   constructor(opts: {
     enabled: boolean;
@@ -77,12 +88,28 @@ export class Gate {
   /** Opens the veil (a choice was made, or the visitor scrolled). */
   open(now = performance.now()): void {
     if (this.state !== 'waiting') return;
-    this.state = 'opening'; this.openedAt = now; this.replay = false;
+    this.state = 'opening'; this.openedAt = now; this.replay = false; this.pullAt = now;
     this.root.classList.add('gate-opening');
     this.hint.textContent = attr(this.hint, 'ready');
     // the choice buttons are going: keyboard focus moves to the story's own controls, not to the page's top
     const active = document.activeElement as HTMLElement | null;
     if (active?.closest('#gate')) document.getElementById('sound')?.focus({ preventScroll: true });
+  }
+
+  /** The camera's pull-back from the grain, starting now (after a rewind: ui/rewind.ts). */
+  startPull(now = performance.now()): void { if (!this.reduced()) this.pullAt = now; }
+
+  /**
+   * How close the camera is on the grain (0..1; core/loop.ts): 1 while the gate waits, easing to 0 as it
+   * opens (slow away from the grain, slow into the world's framing). 0 with motion off.
+   */
+  pull(now: number): number {
+    if (this.reduced()) return 0;
+    if (this.state === 'waiting') return 1;
+    if (this.pullAt < 0) return 0;
+    const k = (now - this.pullAt) / 1000 / PULL_S;
+    if (k >= 1) { this.pullAt = -1; return 0; }
+    return 1 - easeInOut(k);
   }
 
   /**
@@ -119,7 +146,7 @@ export class Gate {
     const breathe = reduced ? 0 : Math.sin(now / 1100) * 5;
     const k = reduced ? 0 : closing ? 1 - easeInOut(e) : easeInOut(e);
     const whole = closing || this.replay;
-    const r0 = whole ? 2 : 38 + breathe, r1 = far * 1.05;
+    const r0 = whole ? 2 : Math.min(innerWidth, innerHeight) * WAIT_R + breathe, r1 = far * 1.05;
     const r = reduced && whole ? 0 : r0 * Math.pow(r1 / r0, k);
     const feather = reduced && whole ? 0 : (150 + r * .55) * (whole ? ss(0, .3, k) : 1);
     const opacity = reduced ? (closing ? e : 1 - e) : 1;

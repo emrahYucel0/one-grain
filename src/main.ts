@@ -8,7 +8,7 @@ import { createStage } from './core/renderer';
 import { StageColour } from './core/stage-colour';
 import { isLayerName, RenderLayers } from './core/layers';
 import { Projection, onResize } from './core/resize';
-import { exposePack, exposeTier, flags } from './debug/parity';
+import { exposePack, exposeTier, flags, pullOverride } from './debug/parity';
 import { updateInteraction } from './input/interact';
 import { Pointer } from './input/pointer';
 import { GrainCloud } from './render/grains';
@@ -29,6 +29,7 @@ import { fillLiveFacts, readCopy, type Copy } from './ui/copy';
 import { Cursor } from './ui/cursor';
 import { Gate } from './ui/gate';
 import { Outro } from './ui/outro';
+import { Rewind } from './ui/rewind';
 import { revealWhenFontsReady } from './ui/fonts';
 import { Loader } from './ui/loader';
 import { guard } from './ui/guard';
@@ -99,8 +100,10 @@ function boot(): void {
   const typeAxes = new TypeAxes($('chapter'), $('time'));
   const layers = new RenderLayers(tier.fx);
   for (const k of flags.off) if (isLayerName(k)) layers.override[k] = false;
-  // phones: the title alone on the first screen; the opening chapter's words come with the first scroll
-  const opening = new Opening(deviceKind(readDevice()).kind === 'phone');
+  // the entry gate: a first visit at the start of the story; not for #slug links, nor the harnesses (unless ?gate)
+  const gated = (!flags.parity || flags.gate) && !(location.hash.length > 1 && location.hash !== `#${WORLDS[0]!.slug}`);
+  // phones and every gated first visit: the title alone on the first screen; the opening chapter's words come with the first scroll
+  const opening = new Opening(gated || deviceKind(readDevice()).kind === 'phone');
   const textBlock = new TextBlock($('chapter'), stage.renderer.domElement, document.querySelector<HTMLElement>('.scrim-top'));
   const loupe = new LoupeView($('loupe'), $('loupeLine'), stage.renderer.domElement, [...document.querySelectorAll<HTMLElement>('.hud .brand, #time, .controls, #timeline')]);
   const loop = new Loop({ stage, grains, hero, timeline, hash, projection, typeAxes, stageColour: new StageColour(), pipeline, timer, layers, textBlock, opening, loupe });
@@ -116,8 +119,6 @@ function boot(): void {
   const cut = $('cut');
   const sound = new SoundToggle($<HTMLButtonElement>('sound'));
   new MotionToggle($<HTMLButtonElement>('motion'));
-  // the entry gate: a first visit at the start of the story; not for #slug links, nor the harnesses (unless ?gate)
-  const gated = (!flags.parity || flags.gate) && !(location.hash.length > 1 && location.hash !== `#${WORLDS[0]!.slug}`);
   const gate = new Gate({
     enabled: gated, gate: $('gate'), veil: $('veil'), hint: $('introHint'), reduced: () => env.reduced,
     onChoice: (on) => sound.choose(on), preloadSound: () => sound.preload(),
@@ -126,8 +127,16 @@ function boot(): void {
   const outro = new Outro({
     again: $<HTMLButtonElement>('again'), share: $<HTMLButtonElement>('share'), credits: $<HTMLButtonElement>('creditsOpen'),
     dialog: $<HTMLDialogElement>('credits'), status: $('status'),
-    onAgain: () => gate.rewind(() => timeline.restart()),
+    // the story runs back to its start, the camera pushes onto the grain and the opening's pull-back
+    // follows (ui/rewind.ts); with motion off the veil closes and opens on the first world instead
+    onAgain: () => {
+      const back = (): void => { timeline.restart(); opening.reset(); };
+      if (env.reduced) gate.rewind(() => { back(); });
+      else rewind.start(timeline.state.v, performance.now(), () => { back(); gate.startPull(); });
+    },
   });
+  const rewind = new Rewind();
+  loop.progressHook = (now) => rewind.value(now);
   // the cursor: a mouse only, and not in the video (the capture has its own scripted pointer)
   const cursor = new Cursor($('cursor'), !flags.capture);
   const a11y = new StoryA11y($('story'), $('status'), copy, {
@@ -142,7 +151,9 @@ function boot(): void {
 
   loop.onFrame(({ L, now }) => {
     loop.finalTime = ending.update(L.hold === LAST, now);
-    outro.update(loop.finalTime, ending.forced, gate.rewinding);
+    outro.update(loop.finalTime, ending.forced, gate.rewinding || rewind.active);
+    loop.rewinding = rewind.active;
+    loop.pull = pullOverride() ?? Math.max(gate.pull(now), rewind.pull(now));
   }, 'story');
   let depth = '';
   loop.onFrame(() => {
@@ -167,15 +178,17 @@ function boot(): void {
     const leaving = hold < 0 && t < .5;
     // the ending's sentence rises on the ending's own clock (seconds since resting there: pinned by ?parity, virtual under ?capture)
     const endingRise = chapter.current === LAST && !leaving ? (loop.finalTime < 0 ? 0 : ss(Ending.TITLE_S, Ending.TITLE_S + 1.8, loop.finalTime)) : 1;
-    const op = textOpacity * gate.update(v, now, marker.x, marker.y) * endingRise;
+    const op = rewind.active ? 0 : textOpacity * gate.update(v, now, marker.x, marker.y) * endingRise;
     chapter.setProgress(op, leaving, !env.reduced);
     typeAxes.showTitle(op > 0);
     clock.update(a, b, clockProgress(tr, t, eg), t, tr);
-    const cutOp = cutOpacity(tr, t).toFixed(3);
+    const cutOp = (rewind.active ? 0 : cutOpacity(tr, t)).toFixed(3);
     if (cutOp !== cut.style.opacity) cut.style.opacity = cutOp;
     intro.update(v);
-    a11y.rest(hold);
-    if (sound.on) sound.sound!.frame({ a, b, t, eg, tr, hold });
+    // starting again passes every chapter on its way back: no announcements, no chapter motifs
+    const rest = rewind.active ? -1 : hold;
+    a11y.rest(rest);
+    if (sound.on) sound.sound!.frame({ a, b, t, eg, tr, hold: rest });
     record?.({ a, b, t, eg, tr, hold });
   });
 

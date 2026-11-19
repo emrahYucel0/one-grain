@@ -31,7 +31,7 @@ was verified and how, and what was not.
 The reference is never edited. The harness serves a patched copy with three hooks: progress
 override, time override, and exposing the built texture (`scripts/lib/reference.mjs`).
 
-## Awwwards P0, P1 and P2: beyond the reference
+## Awwwards P0 to P3: beyond the reference
 
 Design work for an Awwwards submission, made in the port without a reference file:
 
@@ -44,7 +44,8 @@ Design work for an Awwwards submission, made in the port without a reference fil
 - **P1, the ending's last word** (`src/ui/outro.ts`): 3.2 s into the ending, just after the signature
   (2.4 s, brought forward from the reference's 8 s), "Start again", "Share" and "Credits" come in
   under the signature; the card rises by the row's height over a soft stage-coloured ground. Position `29-hold-now` differs from the reference for that reason and is
-  listed as intentional. "Start again" closes the veil onto the grain and opens it on the first world.
+  listed as intentional. "Start again" runs the story back to its start (P3, below); with motion off the
+  veil closes onto the grain and opens on the first world.
 - **P1, the cursor and its touch** (`src/ui/cursor.ts`, `grains.vert.glsl`): a mouse only, so no
   parity position changes; the grains' touch is off unless a mouse moves (`uTouch.w` = 0).
 - **P1, the HUD**: icons beside the sound and motion words, the current chapter named on the rail,
@@ -60,6 +61,31 @@ Design work for an Awwwards submission, made in the port without a reference fil
   per chapter under its index (temperatures, sizes, purity; the display's are read from the visitor's
   own screen). The card is anchored at its foot, so the title and the text keep their places
   (check:text); the article carries the same figures as a list for assistive tech and the fallback.
+- **P3, the opening shot** (`core/loop.ts` `pull`, `ui/gate.ts`): while the gate waits the camera is close
+  on the crystal's tip, the grain in profile against the dark with the melt glowing below, in a wider
+  opening of the veil; entering pulls the camera back along a turning arc to the first world's framing
+  (5.2 s). The title stays alone on the screen until the first scroll, on every gated first visit (it
+  used to share the screen with the first chapter's card on desktops). The harnesses skip the gate.
+- **P3, starting again** (`ui/rewind.ts`): the story runs back from the ending to its start in 4.2 s, the
+  sand flowing back through every world and the clock counting down to 0, the words, the loupe and the
+  "One day," card out of the way; the camera pushes onto the grain as the first world comes in, and the
+  opening's pull-back follows. No black screen between the end and the start any more.
+- **P3, legibility**: the HUD's controls, the rail, the marker, the clock's unit, the loupe's caption, the
+  chapter's index and figures are at least 13 px (15 px on large screens; the uppercase labels 12 px),
+  and the rail's marks and act names brighter; the whole rail is named while the pointer is on it.
+  Positions `01-hold-magma` and `31-hover-chip` differ from the reference by their text alone.
+- **P3, the river** (`story/worlds.ts`, `grains.vert.glsl`): seen down its valley, so the meander reads and
+  the water runs away from the camera, with ripples travelling downstream on it and the valley in focus.
+  Positions `04` to `06` differ from the reference for this reason.
+- **P3, no blur soup**: desert → again backs away from the sand as it is buried instead of sinking the
+  camera through it (`10-tr-desert-again`); light → chip keeps its grains sharp at the height of the
+  dive; purity's vapour settles closer to the rods, so their edges hold (`17-hold-purity`).
+- **P3, the ending's image** (`core/loop.ts`, `grains.vert.glsl` `uRing`): before the grain's light goes,
+  it passes into the sand as a ring, each grain it crosses lit for a moment in its sub-pixel's colour;
+  then the camera draws back until the sand shows its shape, the screen it was (`29-hold-now`).
+- **P3, confinement made visible**: a title comes in at the width it left with and is squeezed (or let
+  go) to its own as its letters rise, so the narrowing through industry reads as meant. Not under the
+  harnesses, nor with motion off.
 
 ## Phase 7: skies, the loupe, the light chapter's pattern (reference v27)
 

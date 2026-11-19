@@ -125,6 +125,15 @@ void main(){
     }
   }
   if (fl < .5) em += blend(uGlowA, uGlowB, e); // the world's inner glow for its base material (magma's quartz)
+  // the river's current (Awwwards P3): ripples travelling downstream (+x, faster than the grains) catch the
+  // light, most in the middle of the channel where the water is fastest, so the flow reads even in a still
+  if (fl > .5 && fl < 1.5) {
+    float tm = uTime * uMotion, mid = 1. - smoothstep(0., 1.7, abs(p.z - 2.2 * sin(p.x * .22)));
+    float rip = sin(p.x * 2.1 - tm * 4.2 + sin(p.z * 3.1 + p.x * .4) * 1.2 + R.x * .6);
+    float crest = smoothstep(.5, 1., rip) * (.4 + .6 * mid) * (1. - m.fade);
+    c = mix(c, vec3(.84, .95, 1.), crest * .6);
+    em += crest * .4;
+  }
   // the light chapter (v27): the circuit pattern lands on the layer, its traces lit, the rest darkened;
   // the light rays themselves (behaviour 17) are not part of the layer
   float wL = (uFrom == uPatWorld ? 1. - e : 0.) + (uTo == uPatWorld ? e : 0.);
@@ -136,6 +145,17 @@ void main(){
     float trace = clamp(tx + ty + pad, 0., 1.);
     c = mix(c * mix(1., .45, wL), vec3(.86, .76, 1.), trace * wL * .9);
     em += trace * wL * 1.5;
+  }
+  // the grain's last light (Awwwards P3): before it goes out, its light passes into the sand around it as a
+  // ring, and the sand it crosses remembers the screen it was: each grain lit in its sub-pixel's colour
+  if (uRing.y > 0. && uRest == 2) {
+    float dr = length(p.xy - uLandPos.xy) - uRing.x;
+    float band = exp(-dr * dr / .7) + .2 * exp(-(dr + 1.4) * (dr + 1.4) / 3.); // the front, and a softer wake behind it
+    float k = band * uRing.y;
+    vec3 sub = R.y < .34 ? vec3(1., .3, .22) : R.y < .67 ? vec3(.36, 1., .42) : vec3(.34, .5, 1.);
+    c = mix(c, sub, clamp(k * .8, 0., .8));
+    em += k * 1.5;
+    p.z += k * .1;
   }
   c *= 1. + arc * .25;
   vec4 mv = modelViewMatrix * vec4(p, 1.);

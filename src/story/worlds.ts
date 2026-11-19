@@ -4,7 +4,7 @@ import type { WorldDef } from './types';
 export const WORLDS: readonly WorldDef[] = [
   { slug: 'magma', act: 'nature', hold: 1.6, clock: { unit: 'years', value: 0 }, lo: '#3c302c', hi: '#ede6dc', grain: .07, cam: [3, 1.5, 10], look: [-2, -.6, -3], conf: .1, frame: 1, wideAnchor: 0 },
   { slug: 'granite', act: 'nature', hold: 1.1, clock: { unit: 'years', value: 3e5 }, lo: '#55514d', hi: '#cbbaa9', grain: .13, cam: [-2, 3, 30], look: [-2, 1, -6], conf: .3, frame: .85, wideAnchor: .5 },
-  { slug: 'river', act: 'nature', hold: 1.0, clock: { unit: 'years', value: 2e7 }, lo: '#5e5040', hi: '#b39b74', grain: .07, cam: [-5, 2.4, 7.5], look: [2.5, -.2, -1], conf: 0, frame: 1, wideAnchor: .85 },
+  { slug: 'river', act: 'nature', hold: 1.0, clock: { unit: 'years', value: 2e7 }, lo: '#5e5040', hi: '#b39b74', grain: .07, cam: [-12, 5, 2], look: [6, -.5, 0], conf: 0, frame: 1, wideAnchor: .85 }, // Awwwards P3: down the valley, the meander reads, the water runs away from us
   { slug: 'coast', act: 'nature', hold: 1.0, clock: { unit: 'years', value: 2e7 }, lo: '#86714f', hi: '#e2cfa8', grain: .065, cam: [5, 1.8, 6.5], look: [-2, 0, .8], conf: .05, frame: 1, wideAnchor: .5 },
   { slug: 'desert', act: 'nature', hold: 1.6, clock: { unit: 'years', value: 2.1e7 }, lo: '#97653a', hi: '#e8ba7b', grain: .17, cam: [-7, 3.2, 11], look: [3, -.5, -4], conf: .15, frame: 1, wideAnchor: .85 },
   { slug: 'again', act: 'nature', hold: .9, clock: { unit: 'years', value: 3e8 }, lo: '#8a4a2c', hi: '#ead0a6', grain: .09, cam: [7, 3.5, 11], look: [-2.5, .5, -1.5], conf: 0, frame: 1, wideAnchor: .5 },

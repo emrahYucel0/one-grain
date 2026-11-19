@@ -26,17 +26,19 @@
   --final-title-size:clamp(2.2rem,4.6vw,4.2rem);--final-title-line:1;--final-title-measure:16ch;
   --body-size:clamp(1.1rem,.55vw + .82rem,1.32rem);--body-line:1.5;--body-opacity:.92;--body-measure:38ch;--body-opsz:16;
   --micro-size:clamp(.95rem,1.1vw,1.02rem);--micro-opacity:.62;--micro-gap:.7rem;
-  --hint-size:.85rem;--hint-gap:.9rem;--hint-track:.01em;
+  --hint-size:.9rem;--hint-gap:.9rem;--hint-track:.01em;
   --signature-size:.95rem;--signature-opacity:.9;
 
   --clock-years:clamp(1.8rem,3.4vw,3rem);--clock-label:clamp(1.2rem,2.2vw,1.8rem);
   --clock-prod:clamp(2rem,3.8vw,3.4rem);--clock-now:clamp(2.8rem,6vw,5.2rem);
-  --clock-unit-size:.95rem;--clock-unit-opacity:.62;
+  --clock-unit-size:1.05rem;--clock-unit-opacity:.86;
 
   --brand-stretch:125%;--brand-weight:500;--brand-track:.01em;
   /* --intro-*: in index.html's critical styles (the intro is the first screen) */
   --cut-weight:300;--cut-size:clamp(2.6rem,7vw,6rem);--cut-opsz:72;
-  --rail-size:.75rem;--rail-track:.01em;
+  --rail-size:clamp(.8125rem,.22vw + .6rem,.9375rem);--rail-track:.01em;
+  /* the HUD's controls, the marker and the small labels over the scene (Awwwards P3: 13 px at least, 15 px on large screens) */
+  --ui-size:clamp(.8125rem,.22vw + .6rem,.9375rem);--ui-small:clamp(.75rem,.16vw + .58rem,.84rem);
 }
 
 /* ---------- ported from reference/blockout-v8.html (keep in sync for parity) ---------- */
@@ -74,7 +76,7 @@ body{margin:0;background:var(--stage);color:var(--ink);font-family:var(--sans);f
 .timeline{position:fixed;z-index:3;right:clamp(1rem,3vw,2.5rem);top:50%;transform:translateY(-50%);display:flex;flex-direction:column;gap:.9rem;align-items:flex-end}
 .timeline .group{display:flex;flex-direction:column;align-items:flex-end;gap:.15rem}
 .timeline .label{font-size:.75rem;color:var(--muted);margin-bottom:.15rem}
-.timeline button{all:unset;cursor:pointer;display:flex;align-items:center;gap:.5rem;padding:.12rem 0;font-size:.75rem;color:var(--muted)}
+.timeline button{all:unset;cursor:pointer;display:flex;align-items:center;gap:.5rem;padding:.12rem 0;font-size:var(--rail-size);color:var(--muted)}
 .timeline button i{display:block;width:16px;height:2px;background:var(--rule);transition:width .3s,background .3s}
 .timeline button span{opacity:0;transition:opacity .2s}
 .timeline button:hover span,.timeline button:focus-visible span{opacity:1}
@@ -86,14 +88,14 @@ body{margin:0;background:var(--stage);color:var(--ink);font-family:var(--sans);f
    its ring and shadow (an outer shadow never darkens the lens inside), the line to the grain, the caption */
 .loupe{position:fixed;z-index:2;left:0;top:0;width:176px;height:176px;border-radius:50%;pointer-events:none;opacity:0;
   box-shadow:0 0 0 1px rgba(236,227,211,.42),0 14px 44px rgba(0,0,0,.55);will-change:transform,opacity}
-.loupe-cap{position:absolute;left:50%;top:calc(100% + 8px);transform:translateX(-50%);font:500 .64rem/1 var(--sans);letter-spacing:.14em;color:rgba(236,227,211,.9);white-space:nowrap;
+.loupe-cap{position:absolute;left:50%;top:calc(100% + 8px);transform:translateX(-50%);font:500 var(--ui-small)/1 var(--sans);letter-spacing:.14em;color:rgba(236,227,211,.95);white-space:nowrap;
   text-shadow:0 0 3px rgba(0,0,0,1),0 0 3px rgba(0,0,0,1),0 0 8px rgba(0,0,0,.85),0 0 16px rgba(0,0,0,.6)}
 .loupe-cap::before{content:'';position:absolute;inset:-16px -30px;z-index:-1;pointer-events:none;
   background:radial-gradient(closest-side,rgb(var(--stage-rgb,13 24 28) / .8),rgb(var(--stage-rgb,13 24 28) / .7) 35%,rgb(var(--stage-rgb,13 24 28) / .4) 62%,rgb(var(--stage-rgb,13 24 28) / 0))}
 .loupe-line{position:fixed;z-index:2;left:0;top:0;width:1px;height:1px;background:rgba(236,227,211,.38);transform-origin:0 50%;pointer-events:none;opacity:0}
 @media (max-width:720px),(max-height:540px){.loupe{width:116px;height:116px}}
 .marker{position:fixed;z-index:2;left:0;top:0;width:30px;height:30px;margin:-15px 0 0 -15px;border:1.5px solid var(--ink);border-radius:50%;pointer-events:none;opacity:.8;will-change:transform}
-.marker span{position:absolute;left:38px;top:5px;font-size:.8rem;white-space:nowrap}
+.marker span{position:absolute;left:38px;top:4px;font-size:var(--ui-size);white-space:nowrap}
 /* .intro: in index.html's critical styles (the loading screen's title) */
 @media (max-width:720px){.timeline .label,.timeline button span{display:none}.timeline{gap:.6rem}}
 
@@ -265,7 +267,7 @@ html.gated .gate{display:flex;opacity:0;visibility:hidden;transform:translateY(8
   transition:opacity .9s ease .5s,transform 1.1s cubic-bezier(.16,.84,.24,1) .5s,visibility 0s linear 1.4s}
 html.gated.ready:not(.gate-opening):not(.gate-closing) .gate{opacity:1;visibility:visible;transform:none;transition-delay:.5s,.5s,0s}
 html:is(.gate-opening,.gate-closing) .gate{opacity:0;visibility:hidden;transform:translateY(-6px);transition:opacity .45s ease,transform .6s ease,visibility 0s linear .6s}
-.gate button{all:unset;position:relative;cursor:pointer;box-sizing:border-box;color:var(--ink);font-size:.82rem;font-weight:500;font-stretch:112%;letter-spacing:.06em;line-height:1}
+.gate button{all:unset;position:relative;cursor:pointer;box-sizing:border-box;color:var(--ink);font-size:var(--ui-size);font-weight:500;font-stretch:112%;letter-spacing:.06em;line-height:1}
 .gate .gate-enter{display:inline-flex;align-items:center;gap:.75rem;min-height:48px;padding:0 1.5rem 0 1.25rem;border-radius:999px;
   border:1px solid rgba(236,227,211,.5);background:rgba(13,24,28,.35);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);
   transition:background .35s ease,color .35s ease,border-color .35s ease}
@@ -289,7 +291,7 @@ html.motion-off .gate-bars i{animation:none;transform:scaleY(.6)}
    --p: the card's progress (0..1, from the story); each piece's own --l runs from its start --a over
    its span --w. The title's letters rise through their word's mask (an eased --l); leaving (.out),
    they go up and out from the first letter (--b). Motion off: no movement, the card only fades. */
-.chapter .idx{display:flex;align-items:center;gap:.7rem;margin:0 0 .9rem;font-family:var(--sans);font-size:.72rem;font-weight:500;font-stretch:112%;letter-spacing:.16em;text-transform:uppercase;color:var(--ink)}
+.chapter .idx{display:flex;align-items:center;gap:.7rem;margin:0 0 .9rem;font-family:var(--sans);font-size:var(--ui-small);font-weight:500;font-stretch:112%;letter-spacing:.16em;text-transform:uppercase;color:var(--ink)}
 .chapter .idx .n{font-variant-numeric:tabular-nums}
 .chapter .idx .n{font-weight:700}
 .chapter .idx .act{display:inline-flex;align-items:center;gap:.7rem}
@@ -316,17 +318,17 @@ html.motion-off .chapter:not(.final) .micro{opacity:var(--micro-opacity)}
 /* the chapter's index is small text over the scene: the same tight halo as the other small labels (check:contrast) */
 .chapter .idx{text-shadow:0 0 3px rgba(0,0,0,1),0 0 3px rgba(0,0,0,1),0 0 8px rgba(0,0,0,.85),0 0 16px rgba(0,0,0,.6)}
 /* narrow phones: a tighter index, so the card stays as compact as it was (the loupe's room, check:responsive) */
-@media (max-width:479px){.chapter .idx{margin-bottom:.5rem;font-size:.66rem;gap:.55rem}.chapter .idx .act{gap:.55rem}.chapter .idx .act::before{width:1.1rem}}
+@media (max-width:479px){.chapter .idx{margin-bottom:.5rem;font-size:.72rem;gap:.55rem}.chapter .idx .act{gap:.55rem}.chapter .idx .act::before{width:1.1rem}}
 
 /* ---------- the chapter's figures (Awwwards P2; src/ui/chapter.ts, data-facts in index.html) ----------
    Under the index, above the title, one after another like the index: a small label and its value. The
    card is anchored at its foot, so the title and the text keep their places; the index moves up a line. */
-.chapter .facts{display:flex;flex-wrap:wrap;gap:.35rem 1.6rem;margin:-.25rem 0 1rem;font-family:var(--sans);font-size:.8rem;line-height:1.3;color:var(--ink)}
+.chapter .facts{display:flex;flex-wrap:wrap;gap:.35rem 1.6rem;margin:-.25rem 0 1rem;font-family:var(--sans);font-size:var(--ui-size);line-height:1.3;color:var(--ink)}
 /* the index and the figures sit higher on the card, over more of the scene: a deeper halo (check:contrast) */
 .chapter :is(.idx,.facts){text-shadow:0 0 2px rgba(0,0,0,1),0 0 3px rgba(0,0,0,1),0 0 4px rgba(0,0,0,1),0 0 8px rgba(0,0,0,.9),0 0 16px rgba(0,0,0,.7),0 0 28px rgba(0,0,0,.45)}
 .chapter .facts .f{display:inline-flex;align-items:baseline;gap:.55rem;white-space:nowrap;--l:clamp(0,calc((var(--p,1) - var(--a,0)) / var(--w,1)),1);
   opacity:var(--l);transform:translateY(calc((1 - var(--l)) * (1 - var(--l)) * .6em * var(--dir,1)))}
-.chapter .facts .k{font-size:.66rem;font-weight:400;font-stretch:112%;letter-spacing:.14em;text-transform:uppercase}
+.chapter .facts .k{font-size:var(--ui-small);font-weight:400;font-stretch:112%;letter-spacing:.14em;text-transform:uppercase}
 .chapter .facts .v{font-weight:500;font-variant-numeric:tabular-nums;letter-spacing:.01em}
 .chapter.final .facts{display:none}
 /* the index and the figures stand higher on the card, over brighter parts of some worlds (the chip's
@@ -337,7 +339,7 @@ html.motion-off .chapter:not(.final) .micro{opacity:var(--micro-opacity)}
   background:radial-gradient(closest-side,rgb(var(--stage-rgb,13 24 28) / .7),rgb(var(--stage-rgb,13 24 28) / .55) 40%,rgb(var(--stage-rgb,13 24 28) / .25) 72%,rgb(var(--stage-rgb,13 24 28) / 0))}
 @media (max-width:479px){.chapter:not(.final)::before{left:-3rem;top:-2.6rem;height:7.5rem}}
 html.motion-off .chapter .facts .f{transform:none;opacity:1}
-@media (max-width:479px){.chapter .facts{gap:.25rem 1.1rem;margin:-.1rem 0 .6rem;font-size:.74rem}.chapter .facts .k{font-size:.6rem}}
+@media (max-width:479px){.chapter .facts{gap:.25rem 1.1rem;margin:-.1rem 0 .6rem;font-size:.8rem}.chapter .facts .k{font-size:.68rem}}
 /* the readable fallback: the figures as a quiet list under each chapter */
 #story dl.facts{display:flex;flex-wrap:wrap;gap:.2rem 1.4rem;margin:.6rem 0 0;font-family:var(--sans);font-size:.85rem;color:var(--muted)}
 #story dl.facts div{display:flex;gap:.45rem}
@@ -350,7 +352,7 @@ html.motion-off .chapter .facts .f{transform:none;opacity:1}
    motion's dot circles while motion is on. The rail keeps the chapter you are in named, marks the ones
    behind you, and lights its act. */
 .controls{gap:22px}
-.sound{display:inline-flex;align-items:center;gap:.5rem;border-bottom:0;padding:2px 0;font-size:.8rem;letter-spacing:.02em;transition:color .3s ease}
+.sound{display:inline-flex;align-items:center;gap:.5rem;border-bottom:0;padding:2px 0;font-size:var(--ui-size);letter-spacing:.02em;transition:color .3s ease}
 .sound:hover{color:var(--ink)}
 .sound .ico{flex:none;display:inline-flex;width:14px;height:12px}
 .ico-sound{align-items:flex-end;justify-content:space-between}
@@ -372,9 +374,17 @@ html.parity :is(.ico-sound i,.ico-motion i,.gate-bars i){animation:none !importa
 html.parity .timeline :is(button span,button i){transition:none}
 html.motion-off .sound[aria-pressed="true"] .ico-sound i{animation:none;transform:scaleY(var(--h,.5))}
 @media (prefers-reduced-motion:reduce){.sound[aria-pressed="true"] .ico-sound i{animation:none;transform:scaleY(var(--h,.5))}.motion[aria-pressed="true"] .ico-motion i{animation:none}}
-/* the rail: the chapter you are in keeps its name, the ones behind you are marked, its act lit */
+/* the rail: the chapter you are in keeps its name, the ones behind you are marked, its act lit. Awwwards P3:
+   the marks and the act names brighter (they were faint over the scene), the whole rail's names shown while
+   the pointer is on it, so it reads as a table of contents rather than as a hidden menu */
+.timeline .label{color:rgba(236,227,211,.8)}
+.timeline button{color:rgba(236,227,211,.84)}
+.timeline button i{background:rgba(236,227,211,.42)}
+.timeline:hover button span{opacity:.86}
+.timeline button:hover span,.timeline button:focus-visible span{opacity:1}
+.timeline button span{text-shadow:0 0 3px rgba(0,0,0,1),0 0 3px rgba(0,0,0,1),0 0 8px rgba(0,0,0,.85),0 0 16px rgba(0,0,0,.6)}
 .timeline button[aria-current="step"] span{opacity:1;text-shadow:0 0 3px rgba(0,0,0,1),0 0 3px rgba(0,0,0,1),0 0 8px rgba(0,0,0,.85),0 0 16px rgba(0,0,0,.6)}
-.timeline button.done i{background:rgba(236,227,211,.55)}
+.timeline button.done i{background:rgba(236,227,211,.72)}
 .timeline .group.here .label{color:var(--ink)}
 
 /* ---------- depth (Awwwards P1): the words sit a little nearer than the world and drift against the camera's
@@ -396,7 +406,7 @@ html.outro-on .story::before{opacity:1}
   pointer-events:auto;opacity:0;visibility:hidden;transform:translateY(10px);
   transition:opacity .5s ease,transform .6s ease,visibility 0s linear .6s}
 html.outro-on .outro{opacity:1;visibility:visible;transform:none;transition:opacity .9s ease .35s,transform 1.1s cubic-bezier(.16,.84,.24,1) .35s,visibility 0s}
-.outro button{all:unset;position:relative;cursor:pointer;box-sizing:border-box;color:var(--ink);font-family:var(--sans);font-size:.82rem;font-weight:500;font-stretch:112%;letter-spacing:.06em;line-height:1;
+.outro button{all:unset;position:relative;cursor:pointer;box-sizing:border-box;color:var(--ink);font-family:var(--sans);font-size:var(--ui-size);font-weight:500;font-stretch:112%;letter-spacing:.06em;line-height:1;
   text-shadow:0 0 3px rgba(0,0,0,1),0 0 8px rgba(0,0,0,.8)}
 .outro .outro-again{display:inline-flex;align-items:center;gap:.65rem;min-height:46px;padding:0 1.4rem 0 1.15rem;border-radius:999px;text-shadow:none;
   border:1px solid rgba(236,227,211,.55);background:rgba(13,24,28,.45);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);
@@ -463,3 +473,20 @@ html.has-cursor:not(.dialog-open) .cursor{display:block}
 .cursor.is-brush.is-down:not(.is-over) .cursor-ring::before{width:150px;height:150px}
 .cursor.is-light:not(.is-over) .cursor-ring::before{width:36px;height:36px;border-radius:5px;border-color:rgba(255,216,150,.95);box-shadow:0 0 16px rgba(255,186,90,.5),0 0 0 1px rgba(0,0,0,.35)}
 @media (forced-colors:active){.cursor{display:none !important}}
+
+/* ---------- confinement made visible (Awwwards P3; ui/type-axes.ts) ----------
+   The titles' width follows the grain's confinement (camera/confinement.ts): wide in nature, condensed as
+   industry closes in on it, open again at the end. The width used to change while the title was hidden, so
+   each chapter simply arrived narrower or wider, which can read as a font failing to load. Now the title
+   comes in at the width it left with and is squeezed (or let go) to its own in front of the reader, over
+   the time its letters take to rise. Not in the harnesses (their frames must not depend on timing), nor
+   with motion off. */
+.chapter h2{transition:font-stretch 1.7s cubic-bezier(.65,0,.2,1) .15s}
+html:is(.parity,.motion-off) .chapter h2{transition:none}
+@media (prefers-reduced-motion:reduce){.chapter h2{transition:none}}
+/* starting again (ui/rewind.ts): the words stay out of the way while the story runs back */
+html.rewinding :is(.story,.marker span){opacity:0;transition:opacity .4s ease}
+
+/* the ending's choices are larger now (P3) and reach further over the sand: a soft ground of the stage colour under the row (check:contrast) */
+.outro::before{content:"";position:absolute;inset:-.2rem -6rem -2rem -4rem;z-index:-1;pointer-events:none;
+  background:radial-gradient(closest-side,rgb(var(--stage-rgb,13 24 28) / .9),rgb(var(--stage-rgb,13 24 28) / .84) 62%,rgb(var(--stage-rgb,13 24 28) / .35) 85%,rgb(var(--stage-rgb,13 24 28) / 0))}

@@ -48,7 +48,9 @@ export function shot(tr: TransitionDef, a: number, b: number, t: number, heroes:
     case 'drift': c1 = off(camA, [2, 1, 3]); c2 = off(camB, [-4, 4, 8]); break;
     case 'breakfall': c1 = off(hA, [0, 6, 8]); c2 = off(hB, [0, 12, 7]); break;
     case 'rise': c1 = off(camA, [0, 9, 2]); c2 = off(camB, [0, 8, 4]); break;
-    case 'sink': c1 = off(camA, [0, -1, -2]); c2 = off(camB, [0, -8, 0]); break;
+    // Awwwards P3: the camera backs away and stays outside the sand as it is buried (it used to sink
+    // through it, and every grain near the lens became a blur)
+    case 'sink': c1 = off(camA, [0, 2.5, 7]); c2 = off(camB, [0, 2, 9]); break;
     case 'top': c1 = off(camA, [0, 3, 0]); c2 = off(hB, [0, 6, .5]); break;
     case 'zoom': c1 = camA.clone().lerp(hA, .97); c2 = camB.clone().lerp(hB, .97); break;
     case 'beam': c1 = off(camA, [0, 5, 0]); c2 = off(camB, [0, -5, 0]); break;

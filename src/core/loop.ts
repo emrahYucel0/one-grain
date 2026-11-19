@@ -32,6 +32,18 @@ import type { Projection } from './resize';
 import type { StageColour } from './stage-colour';
 
 const PATTERN_WORLD = WORLDS.findIndex((w) => w.slug === PATTERN.world);
+/**
+ * The opening shot: its closest approach to the grain (world units), how far round the camera is turned
+ * there (radians; it turns back as it pulls away) and how much higher it looks from: close on the
+ * crystal's tip, the grain in profile against the dark with the melt glowing below it.
+ */
+const PULL_NEAR = 2.1;
+const PULL_TURN = 1.3;
+const PULL_LIFT = .05;
+/** The ending (Awwwards P3): how far the grain's last light spreads (world units), how far the camera draws back (× its distance). */
+const ENDING_RING = 19;
+const ENDING_BACK = .95;
+const UP = new Vector3(0, 1, 0);
 
 export interface LoopDeps {
   stage: Stage;
@@ -105,6 +117,17 @@ export class Loop {
   parallax: { x: number; y: number } = { x: 0, y: 0 };
   /** the cursor's touch on the grains (NDC x, y, strength; set by input) */
   touch = { x: 0, y: 0, s: 0 };
+  /**
+   * How close the camera is on the hero grain (0..1, Awwwards P3): the opening shot starts on the grain and
+   * pulls back to the world's framing (ui/gate.ts), and starting again ends there (ui/rewind.ts). Set in
+   * the 'story' phase; 0 leaves the shot as directed.
+   */
+  pull = 0;
+  /** the story's progress while something other than the scroll drives it (starting again, ui/rewind.ts) */
+  progressHook: ((now: number) => number | null) | null = null;
+  /** set while the story runs back to its start: no loupe */
+  rewinding = false;
+  private readonly pullDir = new Vector3();
 
   constructor(deps: LoopDeps) { this.d = deps; }
 
@@ -133,7 +156,7 @@ export class Loop {
   private frame(draw = true): void {
     const { stage, grains, hero, timeline, hash, projection, typeAxes, stageColour, pipeline, timer, layers } = this.d;
     const reduced = env.reduced;
-    const v = progressOverride() ?? timeline.state.v;
+    const v = progressOverride() ?? this.progressHook?.(performance.now()) ?? timeline.state.v;
     reportProgress(v);
     const dt = this.clock.tick(reduced);
     const time = timeOverride() ?? this.clock.time;
@@ -148,11 +171,20 @@ export class Loop {
     for (const fn of this.listeners.story) fn(info);
     // the final hold (v15): the grain hovers, loses its light (3–5.6 s), then lands among the others
     // (5–6.4 s, a soft ease); under reduced motion it simply becomes matte in place
-    let landed = 0;
+    let landed = 0, ringR = 0, ringK = 0;
     if (L.hold === WORLDS.length - 1 && this.finalTime >= 0) {
-      info.heroLight = 1 - ss(3, 5.6, this.finalTime);
-      landed = reduced ? (info.heroLight < .05 ? 1 : 0) : ss(5, 6.4, this.finalTime);
+      const ft = this.finalTime;
+      info.heroLight = 1 - ss(3, 5.6, ft);
+      landed = reduced ? (info.heroLight < .05 ? 1 : 0) : ss(5, 6.4, ft);
       S.hero.z -= .6 * (1 - (1 - landed) ** 3);
+      if (!reduced) {
+        // Awwwards P3: as the grain's light goes, it passes into the sand as a ring (2.6–7.4 s) ...
+        const r = ss(2.6, 7.4, ft);
+        ringR = 1.4 + r * ENDING_RING; ringK = ss(2.6, 3.2, ft) * (1 - r * r);
+        // ... and the camera draws back until the sand shows its shape: the screen it was (from 5 s on)
+        const back = ss(5, 17, ft);
+        S.pos.sub(S.look).multiplyScalar(1 + ENDING_BACK * back).add(S.look);
+      }
     }
 
     // stage colour per act (the right scrim lighter under a sky); confinement, eased like the camera: lens
@@ -168,6 +200,16 @@ export class Loop {
     const sf = this.skyFrame, canvas = stage.renderer.domElement;
     sf.stage.copy(stageColour.fogLinear); sf.time = time; sf.aspect = canvas.width / Math.max(1, canvas.height);
 
+    // the opening shot: close on the grain, turned a little, pulling back along a widening arc (the
+    // distance eases geometrically, so the pull reads as even); at 0 the shot exactly as directed
+    if (this.pull > 0 && !reduced) {
+      const k = this.pull, d = this.pullDir.copy(S.pos).sub(S.hero), far = d.length();
+      d.normalize().applyAxisAngle(UP, -PULL_TURN * k);
+      d.y += PULL_LIFT * k; d.normalize();
+      const dist = far * Math.pow(Math.min(1, PULL_NEAR / Math.max(far, 1e-3)), k);
+      S.pos.copy(S.hero).addScaledVector(d, dist);
+      S.look.lerp(S.hero, k);
+    }
     hero.moveTo(S.hero);
     hero.visible = heroVisible;
     for (const fn of this.listeners.camera) fn(info);
@@ -184,7 +226,7 @@ export class Loop {
     const fade = reduced ? 1 - Math.sin(Math.PI * L.t) : 1;
     const opacity = fade === 1 ? '1' : fade.toFixed(3);
     if (opacity !== this.canvasOpacity) { this.canvasOpacity = opacity; stage.renderer.domElement.style.opacity = opacity; }
-    const loupe = layers.on('loupe')
+    const loupe = layers.on('loupe') && !this.rewinding
       ? this.d.loupe.update({ a, b, k: rigK, cut: tr.cam === 'cut' ? t : -1, hero: S.hero, camera: stage.camera, heroVisible, heroLight: info.heroLight, text: tb.box, fade, time, dt, now: info.now })
       : this.d.loupe.hide();
 
@@ -198,7 +240,7 @@ export class Loop {
       style: tr.g, k: tr.k ?? 1, span: tr.span ?? .45, spread: tr.spread ?? 30, dir: tr.dir ?? [1, 0, 0],
       heroA: this.heroes[a]!, heroB: this.heroes[b]!,
       loA: wa.lo, hiA: wa.hi, loB: wb.lo, hiB: wb.hi, grain, jitter: towards(ca.jitter, cb.jitter, S.eg),
-      fog: stageColour.fog, fogLinear: layers.on('sky') ? this.sky.fog : stageColour.fogLinear, rig: this.rigState, camera: stage.camera, light, shadows, lightVP: pipeline.shadow.viewProjection, shadowPx: pipeline.shadow.pxPerUnit, land: landed, landPos: S.hero, patternAt: this.heroes[PATTERN_WORLD]!, interact: ix.mode, mouse: ix.mode ? ix.at : this.mouse, press: ix.press, touch: this.touch,
+      fog: stageColour.fog, fogLinear: layers.on('sky') ? this.sky.fog : stageColour.fogLinear, rig: this.rigState, camera: stage.camera, light, shadows, lightVP: pipeline.shadow.viewProjection, shadowPx: pipeline.shadow.pxPerUnit, land: landed, landPos: S.hero, ring: [ringR, ringK], patternAt: this.heroes[PATTERN_WORLD]!, interact: ix.mode, mouse: ix.mode ? ix.at : this.mouse, press: ix.press, touch: this.touch,
     };
     const overdraw = overdrawView();
     grains.setOverdrawView(overdraw);
@@ -210,7 +252,7 @@ export class Loop {
     pipeline.render({
       grains: stage.scene, overlay: stage.overlay, camera: cam, shadows: shadows && !overdraw, shadowEvery, clear: stageColour.fogLinear, direct: overdraw,
       sky: layers.on('sky') ? this.skyFrame : null, loupe,
-      post: { bloom: layers.on('bloom'), dof: layers.on('dof'), grade: layers.on('grade'), near: cam.near, far: cam.far, focus: cam.position.distanceTo(S.hero), dofScale: this.rigState.dof, time, grainMoves: !reduced },
+      post: { bloom: layers.on('bloom'), dof: layers.on('dof'), grade: layers.on('grade'), near: cam.near, far: cam.far, focus: cam.position.distanceTo(S.hero), dofScale: this.rigState.dof * (tr.cam === 'zoom' ? 1 - .85 * S.arc : 1), time, grainMoves: !reduced },
     });
     reportHeroRendered(S.hero, cam);
     timer.tick();
