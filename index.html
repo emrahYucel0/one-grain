@@ -183,12 +183,14 @@ html.nogl #story .fallback-note{display:block;margin:0 0 2.5rem;font-style:itali
 
 <div class="story">
   <div class="chapter" id="chapter" aria-hidden="true"><div class="idx"><span class="n"></span><span class="act"></span></div><div class="facts" id="facts"></div><h2></h2><p></p><p class="micro" id="micro"></p><p class="hint" id="hint"></p></div>
-  <!-- the ending's last word (src/ui/outro.ts): once the signature is there, start again, share, credits -->
+  <!-- the ending's last word (src/ui/outro.ts): once the signature is there, the rewind on its own; under it, share and the sample label -->
   <div class="outro" id="outro" role="group" aria-label="The end">
-    <button class="outro-again" type="button" id="again"><span class="ico ico-again" aria-hidden="true"></span>Start again</button>
-    <button class="outro-share" type="button" id="share" data-title="One Grain" data-text="One grain of sand, 300 million years: from magma to the screen you are looking at."
-      data-copied="Link copied" data-failed="Copy failed">Share</button>
-    <button class="outro-credits" type="button" id="creditsOpen" aria-haspopup="dialog" aria-controls="credits">Credits</button>
+    <button class="outro-again" type="button" id="again" aria-label="Rewind 300 million years"><span class="ico ico-again" aria-hidden="true"></span><span class="lbl-long">Rewind 300 million years</span><span class="lbl-short" aria-hidden="true">Rewind</span></button>
+    <div class="outro-links">
+      <button class="outro-share" type="button" id="share" data-title="One Grain" data-text="One grain of sand, 300 million years: from magma to the screen you are looking at."
+        data-copied="Link copied" data-failed="Copy failed">Send this grain to someone</button>
+      <button class="outro-credits" type="button" id="creditsOpen" aria-haspopup="dialog" aria-controls="credits">Sample label</button>
+    </div>
   </div>
 </div>
 <nav class="timeline" id="timeline" translate="no" aria-label="Chapters" data-go="Go to {title}" data-go-final="Go to the end"></nav>
@@ -197,21 +199,41 @@ html.nogl #story .fallback-note{display:block;margin:0 0 2.5rem;font-style:itali
 <!-- Act II's figure (src/ui/figure.ts): one number fills the screen on each industry chapter -->
 <div class="figure" id="figure" aria-hidden="true" translate="no"><p><span class="figure-v"></span><span class="figure-u"></span></p><span class="figure-l"></span></div>
 
-<!-- the credits (src/ui/outro.ts): a native dialog, so Escape, focus and the backdrop are the browser's -->
-<dialog class="credits" id="credits" aria-labelledby="creditsTitle">
+<!-- the sample label (the credits; src/ui/outro.ts): a native modal dialog, so Escape, focus and the backdrop are the browser's -->
+<dialog class="credits" id="credits" aria-labelledby="creditsTitle" aria-modal="true">
   <div class="credits-in">
-    <p class="credits-kicker" aria-hidden="true">One Grain</p>
-    <h2 id="creditsTitle">Credits</h2>
-    <p class="credits-lede">A single grain of sand, followed for 300 million years: from magma, through rivers, coasts and deserts, into a furnace, a crystal, a chip, and the screen you are reading this on.</p>
-    <dl>
-      <div><dt>Concept, design and code</dt><dd><a href="https://yucelemrah.com">Emrah Y&uuml;cel</a></dd></div>
-      <div><dt>Grains</dt><dd>Up to 160,000 per world, fifteen worlds, every one of them moved on the GPU</dd></div>
-      <div><dt>Sound</dt><dd>Synthesised live in your browser; nothing is recorded</dd></div>
-      <div><dt>Type</dt><dd>Archivo and Newsreader, SIL Open Font License</dd></div>
-      <div><dt>Built with</dt><dd>three.js, GSAP, the Web Audio API</dd></div>
+    <header class="sl-head">
+      <h2 id="creditsTitle"><span class="sl-no">Sample <span class="sl-nocase">No.</span>&nbsp;001</span><span class="sl-dash" aria-hidden="true">&ensp;&mdash;&ensp;</span><span class="sl-name">One Grain</span></h2>
+      <div class="sl-loupe" aria-hidden="true">
+        <span class="sl-lens"><svg viewBox="0 0 100 100" focusable="false">
+          <defs>
+            <radialGradient id="slGrain" cx="38%" cy="32%" r="78%"><stop offset="0" stop-color="#f4ead6"/><stop offset=".45" stop-color="#cdb48a"/><stop offset=".85" stop-color="#7d6342"/><stop offset="1" stop-color="#4b3a26"/></radialGradient>
+            <radialGradient id="slFar" cx="40%" cy="35%" r="80%"><stop offset="0" stop-color="#a99272"/><stop offset="1" stop-color="#3b2f22"/></radialGradient>
+          </defs>
+          <path d="M-6 82 C2 70 16 72 22 84 C26 94 16 106 4 104 C-6 102 -10 90 -6 82Z" fill="url(#slFar)" opacity=".55"/>
+          <path d="M80 -6 C94 -6 106 6 102 18 C98 28 84 28 78 18 C74 10 72 -2 80 -6Z" fill="url(#slFar)" opacity=".5"/>
+          <path d="M31 24 C42 14 63 15 73 26 C83 37 81 55 74 66 C66 78 48 83 36 76 C24 69 17 55 19 43 C20 35 24 30 31 24Z" fill="url(#slGrain)"/>
+          <path d="M36 30 C42 25 52 25 57 28" stroke="#fffaf0" stroke-width="2.4" stroke-linecap="round" fill="none" opacity=".55"/>
+          <g fill="#5a4630" opacity=".55"><circle cx="58" cy="52" r="1.6"/><circle cx="44" cy="61" r="1.1"/><circle cx="64" cy="39" r=".9"/><circle cx="39" cy="46" r=".8"/></g>
+        </svg></span>
+        <span class="sl-cap">&times;200</span>
+      </div>
+    </header>
+    <dl class="sl-fields">
+      <div class="sl-f sl-4"><dt>Origin</dt><dd>Magma, &asymp;&nbsp;300 million years ago</dd></div>
+      <div class="sl-f sl-2"><dt>Worlds</dt><dd class="sl-num">15</dd></div>
+      <div class="sl-f sl-6"><dt>Path</dt><dd>Followed from magma, through rivers, coasts and deserts, into a furnace, a crystal, a chip, and the screen you are reading this on.</dd></div>
+      <div class="sl-f sl-6"><dt>Grains</dt><dd><span class="sl-num">160,000</span> at most in each world, every one of them moved on the GPU</dd></div>
+      <div class="sl-f sl-6"><dt>Sound</dt><dd>Every sound here is grown from noise, like the grains. Nothing was recorded.<span class="sl-aside">Synthesised live with the Web Audio API.</span></dd></div>
+      <div class="sl-f sl-3"><dt>Type</dt><dd>Archivo and Newsreader, SIL Open Font License</dd></div>
+      <div class="sl-f sl-3"><dt>Built with</dt><dd>three.js, GSAP, the Web Audio API</dd></div>
+      <div class="sl-f sl-6"><dt>Collected by</dt><dd><a href="https://yucelemrah.com">Emrah Y&uuml;cel</a>: concept, design and code</dd></div>
     </dl>
-    <p class="credits-note">One plausible journey; real timescales vary widely.</p>
-    <form method="dialog"><button class="credits-close" type="submit">Close</button></form>
+    <footer class="sl-foot">
+      <span class="sl-scale" aria-hidden="true"><i></i>0.5&nbsp;mm</span>
+      <p class="credits-note">One plausible journey; real timescales vary widely.</p>
+      <form method="dialog"><button class="credits-close" type="submit">Close</button></form>
+    </footer>
   </div>
 </dialog>
 <p class="sr-only" id="status" role="status" data-format="{title}. {act}, chapter {n} of {total}."></p>
@@ -313,7 +335,7 @@ html.nogl #story .fallback-note{display:block;margin:0 0 2.5rem;font-style:itali
     </section>
     <section data-slug="now" data-final data-nav="You" aria-labelledby="ch-now">
       <h3 id="ch-now">You are looking at sand right now.</h3>
-      <p data-signature>Made by <a href="https://yucelemrah.com">Emrah Yücel</a>.</p>
+      <p data-signature>Collected by <a href="https://yucelemrah.com">Emrah Yücel</a></p>
       <p class="micro" data-micro>One plausible journey; real timescales vary widely.</p>
     </section>
   </div>

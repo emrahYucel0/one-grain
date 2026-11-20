@@ -7,10 +7,10 @@ const SAID_MS = 2400;
 
 /**
  * The ending's last word (Awwwards P1): once the sentence, the reveal and the signature have had their
- * time, three choices come in under them. "Start again" closes the veil onto the grain and opens it again
- * on the first world (ui/gate.ts rewind); "Share" uses the system's share sheet where there is one and
- * copies the link elsewhere; "Credits" opens a native dialog (Escape, focus and the backdrop are the
- * browser's). Hidden (and out of the tab order) everywhere else in the story; html.outro-on while shown (not .outro: that is the row's own class).
+ * time, three choices come in under them. "Rewind 300 million years" runs the story back to its start
+ * (ui/rewind.ts); "Send this grain to someone" uses the system's share sheet where there is one and
+ * copies the link elsewhere; "Sample label" opens the credits as a specimen label, a native modal dialog
+ * (Escape, focus and the backdrop are the browser's; focus comes back to the button). Hidden (and out of the tab order) everywhere else in the story; html.outro-on while shown (not .outro: that is the row's own class).
  */
 export class Outro {
   private readonly root = document.documentElement;

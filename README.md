@@ -439,7 +439,7 @@ differs from the references, with the reason; the measurements are in `docs/perf
   SIL Open Font License 1.1 and self-hosted via [Fontsource](https://fontsource.org).
 - [three.js](https://threejs.org) (MIT) for rendering and [GSAP](https://gsap.com) with
   ScrollTrigger (GreenSock standard license, free to use) for the scroll timeline.
-- The sound is synthesised in the browser and uses no recordings.
+- Every sound is grown from noise, like the grains: synthesised live with the Web Audio API; nothing was recorded.
 - Licence: the tooling (`scripts/`, `.githooks/`, `vite.config.ts`, `eslint.config.js`) is MIT; the
   work (`src/`, `index.html`, `public/`, `docs/`, `reference/`, `capture/`) is all rights reserved;
   the font subsets are under the SIL OFL 1.1 (`src/fonts/OFL.txt`). See [LICENSE](LICENSE).

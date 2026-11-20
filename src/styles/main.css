@@ -402,7 +402,7 @@ html.motion-off .story{transition:none}
 .story::before{content:"";position:absolute;inset:-90px -280px -150px -140px;z-index:-1;pointer-events:none;opacity:0;transition:opacity 1.4s ease;
   background:radial-gradient(closest-side,rgb(var(--stage-rgb,13 24 28) / .82),rgb(var(--stage-rgb,13 24 28) / .74) 45%,rgb(var(--stage-rgb,13 24 28) / .4) 75%,rgb(var(--stage-rgb,13 24 28) / 0))}
 html.outro-on .story::before{opacity:1}
-.outro{position:absolute;left:0;top:100%;display:flex;flex-wrap:wrap;align-items:center;gap:12px 26px;padding-top:1.4rem;width:max-content;max-width:calc(100vw - 2.5rem);
+.outro{position:absolute;left:0;top:100%;display:flex;flex-direction:column;align-items:flex-start;gap:1.15rem;padding-top:1.4rem;width:max-content;max-width:calc(100vw - 2.5rem);
   pointer-events:auto;opacity:0;visibility:hidden;transform:translateY(10px);
   transition:opacity .5s ease,transform .6s ease,visibility 0s linear .6s}
 html.outro-on .outro{opacity:1;visibility:visible;transform:none;transition:opacity .9s ease .35s,transform 1.1s cubic-bezier(.16,.84,.24,1) .35s,visibility 0s}
@@ -423,35 +423,63 @@ html.outro-on .outro{opacity:1;visibility:visible;transform:none;transition:opac
 .ico-again::after{content:"";position:absolute;right:-3.5px;top:-1px;width:0;height:0;border:3.5px solid transparent;border-top-color:currentColor;transform:rotate(-12deg)}
 .outro-again:hover .ico-again{transform:rotate(-390deg)}
 html.motion-off .outro-again:hover .ico-again{transform:rotate(-30deg)}
-@media (max-width:479px){.outro{gap:10px 20px;padding-top:1.1rem}.outro .outro-again{padding:0 1.15rem 0 .95rem}}
+/* the rewind on its own; under it, the two quieter choices */
+.outro-links{display:flex;flex-wrap:wrap;align-items:center;gap:12px 26px}
+.outro .lbl-short{display:none}
+@media (max-width:479px){.outro{gap:1rem;padding-top:1.1rem}.outro-links{gap:12px 20px}.outro .outro-again{padding:0 1.15rem 0 .95rem}}
+/* too narrow for the whole of it: "Rewind" (its accessible name stays whole) */
+@media (max-width:339px){.outro .lbl-long{display:none}.outro .lbl-short{display:inline}}
+/* the signature, on a smaller line of its own */
+.chapter.final > p:not(.micro):not(.hint){font-size:calc(var(--signature-size) * .86);letter-spacing:.02em}
 
-/* the credits: a native dialog over a dimmed stage */
-.credits{width:min(36rem,calc(100vw - 2rem));max-width:none;max-height:calc(100vh - 2rem);max-height:calc(100dvh - 2rem);margin:auto;padding:0;overflow:auto;
-  border:1px solid rgba(236,227,211,.16);border-radius:6px;background:rgba(9,16,19,.95);color:var(--ink);
+/* the sample label (the credits): a native dialog over a dimmed stage, made as a specimen label — a thin frame
+   inside the card, a ruled sheet of fields (each its name above its value), the grain itself in a loupe as on the
+   stage (.loupe), and a scale bar in the corner */
+.credits{width:min(38rem,calc(100vw - 2rem));max-width:none;max-height:calc(100vh - 2rem);max-height:calc(100dvh - 2rem);margin:auto;padding:0;overflow:auto;
+  border:1px solid rgba(236,227,211,.16);border-radius:4px;background:rgba(9,16,19,.96);color:var(--ink);
   -webkit-backdrop-filter:blur(16px);backdrop-filter:blur(16px);box-shadow:0 30px 90px rgba(0,0,0,.65)}
 .credits::backdrop{background:rgba(4,8,9,.6)}
 .credits[open]{animation:credits-in .7s cubic-bezier(.16,.84,.24,1)}
 @keyframes credits-in{from{opacity:0;transform:translateY(14px)}}
 html.motion-off .credits[open]{animation:none}
 @media (prefers-reduced-motion:reduce){.credits[open]{animation:none}}
-.credits-in{padding:clamp(1.5rem,5vw,2.75rem)}
-.credits-kicker{margin:0 0 .7rem;font:500 .72rem/1 var(--sans);letter-spacing:.16em;text-transform:uppercase;color:var(--muted)}
-.credits h2{margin:0 0 1.1rem;font-family:var(--sans);font-weight:330;font-size:clamp(2.1rem,6vw,3rem);line-height:.95;letter-spacing:-.005em}
-.credits .credits-kicker,.credits h2{font-stretch:125%}
-.credits-lede{margin:0 0 1.8rem;font-family:var(--serif);font-size:1.08rem;line-height:1.5;opacity:.92;font-variation-settings:"opsz" 16}
-.credits dl{margin:0 0 1.6rem}
-.credits dl div{display:grid;grid-template-columns:12.5rem 1fr;gap:1.1rem;padding:.8rem 0;border-top:1px solid var(--rule)}
-.credits dt{font:500 .7rem/1.5 var(--sans);letter-spacing:.12em;text-transform:uppercase;color:var(--muted);padding-top:.1rem}
-.credits dd{margin:0;font-family:var(--serif);font-size:1rem;line-height:1.45}
+.credits-in{margin:10px;border:1px solid rgba(236,227,211,.34);padding:clamp(1.1rem,3.6vw,1.75rem)}
 .credits a{color:var(--ink)}
 .credits a:focus-visible{outline:2px solid var(--ink);outline-offset:3px;border-radius:2px}
-.credits-note{margin:0 0 1.6rem;font-family:var(--serif);font-style:italic;color:var(--muted)}
-.credits form{margin:0}
+.sl-head{position:relative;min-height:136px;padding:0 128px 1.1rem 0;border-bottom:1px solid rgba(236,227,211,.34);margin-bottom:1px}
+.sl-head::after{content:"";position:absolute;left:0;right:0;bottom:-4px;border-bottom:1px solid var(--rule)}
+.credits h2{margin:0;font-family:var(--sans);font-weight:500;font-stretch:125%;font-size:clamp(1rem,2.4vw,1.2rem);line-height:1.35;letter-spacing:.14em;text-transform:uppercase}
+.sl-nocase{text-transform:none}
+.sl-dash{color:var(--muted)}
+.sl-name{white-space:nowrap}
+.sl-loupe{position:absolute;right:0;top:0;display:flex;flex-direction:column;align-items:center;gap:8px}
+.sl-lens{display:block;width:96px;height:96px;border-radius:50%;overflow:hidden;background:radial-gradient(circle at 45% 40%,#2a2620,#0d0b09 78%);
+  box-shadow:0 0 0 1px rgba(236,227,211,.42),0 14px 44px rgba(0,0,0,.55)}
+.sl-lens svg{display:block;width:100%;height:100%}
+.sl-cap{font:500 var(--ui-small)/1 var(--sans);letter-spacing:.14em;color:rgba(236,227,211,.95)}
+.sl-fields{display:grid;grid-template-columns:repeat(6,1fr);gap:1px;margin:1.35rem 0 0;background:var(--rule);border:1px solid var(--rule)}
+.sl-f{background:rgb(11 18 21);padding:.7rem .85rem .8rem;min-width:0}
+.sl-2{grid-column:span 2}.sl-3{grid-column:span 3}.sl-4{grid-column:span 4}.sl-6{grid-column:span 6}
+.sl-f dt{margin:0 0 .35rem;font:500 .66rem/1.3 var(--sans);font-stretch:112%;letter-spacing:.16em;text-transform:uppercase;color:var(--muted)}
+.sl-f dd{margin:0;font-family:var(--serif);font-size:.98rem;line-height:1.42;font-variation-settings:"opsz" 16}
+.sl-num{font-family:var(--sans);font-stretch:112%;font-weight:500;font-variant-numeric:tabular-nums;letter-spacing:.02em}
+dd.sl-num{font-size:1.35rem;line-height:1.1}
+.sl-aside{display:block;margin-top:.3rem;font-family:var(--sans);font-size:.78rem;letter-spacing:.02em;color:var(--muted)}
+.sl-foot{display:flex;flex-wrap:wrap;align-items:center;gap:.8rem 1.4rem;margin-top:1.15rem}
+.sl-scale{display:inline-flex;align-items:center;gap:.5rem;font:500 .66rem/1 var(--sans);letter-spacing:.12em;color:var(--muted);font-variant-numeric:tabular-nums}
+.sl-scale i{display:block;width:44px;height:5px;border:1px solid rgba(236,227,211,.6);border-top:0}
+.credits-note{flex:1 1 14rem;margin:0;font-family:var(--serif);font-style:italic;font-size:.92rem;color:var(--muted)}
+.credits form{margin:0 0 0 auto}
 .credits-close{all:unset;position:relative;cursor:pointer;color:var(--ink);font:500 .82rem/1 var(--sans);letter-spacing:.06em;border-bottom:1px solid rgba(236,227,211,.45);padding-bottom:3px}
 .credits-close::after{content:"";position:absolute;inset:-14px -14px}
 .credits-close:hover{border-color:var(--ink)}
 .credits-close:focus-visible{outline:2px solid var(--ink);outline-offset:4px;border-radius:2px}
-@media (max-width:520px){.credits dl div{grid-template-columns:1fr;gap:.3rem}}
+@media (max-width:520px){
+  .credits-in{margin:6px}
+  .sl-head{min-height:106px;padding-right:86px}
+  .sl-lens{width:70px;height:70px}
+  .sl-3{grid-column:span 6}
+}
 
 /* ---------- the cursor (Awwwards P1; src/ui/cursor.ts) ----------
    A dot at the pointer and a ring trailing it, in the grain marker's language. Shown only for a mouse once it

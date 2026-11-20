@@ -96,8 +96,8 @@ try {
   // the ending's last word (src/ui/outro.ts): three named choices, shown with the revealed ending and kept
   // while focus moves on to them; the credits are a modal dialog that takes focus and gives it back
   await page.waitForTimeout(1200);
-  const row = await page.evaluate(() => ({ shown: document.documentElement.classList.contains('outro-on'), names: [...document.querySelectorAll('#outro button')].map((b) => b.textContent.trim()), vis: getComputedStyle(document.getElementById('outro')).visibility }));
-  check('ending: three named choices, shown', row.shown && row.vis === 'visible' && row.names.join(' | ') === 'Start again | Share | Credits', JSON.stringify(row));
+  const row = await page.evaluate(() => ({ shown: document.documentElement.classList.contains('outro-on'), names: [...document.querySelectorAll('#outro button')].map((b) => (b.getAttribute('aria-label') ?? b.textContent).trim()), vis: getComputedStyle(document.getElementById('outro')).visibility }));
+  check('ending: three named choices, shown', row.shown && row.vis === 'visible' && row.names.join(' | ') === 'Rewind 300 million years | Send this grain to someone | Sample label', JSON.stringify(row));
   await page.locator('#creditsOpen').focus();
   await page.waitForTimeout(300);
   const kept = await page.evaluate(() => document.documentElement.classList.contains('outro-on') && document.activeElement?.id === 'creditsOpen');
