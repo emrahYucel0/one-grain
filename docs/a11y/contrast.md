@@ -5,8 +5,8 @@ background behind it (the text made transparent, its shadow kept), worst 5 % of 
 AAA for body text and titles where the design allows, AA for everything else; large = at least
 24 px, or 18.67 px bold.
 
-- 699 measurements, 0 below AA, 0 body or title blocks below AAA.
-- Lowest against their AA threshold: 1440×900 now ending choice 4.52; 1440×900 coast rail current 4.72; 390×844 now ending choice 4.77; 1440×900 now ending choice 4.82; 390×844 river sound 4.82; 390×844 desert sound 4.98; 1440×900 chip chapter number 5.15; 1440×900 again sound 5.17.
+- 687 measurements, 0 below AA, 0 body or title blocks below AAA.
+- Lowest against their AA threshold: 1440×900 coast rail current 4.72; 390×844 river sound 4.82; 390×844 desert sound 4.98; 1440×900 chip chapter number 5.15; 1440×900 again sound 5.17; 1440×900 desert sound 5.21; 1440×900 quarry sound 5.21; 1440×900 desert rail current 5.31.
 
 | Viewport | At | Block | Contrast | Size | Level |
 |---|---|---|---|---|---|
@@ -39,7 +39,7 @@ AAA for body text and titles where the design allows, AA for everything else; la
 | 390×844 | granite | chapter figure | 11.84 | normal | AAA |
 | 390×844 | granite | title | 9.72 | large | AAA |
 | 390×844 | granite | body | 10.68 | normal | AAA |
-| 390×844 | granite | loupe caption | 11.51 | normal | AAA |
+| 390×844 | granite | loupe caption | 11.40 | normal | AAA |
 | 390×844 | river | brand | 11.49 | normal | AAA |
 | 390×844 | river | clock | 12.72 | normal | AAA |
 | 390×844 | river | unit | 9.82 | normal | AAA |
@@ -66,7 +66,7 @@ AAA for body text and titles where the design allows, AA for everything else; la
 | 390×844 | coast | chapter figure | 13.43 | normal | AAA |
 | 390×844 | coast | title | 12.30 | large | AAA |
 | 390×844 | coast | body | 11.55 | normal | AAA |
-| 390×844 | coast | loupe caption | 9.55 | normal | AAA |
+| 390×844 | coast | loupe caption | 9.48 | normal | AAA |
 | 390×844 | desert | brand | 6.47 | normal | AA |
 | 390×844 | desert | clock | 11.68 | normal | AAA |
 | 390×844 | desert | unit | 9.23 | normal | AAA |
@@ -94,76 +94,72 @@ AAA for body text and titles where the design allows, AA for everything else; la
 | 390×844 | quarry | brand | 9.44 | normal | AAA |
 | 390×844 | quarry | clock | 14.08 | large | AAA |
 | 390×844 | quarry | unit | 10.42 | normal | AAA |
-| 390×844 | quarry | sound | 5.30 | normal | AA |
+| 390×844 | quarry | sound | 5.37 | normal | AA |
 | 390×844 | quarry | motion | 13.71 | normal | AAA |
-| 390×844 | quarry | chapter number | 9.38 | normal | AAA |
+| 390×844 | quarry | chapter number | 10.38 | normal | AAA |
 | 390×844 | quarry | chapter act | 9.94 | normal | AAA |
-| 390×844 | quarry | chapter figure label | 10.96 | normal | AAA |
-| 390×844 | quarry | chapter figure | 11.90 | normal | AAA |
-| 390×844 | quarry | title | 10.23 | large | AAA |
-| 390×844 | quarry | body | 10.43 | normal | AAA |
-| 390×844 | quarry | loupe caption | 11.03 | normal | AAA |
+| 390×844 | quarry | title | 11.47 | large | AAA |
+| 390×844 | quarry | body | 10.46 | normal | AAA |
+| 390×844 | quarry | loupe caption | 11.13 | normal | AAA |
+| 390×844 | quarry | act II figure | 5.87 | large | AAA |
+| 390×844 | quarry | act II figure unit | 12.73 | large | AAA |
+| 390×844 | quarry | act II figure label | 6.55 | normal | AA |
 | 390×844 | furnace | brand | 12.91 | normal | AAA |
 | 390×844 | furnace | clock | 13.84 | large | AAA |
 | 390×844 | furnace | sound | 5.81 | normal | AA |
 | 390×844 | furnace | motion | 13.87 | normal | AAA |
-| 390×844 | furnace | chapter number | 14.01 | normal | AAA |
-| 390×844 | furnace | chapter act | 12.96 | normal | AAA |
-| 390×844 | furnace | chapter figure label | 14.23 | normal | AAA |
-| 390×844 | furnace | chapter figure label | 14.23 | normal | AAA |
-| 390×844 | furnace | chapter figure | 14.11 | normal | AAA |
-| 390×844 | furnace | chapter figure | 14.15 | normal | AAA |
-| 390×844 | furnace | title | 13.68 | large | AAA |
-| 390×844 | furnace | body | 11.89 | normal | AAA |
+| 390×844 | furnace | chapter number | 14.12 | normal | AAA |
+| 390×844 | furnace | chapter act | 13.84 | normal | AAA |
+| 390×844 | furnace | title | 13.85 | large | AAA |
+| 390×844 | furnace | body | 11.93 | normal | AAA |
+| 390×844 | furnace | act II figure | 5.94 | large | AAA |
+| 390×844 | furnace | act II figure unit | 13.41 | large | AAA |
+| 390×844 | furnace | act II figure label | 9.17 | normal | AAA |
 | 390×844 | purity | brand | 13.71 | normal | AAA |
 | 390×844 | purity | clock | 14.00 | large | AAA |
 | 390×844 | purity | sound | 6.23 | normal | AA |
 | 390×844 | purity | motion | 14.01 | normal | AAA |
-| 390×844 | purity | chapter number | 8.33 | normal | AAA |
-| 390×844 | purity | chapter act | 8.91 | normal | AAA |
-| 390×844 | purity | chapter figure label | 9.53 | normal | AAA |
-| 390×844 | purity | chapter figure label | 9.12 | normal | AAA |
-| 390×844 | purity | chapter figure | 10.92 | normal | AAA |
-| 390×844 | purity | chapter figure | 9.99 | normal | AAA |
-| 390×844 | purity | title | 7.03 | large | AAA |
+| 390×844 | purity | chapter number | 9.48 | normal | AAA |
+| 390×844 | purity | chapter act | 10.71 | normal | AAA |
+| 390×844 | purity | title | 10.24 | large | AAA |
 | 390×844 | purity | body | 11.85 | normal | AAA |
+| 390×844 | purity | act II figure | 13.57 | large | AAA |
+| 390×844 | purity | act II figure unit | 14.41 | normal | AAA |
+| 390×844 | purity | act II figure label | 13.96 | normal | AAA |
 | 390×844 | crystal | brand | 13.71 | normal | AAA |
 | 390×844 | crystal | clock | 14.02 | large | AAA |
 | 390×844 | crystal | sound | 6.23 | normal | AA |
 | 390×844 | crystal | motion | 14.01 | normal | AAA |
-| 390×844 | crystal | chapter number | 13.99 | normal | AAA |
-| 390×844 | crystal | chapter act | 13.71 | normal | AAA |
-| 390×844 | crystal | chapter figure label | 14.11 | normal | AAA |
-| 390×844 | crystal | chapter figure label | 14.23 | normal | AAA |
-| 390×844 | crystal | chapter figure | 13.61 | normal | AAA |
-| 390×844 | crystal | chapter figure | 14.23 | normal | AAA |
-| 390×844 | crystal | title | 12.18 | large | AAA |
+| 390×844 | crystal | chapter number | 14.02 | normal | AAA |
+| 390×844 | crystal | chapter act | 13.84 | normal | AAA |
+| 390×844 | crystal | title | 12.90 | large | AAA |
 | 390×844 | crystal | body | 11.94 | normal | AAA |
+| 390×844 | crystal | act II figure | 13.02 | large | AAA |
+| 390×844 | crystal | act II figure unit | 13.98 | large | AAA |
+| 390×844 | crystal | act II figure label | 12.24 | normal | AAA |
 | 390×844 | wafer | brand | 13.71 | normal | AAA |
 | 390×844 | wafer | clock | 14.02 | large | AAA |
 | 390×844 | wafer | sound | 5.49 | normal | AA |
 | 390×844 | wafer | motion | 13.53 | normal | AAA |
-| 390×844 | wafer | chapter number | 10.09 | normal | AAA |
-| 390×844 | wafer | chapter act | 10.11 | normal | AAA |
-| 390×844 | wafer | chapter figure label | 11.62 | normal | AAA |
-| 390×844 | wafer | chapter figure label | 11.91 | normal | AAA |
-| 390×844 | wafer | chapter figure | 12.69 | normal | AAA |
-| 390×844 | wafer | chapter figure | 12.20 | normal | AAA |
-| 390×844 | wafer | title | 11.33 | large | AAA |
+| 390×844 | wafer | chapter number | 12.09 | normal | AAA |
+| 390×844 | wafer | chapter act | 12.03 | normal | AAA |
+| 390×844 | wafer | title | 12.72 | large | AAA |
 | 390×844 | wafer | body | 11.94 | normal | AAA |
-| 390×844 | wafer | loupe caption | 12.92 | normal | AAA |
+| 390×844 | wafer | loupe caption | 12.94 | normal | AAA |
+| 390×844 | wafer | act II figure | 10.98 | large | AAA |
+| 390×844 | wafer | act II figure unit | 13.19 | large | AAA |
+| 390×844 | wafer | act II figure label | 13.88 | normal | AAA |
 | 390×844 | light | brand | 13.71 | normal | AAA |
 | 390×844 | light | clock | 14.00 | large | AAA |
 | 390×844 | light | sound | 6.23 | normal | AA |
 | 390×844 | light | motion | 14.01 | normal | AAA |
-| 390×844 | light | chapter number | 6.90 | normal | AA |
-| 390×844 | light | chapter act | 10.28 | normal | AAA |
-| 390×844 | light | chapter figure label | 8.30 | normal | AAA |
-| 390×844 | light | chapter figure label | 10.56 | normal | AAA |
-| 390×844 | light | chapter figure | 11.11 | normal | AAA |
-| 390×844 | light | chapter figure | 12.22 | normal | AAA |
-| 390×844 | light | title | 6.37 | large | AAA |
-| 390×844 | light | body | 8.89 | normal | AAA |
+| 390×844 | light | chapter number | 8.06 | normal | AAA |
+| 390×844 | light | chapter act | 11.53 | normal | AAA |
+| 390×844 | light | title | 9.60 | large | AAA |
+| 390×844 | light | body | 9.00 | normal | AAA |
+| 390×844 | light | act II figure | 4.28 | large | AA |
+| 390×844 | light | act II figure unit | 11.42 | large | AAA |
+| 390×844 | light | act II figure label | 5.71 | normal | AA |
 | 390×844 | chip | brand | 15.05 | normal | AAA |
 | 390×844 | chip | clock | 15.25 | large | AAA |
 | 390×844 | chip | sound | 6.85 | normal | AA |
@@ -178,7 +174,7 @@ AAA for body text and titles where the design allows, AA for everything else; la
 | 390×844 | chip | body | 10.75 | normal | AAA |
 | 390×844 | chip | micro / footnote | 6.22 | normal | AA |
 | 390×844 | display | brand | 12.34 | normal | AAA |
-| 390×844 | display | clock | 13.63 | large | AAA |
+| 390×844 | display | clock | 13.65 | large | AAA |
 | 390×844 | display | unit | 10.29 | normal | AAA |
 | 390×844 | display | sound | 5.85 | normal | AA |
 | 390×844 | display | motion | 14.97 | normal | AAA |
@@ -196,11 +192,11 @@ AAA for body text and titles where the design allows, AA for everything else; la
 | 390×844 | now | sound | 5.78 | normal | AA |
 | 390×844 | now | motion | 14.59 | normal | AAA |
 | 390×844 | now | title | 14.59 | large | AAA |
-| 390×844 | now | body | 11.94 | normal | AAA |
-| 390×844 | now | micro / footnote | 11.61 | normal | AAA |
-| 390×844 | now | ending choice | 10.49 | normal | AAA |
-| 390×844 | now | ending choice | 4.77 | normal | AA |
-| 390×844 | now | ending choice | 5.75 | normal | AA |
+| 390×844 | now | body | 11.92 | normal | AAA |
+| 390×844 | now | micro / footnote | 11.92 | normal | AAA |
+| 390×844 | now | ending choice | 6.48 | normal | AA |
+| 390×844 | now | ending choice | 5.98 | normal | AA |
+| 390×844 | now | ending choice | 5.59 | normal | AA |
 | 1440×900 | loader | brand | 14.16 | normal | AAA |
 | 1440×900 | magma | brand | 13.60 | normal | AAA |
 | 1440×900 | magma | clock | 14.04 | large | AAA |
@@ -238,7 +234,7 @@ AAA for body text and titles where the design allows, AA for everything else; la
 | 1440×900 | granite | rail label | 9.29 | normal | AAA |
 | 1440×900 | granite | rail label | 9.35 | normal | AAA |
 | 1440×900 | granite | rail current | 13.59 | normal | AAA |
-| 1440×900 | granite | loupe caption | 11.54 | normal | AAA |
+| 1440×900 | granite | loupe caption | 11.74 | normal | AAA |
 | 1440×900 | river | brand | 12.23 | normal | AAA |
 | 1440×900 | river | clock | 11.95 | large | AAA |
 | 1440×900 | river | unit | 9.52 | normal | AAA |
@@ -273,7 +269,7 @@ AAA for body text and titles where the design allows, AA for everything else; la
 | 1440×900 | coast | rail label | 7.68 | normal | AAA |
 | 1440×900 | coast | rail label | 8.88 | normal | AAA |
 | 1440×900 | coast | rail current | 4.72 | normal | AA |
-| 1440×900 | coast | loupe caption | 8.27 | normal | AAA |
+| 1440×900 | coast | loupe caption | 8.34 | normal | AAA |
 | 1440×900 | desert | brand | 9.90 | normal | AAA |
 | 1440×900 | desert | clock | 10.46 | large | AAA |
 | 1440×900 | desert | unit | 8.72 | normal | AAA |
@@ -312,98 +308,94 @@ AAA for body text and titles where the design allows, AA for everything else; la
 | 1440×900 | quarry | unit | 10.18 | normal | AAA |
 | 1440×900 | quarry | sound | 5.21 | normal | AA |
 | 1440×900 | quarry | motion | 13.86 | normal | AAA |
-| 1440×900 | quarry | chapter number | 9.07 | normal | AAA |
-| 1440×900 | quarry | chapter act | 8.37 | normal | AAA |
-| 1440×900 | quarry | chapter figure label | 10.37 | normal | AAA |
-| 1440×900 | quarry | chapter figure | 11.13 | normal | AAA |
-| 1440×900 | quarry | title | 8.52 | large | AAA |
+| 1440×900 | quarry | chapter number | 9.73 | normal | AAA |
+| 1440×900 | quarry | chapter act | 9.78 | normal | AAA |
+| 1440×900 | quarry | title | 9.62 | large | AAA |
 | 1440×900 | quarry | body | 10.07 | normal | AAA |
 | 1440×900 | quarry | rail label | 9.41 | normal | AAA |
 | 1440×900 | quarry | rail label | 14.24 | normal | AAA |
 | 1440×900 | quarry | rail label | 9.34 | normal | AAA |
 | 1440×900 | quarry | rail current | 13.81 | normal | AAA |
-| 1440×900 | quarry | loupe caption | 10.96 | normal | AAA |
+| 1440×900 | quarry | loupe caption | 11.03 | normal | AAA |
+| 1440×900 | quarry | act II figure | 7.49 | large | AAA |
+| 1440×900 | quarry | act II figure unit | 9.75 | large | AAA |
+| 1440×900 | quarry | act II figure label | 9.90 | normal | AAA |
 | 1440×900 | furnace | brand | 13.57 | normal | AAA |
 | 1440×900 | furnace | clock | 11.51 | large | AAA |
 | 1440×900 | furnace | sound | 5.56 | normal | AA |
 | 1440×900 | furnace | motion | 14.02 | normal | AAA |
-| 1440×900 | furnace | chapter number | 13.81 | normal | AAA |
-| 1440×900 | furnace | chapter act | 13.40 | normal | AAA |
-| 1440×900 | furnace | chapter figure label | 13.86 | normal | AAA |
-| 1440×900 | furnace | chapter figure label | 14.02 | normal | AAA |
-| 1440×900 | furnace | chapter figure | 13.96 | normal | AAA |
-| 1440×900 | furnace | chapter figure | 13.94 | normal | AAA |
-| 1440×900 | furnace | title | 13.30 | large | AAA |
+| 1440×900 | furnace | chapter number | 13.86 | normal | AAA |
+| 1440×900 | furnace | chapter act | 13.53 | normal | AAA |
+| 1440×900 | furnace | title | 13.45 | large | AAA |
 | 1440×900 | furnace | body | 11.84 | normal | AAA |
 | 1440×900 | furnace | rail label | 9.41 | normal | AAA |
 | 1440×900 | furnace | rail label | 14.23 | normal | AAA |
 | 1440×900 | furnace | rail label | 9.34 | normal | AAA |
 | 1440×900 | furnace | rail current | 13.58 | normal | AAA |
+| 1440×900 | furnace | act II figure | 5.60 | large | AAA |
+| 1440×900 | furnace | act II figure unit | 9.58 | large | AAA |
+| 1440×900 | furnace | act II figure label | 13.71 | normal | AAA |
 | 1440×900 | purity | brand | 13.57 | normal | AAA |
 | 1440×900 | purity | clock | 13.56 | large | AAA |
 | 1440×900 | purity | sound | 6.16 | normal | AA |
 | 1440×900 | purity | motion | 14.02 | normal | AAA |
-| 1440×900 | purity | chapter number | 13.81 | normal | AAA |
-| 1440×900 | purity | chapter act | 13.40 | normal | AAA |
-| 1440×900 | purity | chapter figure label | 13.97 | normal | AAA |
-| 1440×900 | purity | chapter figure label | 13.96 | normal | AAA |
-| 1440×900 | purity | chapter figure | 13.86 | normal | AAA |
-| 1440×900 | purity | chapter figure | 14.26 | normal | AAA |
-| 1440×900 | purity | title | 9.89 | large | AAA |
+| 1440×900 | purity | chapter number | 13.86 | normal | AAA |
+| 1440×900 | purity | chapter act | 13.53 | normal | AAA |
+| 1440×900 | purity | title | 10.37 | large | AAA |
 | 1440×900 | purity | body | 11.71 | normal | AAA |
 | 1440×900 | purity | rail label | 9.41 | normal | AAA |
 | 1440×900 | purity | rail label | 14.23 | normal | AAA |
 | 1440×900 | purity | rail label | 9.34 | normal | AAA |
 | 1440×900 | purity | rail current | 13.68 | normal | AAA |
+| 1440×900 | purity | act II figure | 13.16 | large | AAA |
+| 1440×900 | purity | act II figure unit | 13.98 | normal | AAA |
+| 1440×900 | purity | act II figure label | 13.81 | normal | AAA |
 | 1440×900 | crystal | brand | 13.57 | normal | AAA |
 | 1440×900 | crystal | clock | 13.57 | large | AAA |
 | 1440×900 | crystal | sound | 6.16 | normal | AA |
 | 1440×900 | crystal | motion | 14.02 | normal | AAA |
-| 1440×900 | crystal | chapter number | 13.70 | normal | AAA |
-| 1440×900 | crystal | chapter act | 13.40 | normal | AAA |
-| 1440×900 | crystal | chapter figure label | 13.85 | normal | AAA |
-| 1440×900 | crystal | chapter figure label | 14.09 | normal | AAA |
-| 1440×900 | crystal | chapter figure | 13.99 | normal | AAA |
-| 1440×900 | crystal | chapter figure | 14.09 | normal | AAA |
-| 1440×900 | crystal | title | 13.30 | large | AAA |
+| 1440×900 | crystal | chapter number | 13.81 | normal | AAA |
+| 1440×900 | crystal | chapter act | 13.53 | normal | AAA |
+| 1440×900 | crystal | title | 13.47 | large | AAA |
 | 1440×900 | crystal | body | 11.85 | normal | AAA |
 | 1440×900 | crystal | rail label | 9.41 | normal | AAA |
 | 1440×900 | crystal | rail label | 14.23 | normal | AAA |
 | 1440×900 | crystal | rail label | 9.34 | normal | AAA |
 | 1440×900 | crystal | rail current | 13.68 | normal | AAA |
+| 1440×900 | crystal | act II figure | 12.71 | large | AAA |
+| 1440×900 | crystal | act II figure unit | 13.67 | large | AAA |
+| 1440×900 | crystal | act II figure label | 13.30 | normal | AAA |
 | 1440×900 | wafer | brand | 13.57 | normal | AAA |
 | 1440×900 | wafer | clock | 13.57 | large | AAA |
 | 1440×900 | wafer | sound | 6.16 | normal | AA |
 | 1440×900 | wafer | motion | 14.02 | normal | AAA |
-| 1440×900 | wafer | chapter number | 13.56 | normal | AAA |
-| 1440×900 | wafer | chapter act | 13.40 | normal | AAA |
-| 1440×900 | wafer | chapter figure label | 13.99 | normal | AAA |
-| 1440×900 | wafer | chapter figure label | 14.11 | normal | AAA |
-| 1440×900 | wafer | chapter figure | 14.12 | normal | AAA |
-| 1440×900 | wafer | chapter figure | 11.92 | normal | AAA |
-| 1440×900 | wafer | title | 9.53 | large | AAA |
+| 1440×900 | wafer | chapter number | 13.71 | normal | AAA |
+| 1440×900 | wafer | chapter act | 13.53 | normal | AAA |
+| 1440×900 | wafer | title | 10.42 | large | AAA |
 | 1440×900 | wafer | body | 11.13 | normal | AAA |
 | 1440×900 | wafer | rail label | 9.31 | normal | AAA |
 | 1440×900 | wafer | rail label | 13.99 | normal | AAA |
 | 1440×900 | wafer | rail label | 9.34 | normal | AAA |
 | 1440×900 | wafer | rail current | 13.67 | normal | AAA |
-| 1440×900 | wafer | loupe caption | 12.88 | normal | AAA |
+| 1440×900 | wafer | loupe caption | 12.11 | normal | AAA |
+| 1440×900 | wafer | act II figure | 12.86 | large | AAA |
+| 1440×900 | wafer | act II figure unit | 13.73 | large | AAA |
+| 1440×900 | wafer | act II figure label | 13.75 | normal | AAA |
 | 1440×900 | light | brand | 13.57 | normal | AAA |
 | 1440×900 | light | clock | 13.56 | large | AAA |
 | 1440×900 | light | sound | 6.16 | normal | AA |
 | 1440×900 | light | motion | 14.02 | normal | AAA |
-| 1440×900 | light | chapter number | 13.70 | normal | AAA |
-| 1440×900 | light | chapter act | 8.73 | normal | AAA |
-| 1440×900 | light | chapter figure label | 10.94 | normal | AAA |
-| 1440×900 | light | chapter figure label | 9.42 | normal | AAA |
-| 1440×900 | light | chapter figure | 9.56 | normal | AAA |
-| 1440×900 | light | chapter figure | 11.80 | normal | AAA |
-| 1440×900 | light | title | 5.72 | large | AAA |
+| 1440×900 | light | chapter number | 13.82 | normal | AAA |
+| 1440×900 | light | chapter act | 9.74 | normal | AAA |
+| 1440×900 | light | title | 7.17 | large | AAA |
 | 1440×900 | light | body | 9.08 | normal | AAA |
 | 1440×900 | light | rail label | 9.31 | normal | AAA |
 | 1440×900 | light | rail label | 13.99 | normal | AAA |
 | 1440×900 | light | rail label | 9.28 | normal | AAA |
 | 1440×900 | light | rail current | 8.23 | normal | AAA |
+| 1440×900 | light | act II figure | 7.82 | large | AAA |
+| 1440×900 | light | act II figure unit | 6.92 | large | AAA |
+| 1440×900 | light | act II figure label | 12.81 | normal | AAA |
 | 1440×900 | chip | brand | 14.83 | normal | AAA |
 | 1440×900 | chip | clock | 14.73 | large | AAA |
 | 1440×900 | chip | sound | 6.77 | normal | AA |
@@ -423,7 +415,7 @@ AAA for body text and titles where the design allows, AA for everything else; la
 | 1440×900 | chip | rail label | 15.15 | normal | AAA |
 | 1440×900 | chip | rail current | 14.10 | normal | AAA |
 | 1440×900 | display | brand | 14.83 | normal | AAA |
-| 1440×900 | display | clock | 12.50 | large | AAA |
+| 1440×900 | display | clock | 12.58 | large | AAA |
 | 1440×900 | display | unit | 10.48 | normal | AAA |
 | 1440×900 | display | sound | 5.43 | normal | AA |
 | 1440×900 | display | motion | 14.92 | normal | AAA |
@@ -440,21 +432,21 @@ AAA for body text and titles where the design allows, AA for everything else; la
 | 1440×900 | display | rail label | 9.65 | normal | AAA |
 | 1440×900 | display | rail label | 15.05 | normal | AAA |
 | 1440×900 | display | rail current | 12.35 | normal | AAA |
-| 1440×900 | display | loupe caption | 13.71 | normal | AAA |
+| 1440×900 | display | loupe caption | 13.78 | normal | AAA |
 | 1440×900 | now | brand | 14.10 | normal | AAA |
 | 1440×900 | now | clock | 14.10 | large | AAA |
 | 1440×900 | now | sound | 6.39 | normal | AA |
 | 1440×900 | now | motion | 14.59 | normal | AAA |
-| 1440×900 | now | title | 14.43 | large | AAA |
-| 1440×900 | now | body | 11.94 | normal | AAA |
-| 1440×900 | now | micro / footnote | 11.63 | normal | AAA |
+| 1440×900 | now | title | 14.21 | large | AAA |
+| 1440×900 | now | body | 11.85 | normal | AAA |
+| 1440×900 | now | micro / footnote | 11.92 | normal | AAA |
 | 1440×900 | now | rail label | 9.59 | normal | AAA |
 | 1440×900 | now | rail label | 9.57 | normal | AAA |
 | 1440×900 | now | rail label | 14.66 | normal | AAA |
 | 1440×900 | now | rail current | 14.37 | normal | AAA |
-| 1440×900 | now | ending choice | 9.77 | normal | AAA |
-| 1440×900 | now | ending choice | 4.82 | normal | AA |
-| 1440×900 | now | ending choice | 4.52 | normal | AA |
+| 1440×900 | now | ending choice | 7.11 | normal | AAA |
+| 1440×900 | now | ending choice | 7.42 | normal | AAA |
+| 1440×900 | now | ending choice | 5.59 | normal | AA |
 | 2560×1440 | loader | brand | 14.16 | normal | AAA |
 | 2560×1440 | magma | brand | 13.89 | normal | AAA |
 | 2560×1440 | magma | clock | 14.16 | large | AAA |
@@ -492,7 +484,7 @@ AAA for body text and titles where the design allows, AA for everything else; la
 | 2560×1440 | granite | rail label | 9.30 | normal | AAA |
 | 2560×1440 | granite | rail label | 9.36 | normal | AAA |
 | 2560×1440 | granite | rail current | 13.76 | normal | AAA |
-| 2560×1440 | granite | loupe caption | 10.59 | normal | AAA |
+| 2560×1440 | granite | loupe caption | 10.62 | normal | AAA |
 | 2560×1440 | river | brand | 12.75 | normal | AAA |
 | 2560×1440 | river | clock | 12.59 | large | AAA |
 | 2560×1440 | river | unit | 10.14 | normal | AAA |
@@ -527,7 +519,7 @@ AAA for body text and titles where the design allows, AA for everything else; la
 | 2560×1440 | coast | rail label | 7.69 | normal | AAA |
 | 2560×1440 | coast | rail label | 8.35 | normal | AAA |
 | 2560×1440 | coast | rail current | 5.52 | normal | AA |
-| 2560×1440 | coast | loupe caption | 8.74 | normal | AAA |
+| 2560×1440 | coast | loupe caption | 8.85 | normal | AAA |
 | 2560×1440 | desert | brand | 11.09 | normal | AAA |
 | 2560×1440 | desert | clock | 11.58 | large | AAA |
 | 2560×1440 | desert | unit | 9.68 | normal | AAA |
@@ -566,98 +558,94 @@ AAA for body text and titles where the design allows, AA for everything else; la
 | 2560×1440 | quarry | unit | 10.60 | normal | AAA |
 | 2560×1440 | quarry | sound | 6.23 | normal | AA |
 | 2560×1440 | quarry | motion | 14.09 | normal | AAA |
-| 2560×1440 | quarry | chapter number | 11.79 | normal | AAA |
-| 2560×1440 | quarry | chapter act | 11.44 | normal | AAA |
-| 2560×1440 | quarry | chapter figure label | 13.68 | normal | AAA |
-| 2560×1440 | quarry | chapter figure | 12.81 | normal | AAA |
-| 2560×1440 | quarry | title | 11.63 | large | AAA |
+| 2560×1440 | quarry | chapter number | 13.67 | normal | AAA |
+| 2560×1440 | quarry | chapter act | 12.40 | normal | AAA |
+| 2560×1440 | quarry | title | 12.29 | large | AAA |
 | 2560×1440 | quarry | body | 11.53 | normal | AAA |
 | 2560×1440 | quarry | rail label | 9.29 | normal | AAA |
 | 2560×1440 | quarry | rail label | 13.99 | normal | AAA |
 | 2560×1440 | quarry | rail label | 9.34 | normal | AAA |
 | 2560×1440 | quarry | rail current | 13.82 | normal | AAA |
-| 2560×1440 | quarry | loupe caption | 11.85 | normal | AAA |
+| 2560×1440 | quarry | loupe caption | 11.84 | normal | AAA |
+| 2560×1440 | quarry | act II figure | 13.36 | large | AAA |
+| 2560×1440 | quarry | act II figure unit | 12.67 | large | AAA |
+| 2560×1440 | quarry | act II figure label | 13.70 | normal | AAA |
 | 2560×1440 | furnace | brand | 13.85 | normal | AAA |
 | 2560×1440 | furnace | clock | 13.86 | large | AAA |
 | 2560×1440 | furnace | sound | 6.24 | normal | AA |
 | 2560×1440 | furnace | motion | 14.09 | normal | AAA |
-| 2560×1440 | furnace | chapter number | 14.13 | normal | AAA |
-| 2560×1440 | furnace | chapter act | 13.85 | normal | AAA |
-| 2560×1440 | furnace | chapter figure label | 14.23 | normal | AAA |
-| 2560×1440 | furnace | chapter figure label | 14.14 | normal | AAA |
-| 2560×1440 | furnace | chapter figure | 14.22 | normal | AAA |
-| 2560×1440 | furnace | chapter figure | 14.23 | normal | AAA |
-| 2560×1440 | furnace | title | 13.85 | large | AAA |
+| 2560×1440 | furnace | chapter number | 14.23 | normal | AAA |
+| 2560×1440 | furnace | chapter act | 13.88 | normal | AAA |
+| 2560×1440 | furnace | title | 13.88 | large | AAA |
 | 2560×1440 | furnace | body | 11.96 | normal | AAA |
 | 2560×1440 | furnace | rail label | 9.29 | normal | AAA |
 | 2560×1440 | furnace | rail label | 13.99 | normal | AAA |
 | 2560×1440 | furnace | rail label | 9.34 | normal | AAA |
 | 2560×1440 | furnace | rail current | 13.71 | normal | AAA |
+| 2560×1440 | furnace | act II figure | 8.51 | large | AAA |
+| 2560×1440 | furnace | act II figure unit | 8.34 | large | AAA |
+| 2560×1440 | furnace | act II figure label | 13.75 | normal | AAA |
 | 2560×1440 | purity | brand | 13.85 | normal | AAA |
 | 2560×1440 | purity | clock | 13.85 | large | AAA |
 | 2560×1440 | purity | sound | 6.24 | normal | AA |
 | 2560×1440 | purity | motion | 14.09 | normal | AAA |
-| 2560×1440 | purity | chapter number | 14.13 | normal | AAA |
-| 2560×1440 | purity | chapter act | 13.85 | normal | AAA |
-| 2560×1440 | purity | chapter figure label | 14.25 | normal | AAA |
-| 2560×1440 | purity | chapter figure label | 14.13 | normal | AAA |
-| 2560×1440 | purity | chapter figure | 14.13 | normal | AAA |
-| 2560×1440 | purity | chapter figure | 14.34 | normal | AAA |
-| 2560×1440 | purity | title | 13.82 | large | AAA |
+| 2560×1440 | purity | chapter number | 14.20 | normal | AAA |
+| 2560×1440 | purity | chapter act | 13.88 | normal | AAA |
+| 2560×1440 | purity | title | 13.86 | large | AAA |
 | 2560×1440 | purity | body | 11.97 | normal | AAA |
 | 2560×1440 | purity | rail label | 9.29 | normal | AAA |
 | 2560×1440 | purity | rail label | 13.99 | normal | AAA |
 | 2560×1440 | purity | rail label | 9.34 | normal | AAA |
 | 2560×1440 | purity | rail current | 13.72 | normal | AAA |
+| 2560×1440 | purity | act II figure | 13.31 | large | AAA |
+| 2560×1440 | purity | act II figure unit | 13.92 | large | AAA |
+| 2560×1440 | purity | act II figure label | 13.86 | normal | AAA |
 | 2560×1440 | crystal | brand | 13.85 | normal | AAA |
 | 2560×1440 | crystal | clock | 13.86 | large | AAA |
 | 2560×1440 | crystal | sound | 6.24 | normal | AA |
 | 2560×1440 | crystal | motion | 14.09 | normal | AAA |
-| 2560×1440 | crystal | chapter number | 14.11 | normal | AAA |
-| 2560×1440 | crystal | chapter act | 13.85 | normal | AAA |
-| 2560×1440 | crystal | chapter figure label | 14.13 | normal | AAA |
-| 2560×1440 | crystal | chapter figure label | 14.15 | normal | AAA |
-| 2560×1440 | crystal | chapter figure | 14.13 | normal | AAA |
-| 2560×1440 | crystal | chapter figure | 14.24 | normal | AAA |
-| 2560×1440 | crystal | title | 13.84 | large | AAA |
+| 2560×1440 | crystal | chapter number | 14.13 | normal | AAA |
+| 2560×1440 | crystal | chapter act | 13.88 | normal | AAA |
+| 2560×1440 | crystal | title | 13.86 | large | AAA |
 | 2560×1440 | crystal | body | 11.97 | normal | AAA |
 | 2560×1440 | crystal | rail label | 9.29 | normal | AAA |
 | 2560×1440 | crystal | rail label | 13.99 | normal | AAA |
 | 2560×1440 | crystal | rail label | 9.34 | normal | AAA |
 | 2560×1440 | crystal | rail current | 13.72 | normal | AAA |
+| 2560×1440 | crystal | act II figure | 13.14 | large | AAA |
+| 2560×1440 | crystal | act II figure unit | 13.82 | large | AAA |
+| 2560×1440 | crystal | act II figure label | 13.57 | normal | AAA |
 | 2560×1440 | wafer | brand | 13.85 | normal | AAA |
 | 2560×1440 | wafer | clock | 13.86 | large | AAA |
 | 2560×1440 | wafer | sound | 6.24 | normal | AA |
 | 2560×1440 | wafer | motion | 14.09 | normal | AAA |
-| 2560×1440 | wafer | chapter number | 14.00 | normal | AAA |
-| 2560×1440 | wafer | chapter act | 13.85 | normal | AAA |
-| 2560×1440 | wafer | chapter figure label | 14.25 | normal | AAA |
-| 2560×1440 | wafer | chapter figure label | 14.23 | normal | AAA |
-| 2560×1440 | wafer | chapter figure | 14.25 | normal | AAA |
-| 2560×1440 | wafer | chapter figure | 14.22 | normal | AAA |
-| 2560×1440 | wafer | title | 13.84 | large | AAA |
+| 2560×1440 | wafer | chapter number | 14.09 | normal | AAA |
+| 2560×1440 | wafer | chapter act | 13.88 | normal | AAA |
+| 2560×1440 | wafer | title | 13.86 | large | AAA |
 | 2560×1440 | wafer | body | 11.97 | normal | AAA |
 | 2560×1440 | wafer | rail label | 9.29 | normal | AAA |
 | 2560×1440 | wafer | rail label | 13.99 | normal | AAA |
 | 2560×1440 | wafer | rail label | 9.34 | normal | AAA |
 | 2560×1440 | wafer | rail current | 13.75 | normal | AAA |
-| 2560×1440 | wafer | loupe caption | 12.89 | normal | AAA |
+| 2560×1440 | wafer | loupe caption | 12.92 | normal | AAA |
+| 2560×1440 | wafer | act II figure | 13.14 | large | AAA |
+| 2560×1440 | wafer | act II figure unit | 13.72 | large | AAA |
+| 2560×1440 | wafer | act II figure label | 13.85 | normal | AAA |
 | 2560×1440 | light | brand | 13.85 | normal | AAA |
 | 2560×1440 | light | clock | 13.85 | large | AAA |
 | 2560×1440 | light | sound | 6.24 | normal | AA |
 | 2560×1440 | light | motion | 14.09 | normal | AAA |
-| 2560×1440 | light | chapter number | 14.12 | normal | AAA |
-| 2560×1440 | light | chapter act | 13.85 | normal | AAA |
-| 2560×1440 | light | chapter figure label | 14.24 | normal | AAA |
-| 2560×1440 | light | chapter figure label | 14.23 | normal | AAA |
-| 2560×1440 | light | chapter figure | 14.23 | normal | AAA |
-| 2560×1440 | light | chapter figure | 10.09 | normal | AAA |
-| 2560×1440 | light | title | 10.62 | large | AAA |
+| 2560×1440 | light | chapter number | 14.13 | normal | AAA |
+| 2560×1440 | light | chapter act | 13.88 | normal | AAA |
+| 2560×1440 | light | title | 11.09 | large | AAA |
 | 2560×1440 | light | body | 11.96 | normal | AAA |
 | 2560×1440 | light | rail label | 9.29 | normal | AAA |
 | 2560×1440 | light | rail label | 13.99 | normal | AAA |
 | 2560×1440 | light | rail label | 9.34 | normal | AAA |
 | 2560×1440 | light | rail current | 13.72 | normal | AAA |
+| 2560×1440 | light | act II figure | 13.25 | large | AAA |
+| 2560×1440 | light | act II figure unit | 13.82 | large | AAA |
+| 2560×1440 | light | act II figure label | 13.58 | normal | AAA |
 | 2560×1440 | chip | brand | 15.15 | normal | AAA |
 | 2560×1440 | chip | clock | 15.14 | large | AAA |
 | 2560×1440 | chip | sound | 6.87 | normal | AA |
@@ -677,7 +665,7 @@ AAA for body text and titles where the design allows, AA for everything else; la
 | 2560×1440 | chip | rail label | 15.26 | normal | AAA |
 | 2560×1440 | chip | rail current | 15.16 | normal | AAA |
 | 2560×1440 | display | brand | 15.15 | normal | AAA |
-| 2560×1440 | display | clock | 13.96 | large | AAA |
+| 2560×1440 | display | clock | 13.88 | large | AAA |
 | 2560×1440 | display | unit | 10.53 | normal | AAA |
 | 2560×1440 | display | sound | 6.28 | normal | AA |
 | 2560×1440 | display | motion | 15.09 | normal | AAA |
@@ -694,18 +682,18 @@ AAA for body text and titles where the design allows, AA for everything else; la
 | 2560×1440 | display | rail label | 9.62 | normal | AAA |
 | 2560×1440 | display | rail label | 14.96 | normal | AAA |
 | 2560×1440 | display | rail current | 12.80 | normal | AAA |
-| 2560×1440 | display | loupe caption | 13.85 | normal | AAA |
+| 2560×1440 | display | loupe caption | 13.84 | normal | AAA |
 | 2560×1440 | now | brand | 14.40 | normal | AAA |
 | 2560×1440 | now | clock | 14.47 | large | AAA |
 | 2560×1440 | now | sound | 6.50 | normal | AA |
 | 2560×1440 | now | motion | 14.67 | normal | AAA |
-| 2560×1440 | now | title | 14.59 | large | AAA |
-| 2560×1440 | now | body | 11.97 | normal | AAA |
-| 2560×1440 | now | micro / footnote | 11.50 | normal | AAA |
+| 2560×1440 | now | title | 14.50 | large | AAA |
+| 2560×1440 | now | body | 11.92 | normal | AAA |
+| 2560×1440 | now | micro / footnote | 11.94 | normal | AAA |
 | 2560×1440 | now | rail label | 9.59 | normal | AAA |
 | 2560×1440 | now | rail label | 9.58 | normal | AAA |
 | 2560×1440 | now | rail label | 14.63 | normal | AAA |
 | 2560×1440 | now | rail current | 14.46 | normal | AAA |
-| 2560×1440 | now | ending choice | 10.06 | normal | AAA |
-| 2560×1440 | now | ending choice | 7.11 | normal | AAA |
-| 2560×1440 | now | ending choice | 6.85 | normal | AA |
+| 2560×1440 | now | ending choice | 7.63 | normal | AAA |
+| 2560×1440 | now | ending choice | 9.95 | normal | AAA |
+| 2560×1440 | now | ending choice | 7.80 | normal | AAA |

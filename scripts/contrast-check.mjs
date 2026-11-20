@@ -35,6 +35,7 @@ const BLOCKS = [
   ['micro / footnote', '#micro', false], ['hint', '#hint', false],
   ['rail label', '.timeline .label', false], ['rail current', '.timeline button[aria-current="step"] span', false], ['loupe caption', '.loupe-cap', false],
   ['ending choice', '#outro button', false],
+  ['act II figure', '#figure .figure-v', false], ['act II figure unit', '#figure .figure-u', false], ['act II figure label', '#figure .figure-l', false],
 ];
 
 const lum = (r, g, b) => { const f = (c) => { c /= 255; return c <= .03928 ? c / 12.92 : ((c + .055) / 1.055) ** 2.4; }; return .2126 * f(r) + .7152 * f(g) + .0722 * f(b); };
@@ -101,6 +102,8 @@ try {
     for (let i = 0; i < SNAP_POINTS.length; i++) {
       await page.evaluate(([v, ft]) => { window.__V = v; window.__T = 10; window.__FT = ft; }, [SNAP_POINTS[i], i === SNAP_POINTS.length - 1 ? 15 : 0]);
       await page.waitForTimeout(900);
+      // the ending's choices fade in after the signature: measure them settled, not part way in
+      if (i === SNAP_POINTS.length - 1) await page.waitForFunction(() => getComputedStyle(document.querySelector('#outro')).opacity === '1', null, { timeout: 6000 }).catch(() => {});
       for (const b of await blocksIn(page)) {
         const r = await measure(page, b);
         if (r !== null) rows.push({ vp: vp.name, at: WORLDS[i].slug, name: b.name, text: b.text, ratio: r, large: b.large, primary: b.primary });

@@ -5,8 +5,11 @@ const COUNT_S = .75;
 /** Room kept clear on the right for the chapter rail (px), and the figure's largest size (px). */
 const RAIL = 170;
 const MAX_PX = 190;
-/** the most of the screen's width the figure may take: the rest is left to the scene's focus */
+/** the most of the screen's width the figure may take: the rest is left to the scene's focus (phones: all of it) */
 const FILL = .36;
+/** below this width the rail is an indicator only and the figure takes the width; and at most this share of the height */
+const NARROW = 600;
+const MAX_H = .26;
 /** the size the figure is measured at */
 const PROBE = 100;
 
@@ -28,12 +31,15 @@ export class FigureView {
   private on = false;
   private shown = '';
   private target = { int: 0, dec: 0, digits: 0, grouped: false };
+  /** the screen changed (resize, a phone turned): fit the figure again */
+  private refit = false;
 
   constructor(el: HTMLElement, copy: Copy) {
     this.el = el; this.copy = copy;
     this.value = el.querySelector('.figure-v')!;
     this.unit = el.querySelector('.figure-u')!;
     this.label = el.querySelector('.figure-l')!;
+    addEventListener('resize', () => { this.refit = true; }, { passive: true });
   }
 
   /** Every frame: `hold` the chapter rested on (-1 moving), `hidden` while something else owns the screen. */
@@ -49,18 +55,24 @@ export class FigureView {
       const [int = '', dec = ''] = f.value.split('.');
       this.target = { int: +int.replace(/,/g, ''), dec: dec ? +`0.${dec}` : 0, digits: dec.length, grouped: int.includes(',') };
       this.unit.textContent = f.unit; this.label.textContent = f.label;
-      // as large as fits between the left margin and the rail: measured once, at its full value, at a probe size
-      this.value.textContent = f.value; this.shown = '';
-      const line = this.value.parentElement!;
-      this.el.style.setProperty('--figure-size', `${PROBE}px`);
-      const room = innerWidth - this.el.offsetLeft - RAIL, w = line.scrollWidth;
-      this.el.style.setProperty('--figure-size', `${Math.min(MAX_PX, PROBE * Math.min(room, FILL * innerWidth) / Math.max(1, w)).toFixed(0)}px`);
-    }
+      this.fit(f.value);
+    } else if (this.refit) this.fit(f.value);
     if (!this.on) { this.on = true; this.el.classList.add('on'); }
     const k = reduced ? 1 : easeOutExpo(Math.min(1, (now - this.since) / 1000 / COUNT_S));
     const t = this.target, n = (t.int + t.dec) * k;
     let s = t.digits ? n.toFixed(t.digits) : String(Math.round(n));
     if (t.grouped) { const [i, d] = s.split('.'); s = i!.replace(/\B(?=(\d{3})+(?!\d))/g, ',') + (d ? `.${d}` : ''); }
     if (s !== this.shown) { this.shown = s; this.value.textContent = s; }
+  }
+
+  /** As large as fits beside the rail (phones: across the width), and no taller than MAX_H of the screen: measured at its full value, at a probe size. */
+  private fit(full: string): void {
+    this.refit = false;
+    this.value.textContent = full; this.shown = '';
+    const line = this.value.parentElement!, left = this.el.offsetLeft;
+    this.el.style.setProperty('--figure-size', `${PROBE}px`);
+    const room = innerWidth < NARROW ? innerWidth - 2 * left : Math.min(innerWidth - left - RAIL, FILL * innerWidth);
+    const size = Math.min(MAX_PX, MAX_H * innerHeight / .8, PROBE * room / Math.max(1, line.scrollWidth));
+    this.el.style.setProperty('--figure-size', `${size.toFixed(0)}px`);
   }
 }

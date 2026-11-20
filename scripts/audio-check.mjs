@@ -1,8 +1,10 @@
 // Sound (npm run check:audio): headless Chromium with autoplay allowed, the dev server, ?parity.
 //  1. nothing is created before the visitor asks (AudioContext constructions counted from page start)
 //  2. the sound button takes a real click at 900×560 and 1440×700 (nothing on top of it)
-//  3. silence: output exactly 0 in the middle of the "One day," cut and after the final landing;
-//     non-zero again after scrolling back from either
+//  3. quiet, never silence (Awwwards P7): the middle of the "One day," cut and the ending after its
+//     landing still sound (a low note under the card, the music going on softly), quieter than the hold
+//     before each (the cut ≥ 3 dB, the ending ≥ 6 dB); full again after scrolling back from either. Starting again has its own sound
+//     (audio/frame.ts rewind()): louder than the ending it starts from, the ambience stepped aside
 //  4. per-world levels: ambience above the music in magma, river, coast, desert and furnace (RMS over
 //     30 s: the ambience is random events and slow swells, and 15 s let a sparse stretch of events
 //     decide; the rule is the same); output peaks below −6 dBFS at every hold
@@ -90,7 +92,7 @@ try {
   let maxPeak = 0;
   for (const w of WORLDS) {
     const i = ix(w.slug);
-    if (i === LAST) continue; // the final hold withdraws into silence (checked below)
+    if (i === LAST) continue; // the final hold settles low (checked below)
     await go(page, SNAP_POINTS[i]);
     await page.waitForTimeout(1200);
     // the ambience is random events (Poisson) and slow swells: the worlds held to "ambience above the music" get 30 s windows
@@ -102,19 +104,33 @@ try {
   check('output peaks below −6 dBFS at every hold', db(maxPeak) < -6, `highest ${fdb(db(maxPeak))}`);
   console.log(rows.map((r) => `      ${r}`).join('\n'));
 
-  // 3: silence in the cut and after the landing, sound again after scrolling back
-  await go(page, transitionMidpoint(CUT)); await page.waitForTimeout(1200);
-  const cut = await levels(page, 800);
-  check('the middle of the "One day," cut is silent (output exactly 0)', cut.out.peak === 0, `peak ${cut.out.peak}`);
-  await go(page, SNAP_POINTS[CUT]); await page.waitForTimeout(1500);
-  const back1 = await levels(page, 1500);
-  check('scrolling back from the cut brings the sound back', back1.out.peak > 0, `peak ${fdb(db(back1.out.peak))}`);
-  await go(page, 1, 7); await page.waitForTimeout(1200);
-  const end = await levels(page, 800);
-  check('after the final landing the output is exactly 0', end.out.peak === 0, `peak ${end.out.peak}`);
-  await go(page, SNAP_POINTS[LAST - 1]); await page.waitForTimeout(1500);
-  const back2 = await levels(page, 1500);
-  check('scrolling back from the end brings the sound back', back2.out.peak > 0, `peak ${fdb(db(back2.out.peak))}`);
+  // 3: quiet, never silent, in the cut and after the landing; full again after scrolling back; the rewind's sound
+  await go(page, SNAP_POINTS[CUT]); await page.waitForTimeout(2500);
+  const before1 = await levels(page, 2000);
+  await go(page, transitionMidpoint(CUT)); await page.waitForTimeout(2500);
+  const cut = await levels(page, 2000);
+  check('the middle of the "One day," cut is quiet, not silent (≥ 3 dB under the hold before)', cut.out.rms > 0 && db(cut.out.rms) <= db(before1.out.rms) - 3,
+    `${fdb(db(cut.out.rms))} vs ${fdb(db(before1.out.rms))} RMS`);
+  await go(page, SNAP_POINTS[CUT]); await page.waitForTimeout(2500);
+  const back1 = await levels(page, 2000);
+  check('scrolling back from the cut brings the sound back up', db(back1.out.rms) > db(cut.out.rms) + 3, `${fdb(db(back1.out.rms))} RMS`);
+  // the ending's level is the master's (the notes come at random, so the output's RMS over a couple of seconds is not)
+  const master = () => page.evaluate(() => window.__audio.engine.master.gain.value);
+  await go(page, 1, 0); await page.waitForTimeout(2500);
+  const landing = await master();
+  await go(page, 1, 7); await page.waitForTimeout(2500);
+  const endGain = await master(), end = await levels(page, 2000);
+  check('after the final landing the music goes on, softly (master ≥ 6 dB under the landing, music still playing)', end.music.rms > 0 && db(endGain) <= db(landing) - 6 && endGain > 0,
+    `master ${fdb(db(endGain))} vs ${fdb(db(landing))}, music ${fdb(db(end.music.rms))} RMS`);
+  const amb0 = await levels(page, 600);
+  await page.evaluate(() => window.__audio.rewind(4.8)); await page.waitForTimeout(1600);
+  const rw = await levels(page, 1500);
+  check('starting again has its sound: louder than the ending, the ambience stepped aside', db(rw.out.rms) > db(end.out.rms) + 3 && rw.ambience.rms < amb0.ambience.rms * .5 + 1e-4,
+    `${fdb(db(rw.out.rms))} vs ${fdb(db(end.out.rms))} RMS; ambience ${fdb(db(rw.ambience.rms))} (was ${fdb(db(amb0.ambience.rms))})`);
+  await page.waitForTimeout(4000);
+  await go(page, SNAP_POINTS[LAST - 1]); await page.waitForTimeout(2500);
+  const back2 = await levels(page, 2000);
+  check('scrolling back from the end brings the sound back up', db(back2.out.rms) > db(end.out.rms) + 3, `${fdb(db(back2.out.rms))} RMS`);
 
   // 7: the whole story, both ways, sound on: console, main-thread cost, nodes
   const stats0 = await page.evaluate(() => ({ ...window.__audio.engine.stats, t: performance.now() }));

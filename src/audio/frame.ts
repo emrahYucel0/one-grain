@@ -119,7 +119,7 @@ export class Sound {
       // one low note under the "One day," card
       if (t > .3 && t < .7 && !this.tolled) { this.tolled = true; this.score.toll(b); }
     } else this.tolled = false;
-    if (hold === LAST) gate = 1 - (1 - END_FLOOR) * ss(3, 6.2, holdSec); // it settles with the grain's light; the music goes on, softly
+    if (hold === LAST && !rewinding) gate = 1 - (1 - END_FLOOR) * ss(3, 6.2, holdSec); // it settles with the grain's light; the music goes on, softly
     this.gate = gate;
     const g = e.master.gain, at = e.now;
     if (gate < .02) {
@@ -158,7 +158,7 @@ export class Sound {
     for (let k = 0; k < N; k++) {
       const x = k / (N - 1), speed = Math.sin(Math.PI * Math.min(1, x * 1.15)) ** 1.5;
       curve[k] = 260 + 2900 * speed;
-      lvl[k] = .16 * Math.min(1, x / .12) * (x < .85 ? 1 : (1 - x) / .15) * (.35 + .65 * speed);
+      lvl[k] = .3 * Math.min(1, x / .12) * (x < .85 ? 1 : (1 - x) / .15) * (.35 + .65 * speed);
     }
     bp.frequency.setValueCurveAtTime(curve, t, dur);
     const g = ctx.createGain(); g.gain.setValueAtTime(0, t); g.gain.setValueCurveAtTime(lvl, t + .001, dur - .002);
