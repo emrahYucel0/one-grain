@@ -88,7 +88,9 @@ try {
       const page = await ctx.newPage();
       await page.route('**/src/main.ts', async (rt) => { await new Promise((ok) => setTimeout(ok, 4000)); await rt.continue(); });
       const nav = page.goto(`${dev.origin}/`).catch(() => {});
-      await page.waitForTimeout(1500);
+      // the page has arrived (a cold dev server can take longer than a fixed wait) and the loader is up
+      await page.waitForSelector('.loader .brand', { timeout: 30000 });
+      await page.waitForTimeout(500);
       await page.evaluate(() => document.documentElement.classList.remove('fonts-pending'));
       const b = (await page.evaluate(() => { const el = document.querySelector('.loader .brand'), r = el.getBoundingClientRect(), m = /rgba?\(([\d.]+),\s*([\d.]+),\s*([\d.]+)/.exec(getComputedStyle(el).color); return { box: { x: r.left, y: r.top, w: r.width, h: r.height }, color: [+m[1], +m[2], +m[3], 1], size: parseFloat(getComputedStyle(el).fontSize) }; }));
       const png = PNG.sync.read(await page.screenshot({ clip: { x: b.box.x, y: b.box.y + b.box.h + 4, width: b.box.w, height: 6 }, scale: 'css' }));

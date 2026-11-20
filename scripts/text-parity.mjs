@@ -14,6 +14,8 @@ const TEXT_REFERENCE = 'v15';
 const INTENTIONAL = [
   ["label: '≈ 2–4 months'", "label: '≈ 6 months'"],
   ["it grows upward from a single seed.", "it is drawn upward from a single seed."],
+  // the ending's signature: a collector's line, as on a sample label
+  ["'Made by <a href=\"https://yucelemrah.com\">Emrah Yücel</a>.'", "'Collected by <a href=\"https://yucelemrah.com\">Emrah Yücel</a>'"],
 ];
 /** The reference publishes the progress each frame rendered, after its words and clock are set (as the port's __progress). */
 const HOOKS = [['    fxTick();\n  }', '    fxTick(); window.__progress = state.v;\n  }']];
