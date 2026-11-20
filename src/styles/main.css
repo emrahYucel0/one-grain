@@ -444,8 +444,6 @@ html.motion-off .outro-again:hover .ico-again{transform:rotate(-30deg)}
 html.motion-off .credits[open]{animation:none}
 @media (prefers-reduced-motion:reduce){.credits[open]{animation:none}}
 .credits-in{margin:10px;border:1px solid rgba(236,227,211,.34);padding:clamp(1.1rem,3.6vw,1.75rem)}
-.credits a{color:var(--ink)}
-.credits a:focus-visible{outline:2px solid var(--ink);outline-offset:3px;border-radius:2px}
 .sl-head{position:relative;min-height:136px;padding:0 128px 1.1rem 0;border-bottom:1px solid rgba(236,227,211,.34);margin-bottom:1px}
 .sl-head::after{content:"";position:absolute;left:0;right:0;bottom:-4px;border-bottom:1px solid var(--rule)}
 .credits h2{margin:0;font-family:var(--sans);font-weight:500;font-stretch:125%;font-size:clamp(1rem,2.4vw,1.2rem);line-height:1.35;letter-spacing:.14em;text-transform:uppercase}
