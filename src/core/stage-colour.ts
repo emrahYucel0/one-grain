@@ -51,7 +51,7 @@ export class StageColour {
     this.scrim = document.querySelector<HTMLElement>('.scrim:not(.scrim-top):not(.scrim-right)');
     this.scrimTop = document.querySelector<HTMLElement>('.scrim-top');
     this.scrimRight = document.querySelector<HTMLElement>('.scrim-right');
-    this.local = [...document.querySelectorAll<HTMLElement>('.controls, .timeline, .loupe, .story')];
+    this.local = [...document.querySelectorAll<HTMLElement>('.controls, .timeline, .loupe, .story, .figure')];
   }
 
   /** the sky's amount the right scrim was last written for, in 1/64 steps */

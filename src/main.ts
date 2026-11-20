@@ -30,7 +30,7 @@ import { Cursor } from './ui/cursor';
 import { FigureView } from './ui/figure';
 import { Gate } from './ui/gate';
 import { Outro } from './ui/outro';
-import { Rewind } from './ui/rewind';
+import { Rewind, REWIND_S } from './ui/rewind';
 import { revealWhenFontsReady } from './ui/fonts';
 import { Loader } from './ui/loader';
 import { guard } from './ui/guard';
@@ -134,7 +134,7 @@ function boot(): void {
     onAgain: () => {
       const back = (): void => { timeline.restart(); opening.reset(); };
       if (env.reduced) gate.rewind(() => { back(); });
-      else rewind.start(timeline.state.v, performance.now(), () => { back(); gate.startPull(); });
+      else { rewind.start(timeline.state.v, performance.now(), () => { back(); gate.startPull(); }); if (sound.on) sound.sound!.rewind(REWIND_S); }
     },
   });
   const rewind = new Rewind();

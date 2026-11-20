@@ -4,7 +4,9 @@ import type { Copy } from './copy';
 const COUNT_S = .75;
 /** Room kept clear on the right for the chapter rail (px), and the figure's largest size (px). */
 const RAIL = 170;
-const MAX_PX = 270;
+const MAX_PX = 190;
+/** the most of the screen's width the figure may take: the rest is left to the scene's focus */
+const FILL = .36;
 /** the size the figure is measured at */
 const PROBE = 100;
 
@@ -52,7 +54,7 @@ export class FigureView {
       const line = this.value.parentElement!;
       this.el.style.setProperty('--figure-size', `${PROBE}px`);
       const room = innerWidth - this.el.offsetLeft - RAIL, w = line.scrollWidth;
-      this.el.style.setProperty('--figure-size', `${Math.min(MAX_PX, PROBE * room / Math.max(1, w)).toFixed(0)}px`);
+      this.el.style.setProperty('--figure-size', `${Math.min(MAX_PX, PROBE * Math.min(room, FILL * innerWidth) / Math.max(1, w)).toFixed(0)}px`);
     }
     if (!this.on) { this.on = true; this.el.classList.add('on'); }
     const k = reduced ? 1 : easeOutExpo(Math.min(1, (now - this.since) / 1000 / COUNT_S));

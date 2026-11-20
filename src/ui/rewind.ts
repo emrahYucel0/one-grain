@@ -1,13 +1,13 @@
-import { easeCubic, easeQuint, ss } from '../core/ease';
+import { easeCubic, ss } from '../core/ease';
 
 /** How long the story takes to run back from the ending to its start (s). */
-const REWIND_S = 4.2;
+export const REWIND_S = 4.8;
 
 /**
  * Away from the ending at once (its hold is long and still), fast through the middle of the story, slow
  * into its start: the second part of an ease-in-out, entered a little way in.
  */
-const IN = .2, eased = (x: number): number => (easeCubic(x) + easeQuint(x)) / 2, E0 = eased(IN);
+const IN = .2, eased = (x: number): number => easeCubic(x), E0 = eased(IN);
 const curve = (k: number): number => (eased(IN + (1 - IN) * k) - E0) / (1 - E0);
 
 /**

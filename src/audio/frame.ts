@@ -26,10 +26,13 @@ export interface SoundFrame {
  * The sound (v23): the engine, the music and the ambience, mapped from the story every frame and
  * scheduled ahead by a timer. Created on the visitor's first request, never before.
  *
- * Silence: the "One day," cut (the gate closes over t .02–.2 and reopens over .84–1) and the end (it
- * follows the grain's light, 3–6.2 s into the final hold). A closed gate ramps the master to exactly
- * 0; scrolling back reopens it.
+ * Quiet, never silence: through the "One day," cut the sound sinks to CUT_FLOOR (over t .02–.3, back
+ * over .8–1) and one low note rings under the card; on the ending it settles to END_FLOOR with the
+ * grain's light (3–6.2 s into the final hold) and the music goes on, softly. Only sound off ramps the
+ * master to exactly 0. Starting again (ui/rewind.ts) has its own sound: rewind().
  */
+const CUT_FLOOR = .32;
+const END_FLOOR = .3;
 export class Sound {
   on = false;
   readonly engine: Engine;
@@ -42,6 +45,10 @@ export class Sound {
   private lastHold = -1;
   private holdAt = -1;
   private holdSince = -1;
+  /** the cut's low note has rung (once per pass through the cut) */
+  private tolled = false;
+  /** audio time the rewind's sound ends (0: none) */
+  private rewindUntil = 0;
 
   private constructor(engine: Engine) {
     this.engine = engine;
@@ -99,13 +106,20 @@ export class Sound {
     const bedA = AMB[slug(a)]!.bed ?? 0, bedB = AMB[slug(b)]!.bed ?? 0;
     this.amb.bed(bedA + (bedB - bedA) * ss(.2, .8, eg));
     // the pad breathes: full when a chapter arrives or the story moves, settling lower while resting
-    e.glide(this.score.padG.gain, hold >= 0 ? .55 + .45 * (1 - ss(1, 7, holdSec)) : 1, .8);
+    const rewinding = this.rewindUntil > e.now;
+    e.glide(this.score.padG.gain, rewinding ? .3 : hold >= 0 ? .55 + .45 * (1 - ss(1, 7, holdSec)) : 1, rewinding ? .4 : .8);
+    // the ambience steps aside while the story runs back (its worlds would flicker past)
+    e.glide(e.ambience.gain, rewinding ? 0 : LEVELS.ambience, rewinding ? .25 : 1.2);
     this.score.pulse = hold >= 0 && PULSE.has(slug(hold));
 
     // silence: the cut and the end
     let gate = 1;
-    if (tr.cam === 'cut') gate = t < .5 ? 1 - ss(.02, .2, t) : ss(.84, 1, t);
-    if (hold === LAST) gate = 1 - ss(3, 6.2, holdSec); // it withdraws with the grain's light; silence when it lands
+    if (tr.cam === 'cut' && !rewinding) {
+      gate = 1 - (1 - CUT_FLOOR) * (t < .5 ? ss(.02, .3, t) : 1 - ss(.8, 1, t));
+      // one low note under the "One day," card
+      if (t > .3 && t < .7 && !this.tolled) { this.tolled = true; this.score.toll(b); }
+    } else this.tolled = false;
+    if (hold === LAST) gate = 1 - (1 - END_FLOOR) * ss(3, 6.2, holdSec); // it settles with the grain's light; the music goes on, softly
     this.gate = gate;
     const g = e.master.gain, at = e.now;
     if (gate < .02) {
@@ -118,14 +132,51 @@ export class Sound {
       }
     } else {
       if (this.zeroed) { g.cancelScheduledValues(at); g.setValueAtTime(0, at); this.zeroed = false; }
-      e.glide(g, LEVELS.master * gate, gate < this.lastGate ? .3 : .6);
+      e.glide(g, LEVELS.master * gate, gate < this.lastGate ? .7 : .6);
     }
     this.lastGate = gate;
 
     // the motif, once per chapter arrival (never during silence)
-    if (hold >= 0 && hold !== this.lastHold) { this.lastHold = hold; if (gate > .5) this.score.motif(hold, actOf(hold)); }
+    if (hold >= 0 && hold !== this.lastHold) { this.lastHold = hold; if (gate > .5 && !rewinding) this.score.motif(hold, actOf(hold)); }
     if (hold < 0) this.lastHold = -1;
     e.stats.frameMs += performance.now() - t0;
+  }
+
+  /**
+   * Starting again (ui/rewind.ts): a tape running back for `dur` seconds — a rush of noise whose pitch
+   * climbs with the run's speed and falls as it slows, a flutter on it, and the opening chord swelling in
+   * backwards, landing as the camera reaches the grain.
+   */
+  rewind(dur: number): void {
+    if (!this.on) return;
+    const e = this.engine, ctx = e.ctx, t = e.now + .02, end = t + dur;
+    this.rewindUntil = end;
+    // the rush: band-passed noise, its band riding the run's speed
+    const src = ctx.createBufferSource(); src.buffer = e.noiseBuf; src.loop = true;
+    const bp = ctx.createBiquadFilter(); bp.type = 'bandpass'; bp.Q.value = 1.6;
+    const N = 48, curve = new Float32Array(N), lvl = new Float32Array(N);
+    for (let k = 0; k < N; k++) {
+      const x = k / (N - 1), speed = Math.sin(Math.PI * Math.min(1, x * 1.15)) ** 1.5;
+      curve[k] = 260 + 2900 * speed;
+      lvl[k] = .16 * Math.min(1, x / .12) * (x < .85 ? 1 : (1 - x) / .15) * (.35 + .65 * speed);
+    }
+    bp.frequency.setValueCurveAtTime(curve, t, dur);
+    const g = ctx.createGain(); g.gain.setValueAtTime(0, t); g.gain.setValueCurveAtTime(lvl, t + .001, dur - .002);
+    // the flutter: the tape's chatter, quicker as it runs
+    const flut = ctx.createOscillator(); flut.frequency.setValueAtTime(9, t); flut.frequency.linearRampToValueAtTime(19, t + dur * .45); flut.frequency.linearRampToValueAtTime(7, end);
+    const trem = e.gain(.7); flut.connect(e.gain(.3)).connect(trem.gain);
+    src.connect(bp).connect(trem).connect(g).connect(e.music);
+    src.start(t, 0); src.stop(end + .1); flut.start(t); flut.stop(end + .1);
+    // the opening chord, backwards: it swells in from nothing and lands as the camera reaches the grain
+    const sw = ctx.createGain(), lp = ctx.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.setValueAtTime(300, t); lp.frequency.exponentialRampToValueAtTime(1800, end);
+    sw.gain.setValueAtTime(0, t); sw.gain.setValueAtTime(0, t + dur * .35); sw.gain.exponentialRampToValueAtTime(.002, t + dur * .4);
+    sw.gain.exponentialRampToValueAtTime(.09, end); sw.gain.linearRampToValueAtTime(0, end + .25);
+    sw.connect(lp).connect(e.music);
+    for (const m of this.score.chordOf(0)) {
+      const o = ctx.createOscillator(); o.type = 'triangle'; o.frequency.value = 440 * Math.pow(2, (m + 12 - 69) / 12);
+      o.connect(sw); o.start(t); o.stop(end + .3);
+    }
+    e.count(9 + this.score.chordOf(0).length);
   }
 
   /** The look-ahead scheduler (every 50 ms while on; capture mode calls it itself). */
@@ -135,7 +186,7 @@ export class Sound {
     if (!this.on || this.gate < .02) return;
     const t0 = performance.now(), now = this.engine.now;
     this.amb.schedule(now);
-    if (this.gate >= .3) this.score.schedule(now);
+    if (this.gate >= .3 && this.rewindUntil <= now) this.score.schedule(now);
     this.engine.stats.schedMs += performance.now() - t0;
   }
 }

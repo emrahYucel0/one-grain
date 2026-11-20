@@ -91,6 +91,13 @@ export class Score {
 
   chordOf(i: number): readonly number[] { return chordOf(i); }
 
+  /** One low note from chapter i's chord, long and soft (under the "One day," card). */
+  toll(i: number): void {
+    const root = chordOf(i)[0]!;
+    this.note(root + 12, .55, 0);
+    this.nextNote = this.e.now + 4;
+  }
+
   private setBank(bank: Bank, ch: number, now: number): void {
     bank.ch = ch;
     chordOf(ch).forEach((m, v) => { const f = midi(m); bank.voices[v]!.o1.frequency.setValueAtTime(f, now); bank.voices[v]!.o2.frequency.setValueAtTime(f, now); });
