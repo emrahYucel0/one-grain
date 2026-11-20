@@ -8,9 +8,16 @@ export function cutOpacity(tr: TransitionDef, t: number): number {
   return tr.cam === 'cut' ? ss(.12, .3, t) * (1 - ss(.7, .88, t)) : 0; // a wider window (v15)
 }
 
-/** Chapter text fades out early in a transition and back in at its end (slower around the cut). */
+/** A touch screen held sideways: too short for "One day," and the next title on it at once. */
+const LANDSCAPE_TOUCH = typeof matchMedia === 'function' ? matchMedia('(pointer: coarse) and (orientation: landscape)') : null;
+
+/**
+ * Chapter text fades out early in a transition and back in at its end (slower around the cut). Out of the
+ * cut on a landscape touch screen it comes in only once "One day," has gone (cutOpacity: by .88).
+ */
 export function chapterOpacity(tr: TransitionDef, t: number): number {
-  return tr.cam === 'cut' ? (t < .5 ? 1 - ss(0, .3, t) : ss(.7, 1, t)) : (t < .5 ? 1 - ss(0, .2, t) : ss(.8, 1, t));
+  if (tr.cam !== 'cut') return t < .5 ? 1 - ss(0, .2, t) : ss(.8, 1, t);
+  return t < .5 ? 1 - ss(0, .3, t) : ss(LANDSCAPE_TOUCH?.matches ? .88 : .7, 1, t);
 }
 
 /** Where the title card has faded completely (story progress). */

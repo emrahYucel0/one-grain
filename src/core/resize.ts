@@ -1,5 +1,6 @@
 import { MathUtils, Vector2 } from 'three';
 import { MAX_ASPECT, PORTRAIT_EXTRA_DEG } from '../camera/confinement';
+import { TOUCH } from '../timeline/config';
 import type { Stage } from './renderer';
 
 const buffer = new Vector2();
@@ -51,14 +52,15 @@ const BAR_PX = 120;
 /**
  * Calls `fn` once things settle after a window resize (150 ms, as the reference). Height-only changes
  * under 120 px (iOS/Android address bars while scrolling) are ignored: the canvas is sized to the
- * largest viewport (styles/main.css), so nothing needs rebuilding and nothing may jump.
+ * largest viewport (styles/main.css), so nothing needs rebuilding and nothing may jump. On touch every
+ * height-only change is: only a new width (the phone turned) refits the renderer, the camera and the track.
  */
 export function onResize(fn: () => void): void {
   let timer: ReturnType<typeof setTimeout> | undefined, w = innerWidth, h = innerHeight;
   addEventListener('resize', () => {
     clearTimeout(timer);
     timer = setTimeout(() => {
-      if (innerWidth === w && Math.abs(innerHeight - h) < BAR_PX) return;
+      if (innerWidth === w && (TOUCH || Math.abs(innerHeight - h) < BAR_PX)) return;
       w = innerWidth; h = innerHeight;
       fn();
     }, 150);

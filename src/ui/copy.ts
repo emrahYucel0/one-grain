@@ -23,6 +23,8 @@ export interface ChapterCopy {
   figure: { value: string; unit: string; label: string } | null;
   /** clock label for this chapter (years: shown only while resting; prod: always) and its sub-line */
   clockLabel: string;
+  /** a shorter clock label for narrow screens (data-clock-short; empty: the label as it is) */
+  clockShort: string;
   clockSub: string;
   /** label in the timeline nav */
   navLabel: string;
@@ -56,6 +58,7 @@ export function readCopy(story: HTMLElement): Copy {
         facts: [...s.querySelectorAll('[data-facts] > div')].map((d) => ({ label: text(d.querySelector('dt')), value: text(d.querySelector('dd')) })),
         figure: s.dataset.figure ? { value: s.dataset.figure, unit: s.dataset.figureUnit ?? '', label: s.dataset.figureLabel ?? '' } : null,
         clockLabel: s.dataset.clock ?? '',
+        clockShort: s.dataset.clockShort ?? '',
         clockSub: s.dataset.clockSub ?? '',
         navLabel: s.dataset.nav ?? title,
         final,
@@ -77,9 +80,10 @@ export function readCopy(story: HTMLElement): Copy {
 export function fillLiveFacts(story: HTMLElement): void {
   const dpr = devicePixelRatio || 1, w = Math.round(screen.width * dpr), h = Math.round(screen.height * dpr);
   if (!(w > 0 && h > 0)) return;
-  const n = (v: number): string => v.toLocaleString('en');
+  // CSS pixels × devicePixelRatio, not the panel itself (a Plus iPhone renders larger and scales down): approximate
+  const n = (v: number): string => '≈ ' + v.toLocaleString('en');
   for (const dd of story.querySelectorAll<HTMLElement>('[data-live]')) {
-    if (dd.dataset.live === 'screen') dd.textContent = `${n(w)} × ${n(h)} px`;
+    if (dd.dataset.live === 'screen') dd.textContent = `${n(w)} × ${h.toLocaleString('en')} px`;
     else if (dd.dataset.live === 'subpixels') dd.textContent = n(w * h * 3);
   }
 }

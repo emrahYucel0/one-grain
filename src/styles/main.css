@@ -158,6 +158,18 @@ body{margin:0;background:var(--stage);color:var(--ink);font-family:var(--sans);f
   .timeline{pointer-events:none}
   .timeline .group{display:none}
 }
+/* touch: still while the browser's bars come and go (iOS Safari, Chrome on Android). What sits at the
+   bottom is placed from the top, against the small viewport (bars shown), so it never follows the bar;
+   the scene is the large viewport (#scene, 100lvh) and is resized only when the width changes (core/resize.ts). */
+@media (pointer:coarse){
+  :root .story{bottom:auto;top:calc(100svh - env(safe-area-inset-bottom,0px) - 2.2rem);translate:calc(var(--px,0) * -18px) calc(-100% + var(--py,0) * -10px)}
+  .scrim:not(.scrim-top):not(.scrim-right){bottom:auto;top:58svh;height:calc(42svh + 100lvh - 100svh);background:linear-gradient(to top,var(--stage) calc(100lvh - 100svh + 3.4svh),transparent)}
+  /* the clock keeps one height whatever it shows, so the buttons under it never move */
+  .time{height:max(calc(var(--clock-prod) * .95 + 1.65rem),calc(var(--clock-now) * .95));justify-content:flex-start}
+}
+@media (max-height:559px) and (pointer:coarse),(hover:none) and (pointer:coarse) and (max-width:719px){
+  .timeline{bottom:auto;height:calc(100svh - 96px - env(safe-area-inset-bottom,0px) - 1rem)}
+}
 /* legibility over bright worlds (v15): a soft shadow under all overlay text; no native scrollbar */
 .hud,.timeline,.time,.story{text-shadow:0 1px 10px rgba(0,0,0,.55),0 0 2px rgba(0,0,0,.35)}
 html{scrollbar-width:none}html::-webkit-scrollbar{display:none}

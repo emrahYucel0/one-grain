@@ -15,6 +15,8 @@ import { attr, type Copy } from './copy';
 const PUNCH_EASE = 'cubic-bezier(.2,.8,.2,1)';
 const PUNCH: Keyframe[] = [{ transform: 'scale(1.35)', opacity: .2, offset: 0, easing: PUNCH_EASE }, { opacity: 1, offset: .6, easing: PUNCH_EASE }, { transform: 'scale(1)', opacity: 1, offset: 1 }];
 const PUNCH_TIMING: KeyframeAnimationOptions = { duration: 700 };
+/** Narrow screens take a chapter's short clock label where it has one (data-clock-short). */
+const NARROW = typeof matchMedia === 'function' ? matchMedia('(max-width: 599px)') : null;
 
 export const clockProgress = (tr: TransitionDef, t: number, eg: number): number => (tr.g === 21 ? (t < .74 ? 0 : 1) : eg);
 
@@ -52,7 +54,7 @@ export class ClockView {
       if (A.unit === 'years' && B.unit === 'years') v = Math.pow(10, Math.log10(A.value + 1) + (Math.log10(B.value + 1) - Math.log10(A.value + 1)) * eg) - 1;
       // a chapter's own label holds near its end of the move (hysteresis: granite does not flicker
       // between "≈ hundreds of thousands" and "≈ 300,000" as soon as the scroll starts)
-      const own = eg < .15 || eg > .85 ? chapter.clockLabel : '';
+      const own = eg < .15 || eg > .85 ? (NARROW?.matches && chapter.clockShort) || chapter.clockLabel : '';
       el.classList.toggle('is-label', !!own);
       value = own ? attr(el, 'approx') + own : v < 1 ? '0' : attr(el, 'approx') + this.years(v);
       label = attr(el, 'years');

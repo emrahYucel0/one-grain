@@ -47,4 +47,36 @@ export const SCROLL = {
 
   /** a jump (the right-hand rail, keys, a #link): Lenis's smoothing for it; the speed limit is off until it lands */
   jumpLerp: .1,
+
+  /**
+   * Touch screens (phones, tablets): the values above hold for the wheel and the trackpad; on touch these
+   * override them. A swipe covers more of the story (a shorter track); the speed limit still applies, so a
+   * hard flick never skips a transition: the sand flows on until it has caught up. The critical moves keep
+   * their halved limit (critical.speed), and everything else above (shares, staccato) is the same.
+   */
+  touch: {
+    /** what counts as touch */
+    query: '(pointer: coarse)',
+    /** the track's length as a share of the wheel's: 0.5 is half the finger travel for the whole journey */
+    length: .5,
+    /** the story's speed limit on touch, chapters per second */
+    maxSpeed: 1,
+    /**
+     * Off (default): the phone's own scrolling and momentum, which runs on after the finger lifts as
+     * everywhere else on the phone. On: Lenis takes the finger over (its own inertia), and only then do
+     * touchMultiplier, syncTouchLerp and touchInertiaExponent apply.
+     */
+    syncTouch: false,
+    /** Lenis (with syncTouch): page pixels per pixel of finger travel */
+    touchMultiplier: 2,
+    /** Lenis (with syncTouch): smoothing of the finger (0..1, lower is smoother) */
+    syncTouchLerp: .075,
+    /** Lenis (with syncTouch): how far the inertia carries after the finger lifts (default 1.7) */
+    touchInertiaExponent: 1.7,
+  },
 } as const;
+
+/** The visitor scrolls by touch (timeline/config.ts touch), read once at start. */
+export const TOUCH = typeof matchMedia === 'function' && matchMedia(SCROLL.touch.query).matches;
+/** The story's speed limit (chapters per second) for this device. */
+export const MAX_SPEED: number = TOUCH ? SCROLL.touch.maxSpeed : SCROLL.maxSpeed;

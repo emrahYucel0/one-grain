@@ -2,13 +2,13 @@ import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import Lenis from 'lenis';
 import { env } from '../core/env';
-import { SCROLL } from './config';
+import { MAX_SPEED, SCROLL, TOUCH } from './config';
 import { SNAP_POINTS, TOTAL, fromChapters, nearestChapter, speedAt, toChapters } from './segments';
 
 gsap.registerPlugin(ScrollTrigger);
 // Mobile browsers resize the viewport as their bars come and go: no refresh (no jump) for that.
 // ScrollTrigger's own rule ignores height changes under 25 % only (a landscape phone's bar is more);
-// resizes refresh it from core/resize.ts onResize instead, which skips height-only changes under 120 px.
+// resizes refresh it from core/resize.ts onResize instead, which skips height-only changes (touch: all of them).
 ScrollTrigger.config({ ignoreMobileResize: true, autoRefreshEvents: 'visibilitychange,DOMContentLoaded,load' });
 
 /** A jump hands the story back to the speed limit once it is this close (chapters), or after this long. */
@@ -17,7 +17,7 @@ const LANDED = .002, JUMP_MAX_MS = 5000;
 const MAX_DT = .1;
 
 /**
- * Native page scroll, smoothed by Lenis (wheel and trackpad; touch stays native), gives the story a
+ * Native page scroll, smoothed by Lenis (wheel and trackpad; touch stays native unless config's touch.syncTouch), gives the story a
  * target; the story shows a value that follows it, never faster than a speed limit (timeline/config.ts).
  * Everything that plays the story (the worlds, the clock, the words, the rail, the sound) reads that
  * shown value, never the scroll. Nothing scrolls on its own: no snapping. A jump (rail, keys, a #link)
@@ -42,10 +42,13 @@ export class ScrollTimeline {
   private max = 0;
 
   constructor(track: HTMLElement) {
-    track.style.height = `${TOTAL * 100 + 100}vh`;
+    // on touch a shorter track: a swipe carries further through the story (timeline/config.ts touch.length)
+    track.style.height = `${TOTAL * 100 * (TOUCH ? SCROLL.touch.length : 1) + 100}vh`;
     this.trigger = ScrollTrigger.create({ trigger: track, start: 'top top', end: 'bottom bottom' });
     this.lenis = new Lenis({
       lerp: SCROLL.lerp, wheelMultiplier: SCROLL.wheelMultiplier, smoothWheel: SCROLL.smoothWheel && !env.reduced,
+      syncTouch: TOUCH && SCROLL.touch.syncTouch && !env.reduced, touchMultiplier: SCROLL.touch.touchMultiplier,
+      syncTouchLerp: SCROLL.touch.syncTouchLerp, touchInertiaExponent: SCROLL.touch.touchInertiaExponent,
       // the credits scroll on their own
       prevent: (node) => node.nodeName === 'DIALOG',
     });
@@ -70,7 +73,7 @@ export class ScrollTimeline {
     else if (gap !== 0) {
       // close a share of the gap (as 0.1 of it per 1/60 s would), at most at the speed limit
       let step = Math.abs(gap) * (1 - Math.pow(1 - SCROLL.follow, dt * 60));
-      if (this.jumpTo < 0) step = Math.min(step, SCROLL.maxSpeed * speedAt(this.shown) * dt);
+      if (this.jumpTo < 0) step = Math.min(step, MAX_SPEED * speedAt(this.shown) * dt);
       this.shown = Math.abs(gap) < 1e-5 ? target : this.shown + Math.sign(gap) * step;
     }
     this.state.v = fromChapters(this.shown);
