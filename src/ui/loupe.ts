@@ -160,9 +160,10 @@ export class LoupeView {
     const m = MAG_FROM * Math.pow(MAG_TO / MAG_FROM, ss(0, 1, this.deep)), e10 = Math.pow(10, Math.floor(Math.log10(m)) - 1);
     const cap = `×${(Math.round(m / e10) * e10).toLocaleString('en-US')}`;
     const hintEl = this.hint, ds = hintEl?.dataset ?? {};
-    const hint = at < 0 ? this.shown.hint
-      : kind ? (this.deep > .6 ? ds[kind === 'Si' ? 'si' : 'sio2'] : ds[h.mouse ? 'deepMouse' : 'deepTouch']) ?? ''
-      : HOLD[at] ? (this.broken === at ? '' : ds.hold ?? '') : '';
+    // mid-transition, the nearer world's line (the same both ways through, check:reverse)
+    const near = at >= 0 ? at : f.k < .5 ? f.a : f.b, nearKind = DEEP[near];
+    const hint = nearKind ? (at >= 0 && this.deep > .6 ? ds[nearKind === 'Si' ? 'si' : 'sio2'] : ds[h.mouse ? 'deepMouse' : 'deepTouch']) ?? ''
+      : HOLD[near] ? (this.broken === near ? '' : ds.hold ?? '') : '';
     const holdS = (this.broken >= 0 ? 1 : this.hold).toFixed(3);
     if (cap !== this.shown.cap && this.cap) { this.shown.cap = cap; this.cap.textContent = cap; }
     if (hint !== this.shown.hint && hintEl) { this.shown.hint = hint; hintEl.textContent = hint; }

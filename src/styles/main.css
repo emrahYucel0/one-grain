@@ -95,8 +95,9 @@ body{margin:0;background:var(--stage);color:var(--ink);font-family:var(--sans);f
 /* Awwwards P8, the loupe answers the hand (ui/loupe.ts): the magnification, and under it what to do or what
    this is; the hold drawn round the ring; the cursor opens over a lens that answers */
 .loupe-cap{display:flex;flex-direction:column;align-items:center;gap:7px}
+.loupe-cap::before{inset:-24px -44px;background:radial-gradient(closest-side,rgb(var(--stage-rgb,13 24 28) / .82),rgb(var(--stage-rgb,13 24 28) / .78) 50%,rgb(var(--stage-rgb,13 24 28) / .55) 76%,rgb(var(--stage-rgb,13 24 28) / 0))}
 .loupe-x{font-variant-numeric:tabular-nums}
-.loupe-hint{font-family:var(--serif);font-style:italic;font-weight:400;font-size:.9rem;letter-spacing:.01em;line-height:1.2;opacity:.92}
+.loupe-hint{font-family:var(--serif);font-style:italic;font-weight:400;font-size:.9rem;letter-spacing:.01em;line-height:1.2}
 .loupe-hint:empty{display:none}
 .loupe-hold{position:absolute;inset:-7px;width:calc(100% + 14px);height:calc(100% + 14px);transform:rotate(-90deg);overflow:visible;pointer-events:none}
 .loupe-hold circle{fill:none;stroke:rgba(255,226,180,.95);stroke-width:1.6;stroke-linecap:round;stroke-dasharray:100;stroke-dashoffset:calc(100 - var(--hold,0) * 100);
