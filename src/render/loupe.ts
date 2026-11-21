@@ -25,6 +25,10 @@ export interface LoupeFrame {
   /** turning angles, radians: about the vertical, and the tilt that shows the crystal's faces */
   yaw: number;
   tilt: number;
+  /** Awwwards P8, the loupe answers the hand (ui/loupe.ts): the dive to the crystal's cell 0..1, that cell with oxygen (1) or without (0), the stone cracking as it is held 0..1 */
+  deep: number;
+  oxy: number;
+  crack: number;
 }
 
 if (LOUPE.length !== WORLDS.length) throw new Error(`story/loupe.ts has ${LOUPE.length} looks for ${WORLDS.length} worlds`);
@@ -69,7 +73,7 @@ export class LoupePass {
     });
     this.u = {
       uRes: { value: new Vector2(1, 1) }, uTime: { value: 0 }, uK: { value: 0 }, uPhase: { value: -1 }, uCycle: { value: 2 },
-      uRot: { value: this.rot }, uZero: { value: 0 }, uBound: { value: 1.5 }, uDetail: { value: 1 }, uSteps: { value: 72 }, ...side('A'), ...side('B'),
+      uRot: { value: this.rot }, uZero: { value: 0 }, uBound: { value: 1.5 }, uDetail: { value: 1 }, uSteps: { value: 72 }, uDeep: { value: 0 }, uOxy: { value: 1 }, uCrack: { value: 0 }, ...side('A'), ...side('B'),
     };
     const geometry = new PlaneGeometry(2, 2);
     const march = new Mesh(geometry, new ShaderMaterial({ glslVersion: GLSL3, uniforms: this.u, blending: NoBlending, depthTest: false, depthWrite: false, ...loupeShaders }));
@@ -126,6 +130,7 @@ export class LoupePass {
       (u[`uCol${s}`]!.value as Vector3).copy(P.col); (u[`uGlow${s}`]!.value as Vector3).copy(P.glow); (u[`uEnv${s}`]!.value as Vector3).copy(P.env);
     }
     u.uK!.value = f.k; u.uTime!.value = f.time;
+    u.uDeep!.value = f.deep; u.uOxy!.value = f.oxy; u.uCrack!.value = f.crack;
     // a faint lens is marched plainly: no surface detail (relief, frost, mineral grains) below 55 %
     // opacity, all of it from 85 %; fewer steps while it moves (the cost of a small lens is the length of
     // one pixel's march, not the number of its pixels)
@@ -139,8 +144,9 @@ export class LoupePass {
     const left = Math.round((f.x - f.r) * dpr) / dpr, bottom = Math.round((h - f.y - f.r) * dpr) / dpr;
     // in a transition, where it moves, fades and blends two looks, the lens is marched at half the
     // resolution (a quarter of the pixels) and stretched; at rest at full resolution
-    const moving = f.k > 0 && f.k < 1, size = moving ? Math.max(2, Math.round(px / 2)) : px;
-    const key = `${f.a} ${f.b} ${size}`, whole = !this.shownLast || key !== this.held;
+    // and while it dives (Awwwards P8), when it changes from frame to frame
+    const moving = (f.k > 0 && f.k < 1) || (f.deep > 0 && f.deep < 1), size = moving ? Math.max(2, Math.round(px / 2)) : px;
+    const key = `${f.a} ${f.b} ${size}`, whole = !this.shownLast || key !== this.held || (f.deep > 0 && f.deep < 1);
     if (this.target.width !== size) this.target.setSize(size, size);
     (u.uRes!.value as Vector2).set(size, size);
     renderer.getViewport(this.saved);

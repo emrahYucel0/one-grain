@@ -50,6 +50,13 @@ export interface LoupeLook {
   panels?: number;
   /** turns to and fro instead of round (a face that must stay towards the viewer) */
   sway?: boolean;
+  /**
+   * Awwwards P8, the loupe answers the hand (ui/loupe.ts). `deep`: hovered (held, on touch), it dives to one
+   * cell of the crystal, as atoms: silica (SiO₂, the sand) or silicon (Si, the wafer). `hold`: held, the
+   * stone cracks, and breaks into the next chapter.
+   */
+  deep?: 'SiO2' | 'Si';
+  hold?: boolean;
   pattern: LoupePattern;
   /** body colour, emission colour, the light around it (linear, may exceed 1) */
   colour: Vec3;
@@ -65,17 +72,17 @@ export const LOUPE: readonly LoupeLook[] = [
   // magma: a sharp, clear crystal, lit by the melt
   L({ shape: 'grain', round: 0, wear: 0, frost: 0, gloss: .95, glass: .9, milk: .1, metal: 0, emission: .12, speckle: 0, pattern: 'none', colour: [.86, .9, .95], glow: [1, .42, .12], env: [1, .55, .3] }),
   // granite: translucent quartz, faintly smoky, its faces still sharp
-  L({ show: true, shape: 'grain', round: .04, wear: 0, frost: .04, gloss: .95, glass: .95, milk: .12, metal: 0, emission: 0, speckle: 0, pattern: 'none', colour: [.9, .87, .83], glow: NONE, env: [.5, .55, .65] }),
+  L({ show: true, deep: 'SiO2', shape: 'grain', round: .04, wear: 0, frost: .04, gloss: .95, glass: .95, milk: .12, metal: 0, emission: 0, speckle: 0, pattern: 'none', colour: [.9, .87, .83], glow: NONE, env: [.5, .55, .65] }),
   // river: worn, wet
   L({ shape: 'grain', round: .45, wear: .4, frost: .12, gloss: 1, glass: .5, milk: .45, metal: 0, emission: 0, speckle: .15, pattern: 'none', colour: [.86, .85, .8], glow: NONE, env: [.35, .75, .8] }),
   // coast: rounded by the waves, worn and frosted: a matte, satin surface, light glowing through its edges
-  L({ show: true, shape: 'grain', round: 1, wear: .8, frost: .85, gloss: .25, glass: 0, milk: .9, metal: 0, emission: 0, speckle: .35, pattern: 'none', colour: [.9, .84, .74], glow: NONE, env: [.95, .62, .48] }),
+  L({ show: true, deep: 'SiO2', shape: 'grain', round: 1, wear: .8, frost: .85, gloss: .25, glass: 0, milk: .9, metal: 0, emission: 0, speckle: .35, pattern: 'none', colour: [.9, .84, .74], glow: NONE, env: [.95, .62, .48] }),
   // desert: round, frosted, iron-stained
   L({ shape: 'grain', round: 1, wear: .6, frost: 1, gloss: .12, glass: 0, milk: 1, metal: 0, emission: 0, speckle: .6, pattern: 'none', colour: [.95, .7, .46], glow: NONE, env: [1, .7, .45] }),
   // again: quartzite
   L({ shape: 'grain', round: .6, wear: .5, frost: .55, gloss: .3, glass: 0, milk: .9, metal: 0, emission: 0, speckle: .3, pattern: 'none', colour: [.82, .75, .66], glow: NONE, env: [.8, .6, .45] }),
   // quarry: a broken lump of stone: fresh fracture faces, grains of quartz, feldspar and mica
-  L({ show: true, shape: 'lump', round: 0, wear: 0, frost: .5, gloss: .2, glass: 0, milk: 0, metal: 0, emission: 0, speckle: 1, pattern: 'none', colour: [.7, .67, .63], glow: NONE, env: [.65, .68, .72] }),
+  L({ show: true, hold: true, shape: 'lump', round: 0, wear: 0, frost: .5, gloss: .2, glass: 0, milk: 0, metal: 0, emission: 0, speckle: 1, pattern: 'none', colour: [.7, .67, .63], glow: NONE, env: [.65, .68, .72] }),
   // furnace: molten
   L({ shape: 'drop', round: 1, wear: 0, frost: 0, gloss: .6, glass: 0, milk: 0, metal: 0, emission: 1, speckle: 0, pattern: 'none', colour: [1, .5, .15], glow: [1, .5, .16], env: [1, .5, .2] }),
   // purity: polysilicon
@@ -83,7 +90,7 @@ export const LOUPE: readonly LoupeLook[] = [
   // crystal: the perfect lattice
   L({ shape: 'crystal', round: 0, wear: 0, frost: 0, gloss: 1, glass: 0, milk: 0, metal: .95, emission: 0, speckle: 0, panels: .8, pattern: 'lattice', colour: [.7, .73, .8], glow: NONE, env: [.65, .72, .9] }),
   // wafer: a true mirror, the cleanroom's ceiling in it, its notch at the edge
-  L({ show: true, shape: 'disc', round: 0, wear: 0, frost: 0, gloss: 1, glass: 0, milk: 0, metal: 1, emission: 0, speckle: 0, panels: 1, pattern: 'none', colour: [.62, .64, .68], glow: NONE, env: [.7, .75, .95] }),
+  L({ show: true, deep: 'Si', shape: 'disc', round: 0, wear: 0, frost: 0, gloss: 1, glass: 0, milk: 0, metal: 1, emission: 0, speckle: 0, panels: 1, pattern: 'none', colour: [.62, .64, .68], glow: NONE, env: [.7, .75, .95] }),
   // light: a pattern of light
   L({ shape: 'disc', round: 0, wear: 0, frost: 0, gloss: .9, glass: 0, milk: 0, metal: .8, emission: .55, speckle: 0, panels: .6, pattern: 'light', colour: [.6, .55, .8], glow: [.72, .55, 1], env: [.6, .5, 1] }),
   // chip: circuits

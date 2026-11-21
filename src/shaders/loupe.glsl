@@ -33,6 +33,10 @@ uniform float uBound;
 // out of a transition) is marched plainly. The march costs by its length, not by its pixels: a small lens
 // is bound by how long one pixel's march takes.
 uniform float uDetail, uSteps;
+// Awwwards P8, the loupe answers the hand. uDeep 0..1: the dive into the grain, down to one cell of its
+// crystal; uOxy: that crystal with its oxygen (1: silica) or without (0: silicon, the wafer). uCrack 0..1:
+// the quarry's stone cracking as the loupe is held.
+uniform float uDeep, uOxy, uCrack;
 out highp vec4 fragColor;
 
 const vec3 KEY = vec3(.5516, .7522, .3609); // normalize(.55, .75, .36)
@@ -96,6 +100,70 @@ float map(vec3 p){
   }
   return d / 1.6;
 }
+// ---- the deep view: one cell of the crystal, as atoms ----
+// Silicon on the diamond lattice (its cubic cell: 8 corners, 6 faces, 4 inside), each inner atom bonded to
+// four neighbours; with oxygen, one sits halfway along every bond (cristobalite, one of silica's crystal
+// forms: every silicon among four oxygens, every oxygen between two silicons). Without it, the same cell is
+// silicon itself, the wafer's crystal. Spheres and bonds are intersected exactly, not marched.
+const vec3 SI[18] = vec3[18](
+  vec3(0, 0, 0), vec3(1, 0, 0), vec3(0, 1, 0), vec3(1, 1, 0), vec3(0, 0, 1), vec3(1, 0, 1), vec3(0, 1, 1), vec3(1, 1, 1),
+  vec3(.5, .5, 0), vec3(.5, .5, 1), vec3(.5, 0, .5), vec3(.5, 1, .5), vec3(0, .5, .5), vec3(1, .5, .5),
+  vec3(.25, .25, .25), vec3(.75, .75, .25), vec3(.75, .25, .75), vec3(.25, .75, .75));
+const vec3 BOND[4] = vec3[4](vec3(-.25, -.25, -.25), vec3(.25, .25, -.25), vec3(.25, -.25, .25), vec3(-.25, .25, .25));
+const float CELL = 1.25;
+float sphHit(vec3 ro, vec3 rd, vec3 c, float r){ vec3 oc = ro - c; float b = dot(oc, rd), h = b * b - dot(oc, oc) + r * r; return h < 0. ? -1. : -b - sqrt(h); }
+// a capsule from pa to pb (iq's intersection)
+float capHit(vec3 ro, vec3 rd, vec3 pa, vec3 pb, float r){
+  vec3 ba = pb - pa, oa = ro - pa;
+  float baba = dot(ba, ba), bard = dot(ba, rd), baoa = dot(ba, oa), rdoa = dot(rd, oa), oaoa = dot(oa, oa);
+  float a = baba - bard * bard, b = baba * rdoa - baoa * bard, c = baba * oaoa - baoa * baoa - r * r * baba, h = b * b - a * c;
+  if (h < 0.) return -1.;
+  float t = (-b - sqrt(h)) / a, y = baoa + t * bard;
+  if (y > 0. && y < baba) return t;
+  return -1.;
+}
+// the cell seen through the lens, `zoom` its scale (it grows in as the dive arrives)
+vec3 deepView(vec2 uv, float zoom, vec3 env){
+  vec3 rd = normalize(vec3(uv / zoom, -1.55)), o = uRot * vec3(0., 0., 3.6), d = uRot * rd;
+  float tBest = 1e3, kind = -1.; vec3 cBest = vec3(0.), aBest = vec3(0.), bBest = vec3(0.);
+  vec3 cloud = vec3(0.);
+  vec3 siCol = mix(vec3(.64, .69, .78), vec3(.9, .85, .76), uOxy), oCol = vec3(1., .42, .26);
+  for (int i = uZero; i < 18; i++){
+    vec3 c = (SI[i] - .5) * CELL;
+    float t = sphHit(o, d, c, .125);
+    if (t > 0. && t < tBest){ tBest = t; kind = 0.; cBest = c; }
+    vec3 w = c - o; float pd = length(w - d * dot(w, d));                    // its electron cloud
+    cloud += siCol * exp(-pd * pd * 26.) * .07;
+  }
+  for (int j = uZero; j < 16; j++){
+    vec3 a = (SI[14 + j / 4] - .5) * CELL, b = a + BOND[j - (j / 4) * 4] * CELL, m = (a + b) * .5;
+    float t = capHit(o, d, a, b, .026);
+    if (t > 0. && t < tBest){ tBest = t; kind = 2.; aBest = a; bBest = b; }
+    if (uOxy > .01) {
+      t = sphHit(o, d, m, .085 * uOxy);
+      if (t > 0. && t < tBest){ tBest = t; kind = 1.; cBest = m; }
+      vec3 w = m - o; float pd = length(w - d * dot(w, d));
+      cloud += oCol * exp(-pd * pd * 40.) * .06 * uOxy;
+    }
+  }
+  float r = length(uv);
+  vec3 c = vec3(.012, .014, .02) + env * .05 * (1. - r * 1.4) + cloud;
+  if (kind >= 0.) {
+    vec3 p = o + d * tBest, n;
+    if (kind > 1.5) { vec3 ba = bBest - aBest; n = normalize(p - (aBest + ba * clamp(dot(p - aBest, ba) / dot(ba, ba), 0., 1.))); }
+    else n = normalize(p - cBest);
+    vec3 col = kind < .5 ? siCol : kind < 1.5 ? oCol : vec3(.62, .58, .54);
+    vec3 L = uRot * KEY, V = -d, H = normalize(L + V);
+    float ndl = max(dot(n, L), 0.), ndv = max(dot(n, V), 0.);
+    vec3 lit = col * (ndl * .95 + .1 + .22 * (n.y * .5 + .5) * env * 2.)
+      + KEY_COL * pow(max(dot(n, H), 0.), kind > 1.5 ? 24. : 70.) * (kind > 1.5 ? .25 : .9)
+      + mix(env, col, .5) * pow(1. - ndv, 3.) * .5;                         // a rim: the cloud's edge
+    float far = smoothstep(2.4, 4.6, tBest);                                // depth: the far side recedes
+    c = mix(lit, c, far * .72);
+  }
+  return c;
+}
+
 // the tetrahedron's corners, for normals from four taps
 vec3 tap(int i){ return .5773 * (2. * vec3(float(((i + 3) >> 1) & 1), float((i >> 1) & 1), float(i & 1)) - 1.); }
 
@@ -150,7 +218,13 @@ void main(){
   float frost = m1.z * uDetail, gloss = m1.w, glass = m2.x * uDetail, milk = m2.y, metal = m2.z, em = m2.w;
   vec3 col = mix(uColA, uColB, uK), glow = mix(uGlowA, uGlowB, uK), env = mix(uEnvA, uEnvB, uK);
   gDome = 1. - .5 * glass;
-  vec3 ro = vec3(0., 0., 3.6), rd = normalize(vec3(uv, -1.55));
+  // the dive: the grain's view rushes in towards its middle as the cell comes up out of it
+  float dive = smoothstep(.3, .78, uDeep);
+  if (uDeep > .999) {
+    vec3 dc = deepView(uv, 1., env); dc = dc / (1. + dc * .55); dc = pow(max(dc, 0.), vec3(1. / 2.2));
+    fragColor = vec4(dc * mask, mask); return;
+  }
+  vec3 ro = vec3(0., 0., 3.6), rd = normalize(vec3(uv / (1. + uDeep * uDeep * 7.), -1.55));
   vec3 c = env * .085 * (1. - r * 1.3) + vec3(.01);
   // One loop, one call of the distance function, walking through the steps in turn: the march to the
   // surface (only rays that meet the shapes' bounding sphere), the normal there (four taps), how open
@@ -228,9 +302,20 @@ void main(){
     c = (diff * (1. - glass) * (1. - metal) + trans * glass * (1. - F)) * ao + refl * F + spec * (.3 + .7 * ao) + sss;
     for (int s = uZero; s < 2; s++) pattern(s == 0 ? uA3.y : uB3.y, pr, s == 0 ? uGlowA : uGlowB, em, s == 0 ? 1. - uK : uK, c);
     if (uA3.y < 3.5 && uB3.y < 3.5) c += glow * em * (.55 + .45 * pow(1. - ndv, 4.));
+    // the quarry's stone, held: fractures open across it and glow, spreading as the hold goes on
+    if (uCrack > 0.) {
+      float v = abs(noise(pr * 2.2) - .5) + abs(noise(pr * 5.7 + 11.) - .5) * .3;
+      float reach = smoothstep(uCrack * 1.3 - .12, uCrack * 1.3, 1. - noise(pr * 1.1 + 4.) + .15);
+      float line = smoothstep(.02 + .06 * uCrack, .0, v) * (1. - reach);
+      c = c * (1. - .8 * line) + vec3(1.5, .95, .55) * line * (1.2 + 3. * uCrack);
+    }
     c = mix(bg, c, clamp(cover, 0., 1.));
   }
   if (em > 0. && uA3.y < 3.5 && uB3.y < 3.5) c += glow * em * .22 * exp(-r * r * 7.);
+  if (uDeep > .001) {
+    c = mix(c, deepView(uv, mix(.12, 1., smoothstep(.25, 1., uDeep)), env), dive);
+    c += vec3(1., .96, .88) * .2 * sin(3.14159 * dive) * exp(-r * r * 6.);      // a breath of light as it passes through
+  }
   c = c / (1. + c * .55); c = pow(max(c, 0.), vec3(1. / 2.2));
   fragColor = vec4(c * mask, mask);
 }

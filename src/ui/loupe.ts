@@ -31,9 +31,21 @@ export interface LoupeInput {
   /** seconds since the last frame */
   dt: number;
   now: number;
+  /** motion off: the dive is a cut, the stone does not shake */
+  reduced: boolean;
 }
 
 const SHOW = LOUPE.map((l) => !!l.show);
+const DEEP = LOUPE.map((l) => l.deep ?? null);
+const HOLD = LOUPE.map((l) => !!l.hold);
+/** the dive in and back out (s) */
+const DIVE_S = 1, SURFACE_S = .6;
+/** how long the stone must be held to break (s), and how fast an unfinished hold lets go */
+const HOLD_S = 1.6, RELEASE_S = .6;
+/** the dive's magnification: from the loupe's ×200 to one cell of the crystal, about half a nanometre across */
+const MAG_FROM = 200, MAG_TO = 5e7;
+/** a mouse, and the pointer's own place and press (CSS pixels) */
+interface Hand { x: number; y: number; mouse: boolean; down: boolean; downIn: boolean }
 const SWAY = LOUPE.map((l) => !!l.sway);
 const AVOID = WORLDS.map((w) => LOUPE_AVOID[w.slug] ?? []);
 /** around the HUD's and the rail's elements, and the viewport's edges */
@@ -81,7 +93,19 @@ export class LoupeView {
   private avail = 0;
   private start = -1;
   private written = { frame: '', op: '', line: '', lineOp: '' };
-  readonly frame: LoupeFrame = { x: 0, y: 0, r: 88, op: 0, a: 0, b: 0, k: 0, time: 0, yaw: 0, tilt: .55 };
+  /** Awwwards P8: the hand on the loupe, the dive, the hold, and the chapter it broke (-1: none) */
+  private readonly hand: Hand = { x: -1e4, y: -1e4, mouse: false, down: false, downIn: false };
+  /** the dive's own clock, 0..1 (eased into `deep`) */
+  private dive = 0;
+  private deep = 0;
+  private hold = 0;
+  private broken = -1;
+  private readonly cap: HTMLElement | null;
+  private readonly hint: HTMLElement | null;
+  private shown = { cap: '', hint: '', hold: '', over: false };
+  /** called once the quarry's stone has been held to breaking, with its chapter */
+  onBreak: ((chapter: number) => void) | null = null;
+  readonly frame: LoupeFrame = { x: 0, y: 0, r: 88, op: 0, a: 0, b: 0, k: 0, time: 0, yaw: 0, tilt: .55, deep: 0, oxy: 1, crack: 0 };
 
   constructor(el: HTMLElement, line: HTMLElement, canvas: HTMLElement, hud: readonly HTMLElement[]) {
     this.el = el; this.line = line;
@@ -94,9 +118,59 @@ export class LoupeView {
     };
     measure();
     addEventListener('resize', measure);
+    this.cap = el.querySelector('.loupe-x'); this.hint = el.querySelector('.loupe-hint');
+    // the hand: wherever it is (the loupe itself lets every event through to the page, so scrolling over it scrolls)
+    const at = (e: PointerEvent): void => { this.hand.x = e.clientX; this.hand.y = e.clientY; this.hand.mouse = e.pointerType === 'mouse'; };
+    addEventListener('pointermove', at, { passive: true });
+    addEventListener('pointerdown', (e) => { at(e); if (e.button === 0) { this.hand.down = true; this.hand.downIn = this.inside(); } }, { passive: true });
+    const up = (): void => { this.hand.down = false; this.hand.downIn = false; };
+    addEventListener('pointerup', up, { passive: true });
+    // a finger that moves is scrolling: the browser takes it (pointercancel), and the hold lets go
+    addEventListener('pointercancel', up, { passive: true });
+    addEventListener('blur', up);
+    document.documentElement.addEventListener('pointerleave', (e) => { if (e.pointerType === 'mouse') { this.hand.x = this.hand.y = -1e4; } });
     // the HUD's clock and controls change size with their words
     const ro = new ResizeObserver(measure);
     for (const h of hud) ro.observe(h);
+  }
+
+  /** whether the hand is over the lens */
+  private inside(): boolean { return this.cur.placed && Math.hypot(this.hand.x - this.cur.x, this.hand.y - this.cur.y) < this.R + 6; }
+
+  /**
+   * Awwwards P8, the loupe answers the hand. On a chapter whose look has `deep` (story/loupe.ts), a mouse
+   * over the lens (a finger held on it) dives to the crystal's cell; at the quarry, held, the stone cracks
+   * and breaks into the next chapter. Only while resting on the chapter, with the loupe in full view.
+   */
+  private touch(f: LoupeInput, op: number): { deep: number; oxy: number; crack: number; shake: number } {
+    const at = f.k < .02 ? f.a : f.k > .98 ? f.b : -1, live = at >= 0 && op > .5, h = this.hand;
+    if (at >= 0 && at !== this.broken) this.broken = -1;
+    const over = live && this.inside();
+    const kind = at >= 0 ? DEEP[at] : null;
+    // the dive: in in a second, back out quicker; eased at both ends
+    const want = over && kind && (h.mouse || h.downIn) ? 1 : 0;
+    this.dive = f.reduced ? want : want ? Math.min(1, this.dive + f.dt / DIVE_S) : Math.max(0, this.dive - f.dt / SURFACE_S);
+    this.deep = this.dive * this.dive * (3 - 2 * this.dive);
+    // the hold
+    const holding = live && HOLD[at] && h.down && h.downIn && over && this.broken !== at;
+    this.hold = holding ? Math.min(1, this.hold + f.dt / HOLD_S) : Math.max(0, this.hold - f.dt / RELEASE_S);
+    if (holding && this.hold >= 1) { this.broken = at; this.hold = 0; this.onBreak?.(at); }
+    const crack = this.broken >= 0 ? (f.a === this.broken ? 1 - f.k : f.b === this.broken ? f.k : 0) : at >= 0 && HOLD[at] ? this.hold : 0;
+    // the caption: the magnification counts up with the dive; a line under it says what to do, or what this is
+    const m = MAG_FROM * Math.pow(MAG_TO / MAG_FROM, ss(0, 1, this.deep)), e10 = Math.pow(10, Math.floor(Math.log10(m)) - 1);
+    const cap = `×${(Math.round(m / e10) * e10).toLocaleString('en-US')}`;
+    const hintEl = this.hint, ds = hintEl?.dataset ?? {};
+    const hint = at < 0 ? this.shown.hint
+      : kind ? (this.deep > .6 ? ds[kind === 'Si' ? 'si' : 'sio2'] : ds[h.mouse ? 'deepMouse' : 'deepTouch']) ?? ''
+      : HOLD[at] ? (this.broken === at ? '' : ds.hold ?? '') : '';
+    const holdS = (this.broken >= 0 ? 1 : this.hold).toFixed(3);
+    if (cap !== this.shown.cap && this.cap) { this.shown.cap = cap; this.cap.textContent = cap; }
+    if (hint !== this.shown.hint && hintEl) { this.shown.hint = hint; hintEl.textContent = hint; }
+    if (holdS !== this.shown.hold) { this.shown.hold = holdS; this.el.style.setProperty('--hold', holdS); }
+    // the cursor opens over a lens that answers
+    const answers = over && h.mouse && (!!kind || (HOLD[at] && this.broken !== at));
+    if (answers !== this.shown.over) { this.shown.over = answers; document.documentElement.classList.toggle('loupe-over', answers); }
+    return { deep: this.deep, oxy: kind === 'Si' ? 0 : 1, crack, shake: f.reduced ? 0 : this.hold * this.hold * 3.2 };
   }
 
   /** Off (the low tier, ?off=loupe): nothing shown, nothing drawn. */
@@ -146,8 +220,10 @@ export class LoupeView {
     op *= this.avail;
     if (!this.cur.placed) op = 0;
 
+    // the hand on it (Awwwards P8), and the stone trembling as it is held
+    const hand = this.touch(f, op), sh = hand.shake;
     // the ring and the line (from just off the grain to the ring)
-    const cx = this.cur.x, cy = this.cur.y, dx = cx - hx, dy = cy - hy, dist = Math.max(1e-3, Math.hypot(dx, dy)), len = Math.max(0, dist - R - 10);
+    const cx = this.cur.x + (sh ? Math.sin(f.now * .093) * sh : 0), cy = this.cur.y + (sh ? Math.cos(f.now * .071) * sh : 0), dx = cx - hx, dy = cy - hy, dist = Math.max(1e-3, Math.hypot(dx, dy)), len = Math.max(0, dist - R - 10);
     const shown = op >= .005;
     this.write(
       shown ? `translate(${(cx - R).toFixed(1)}px,${(cy - R).toFixed(1)}px)` : this.written.frame, shown ? op.toFixed(3) : '0',
@@ -158,6 +234,7 @@ export class LoupeView {
     if (!shown) return null;
     const fr = this.frame;
     fr.x = cx - box.left; fr.y = cy - box.top; fr.r = R; fr.op = op; fr.a = f.a; fr.b = f.b; fr.k = f.k; fr.time = f.time;
+    fr.deep = hand.deep; fr.oxy = hand.oxy; fr.crack = hand.crack;
     // a slow turn so the surface reads, tilted to show the crystal's faces; a face that must stay towards
     // the viewer (the pixel) sways to and fro instead. It stands still with the clock (reduced motion).
     const sway = (SWAY[f.a] ? 1 - f.k : 0) + (SWAY[f.b] ? f.k : 0);

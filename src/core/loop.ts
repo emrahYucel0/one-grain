@@ -255,7 +255,7 @@ export class Loop {
     const opacity = fade === 1 ? '1' : fade.toFixed(3);
     if (opacity !== this.canvasOpacity) { this.canvasOpacity = opacity; stage.renderer.domElement.style.opacity = opacity; }
     const loupe = layers.on('loupe') && !this.rewinding
-      ? this.d.loupe.update({ a, b, k: rigK, cut: tr.cam === 'cut' ? t : -1, hero: S.hero, camera: stage.camera, heroVisible, heroLight: info.heroLight, text: tb.box, fade, time, dt, now: info.now })
+      ? this.d.loupe.update({ a, b, k: rigK, cut: tr.cam === 'cut' ? t : -1, hero: S.hero, camera: stage.camera, heroVisible, heroLight: info.heroLight, text: tb.box, fade, time, dt, now: info.now, reduced })
       : this.d.loupe.hide();
 
     // the key light's shadow map, framed around what the camera looks at

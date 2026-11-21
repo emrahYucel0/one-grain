@@ -109,6 +109,8 @@ function boot(): void {
   const loupe = new LoupeView($('loupe'), $('loupeLine'), stage.renderer.domElement, [...document.querySelectorAll<HTMLElement>('.hud .brand, #time, .controls, #timeline')]);
   const loop = new Loop({ stage, grains, hero, timeline, hash, projection, typeAxes, stageColour: new StageColour(), pipeline, timer, layers, textBlock, opening, loupe });
   const go = (i: number): void => timeline.goTo(i);
+  // the quarry's stone, held until it breaks: on into the next chapter, at the story's own pace
+  loupe.onBreak = (i) => timeline.proceed(Math.min(WORLDS.length - 1, i + 1));
 
   // words and instruments
   const chapter = new ChapterView($('chapter'), copy, env.touchOnly);

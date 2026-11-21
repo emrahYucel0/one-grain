@@ -89,6 +89,16 @@ export class ScrollTimeline {
   }
 
   /**
+   * On to chapter i at the story's own pace: the scroll goes there, the speed limit stays (no jump), so
+   * the move plays as if scrolled (Awwwards P8: the quarry's loupe, held until the stone breaks).
+   */
+  proceed(i: number): void {
+    const max = document.documentElement.scrollHeight - innerHeight;
+    this.target = i; this.targetAt = performance.now(); this.jumpTo = -1;
+    this.lenis.scrollTo(max * SNAP_POINTS[i]!, { lerp: SCROLL.jumpLerp, force: true });
+  }
+
+  /**
    * Back to the start at once (the ending's "Start again", once the story has run back to it, or behind
    * the closed veil with motion off).
    */
