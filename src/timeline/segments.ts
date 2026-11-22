@@ -13,7 +13,7 @@ const CH = WORLDS.length;
 const CRITICAL = new Set(SCROLL.critical.from.map((slug) => WORLDS.findIndex((w) => w.slug === slug)));
 /** Act II's worlds, told as a montage (timeline/config.ts staccato); not the critical ones' moves. */
 export const STACCATO: ReadonlySet<number> = new Set(SCROLL.staccato.worlds.map((slug) => WORLDS.findIndex((w) => w.slug === slug)).filter((i) => !CRITICAL.has(i)));
-const holdShareOf = (i: number): number => WORLDS[i]!.holdShare ?? (STACCATO.has(i) ? SCROLL.staccato.holdShare : SCROLL.holdShare);
+const holdShareOf = (i: number): number => (STACCATO.has(i) ? SCROLL.staccato.holdShare : SCROLL.holdShare);
 /**
  * Each chapter keeps its authored scroll length (its world's hold and the transition out of it), shared
  * out in favour of the transition (timeline/config.ts holdShare). The last world is a hold only.
@@ -22,9 +22,10 @@ export const SEGMENTS: readonly Segment[] = (() => {
   const segs: Segment[] = []; let total = 0;
   WORLDS.forEach((w, i) => {
     if (i === CH - 1) { segs.push({ type: 'hold', i, start: total, len: w.hold }); return; }
-    const len = w.hold + TRANSITIONS[i]!.len, hold = len * holdShareOf(i);
-    segs.push({ type: 'hold', i, start: total, len: hold }, { type: 'tr', i, start: total + hold, len: len - hold });
-    total += len;
+    // a drift (story/types.ts) lengthens the hold by its extra screens; the transition keeps its length
+    const len = w.hold + TRANSITIONS[i]!.len, hold = len * holdShareOf(i), extra = w.drift?.extra ?? 0;
+    segs.push({ type: 'hold', i, start: total, len: hold + extra }, { type: 'tr', i, start: total + hold + extra, len: len - hold });
+    total += len + extra;
   });
   return segs;
 })();
@@ -38,7 +39,7 @@ export const SNAP_POINTS: readonly number[] = WORLDS.map((_, i) => {
   if (i === CH - 1) return 1;
   const h = SEGMENTS.find((s) => s.type === 'hold' && s.i === i)!;
   // a world the camera drifts through (story/types.ts drift) is arrived at where the drift begins
-  return (h.start + (WORLDS[i]!.drift ? Math.min(h.len / 2, .3) : h.len / 2)) / TOTAL;
+  return (h.start + (WORLDS[i]!.drift ? Math.min(h.len / 2, .1) : h.len / 2)) / TOTAL;
 });
 
 /** Progress where transition i is at point t (its own pace, midEase, undone), for a place inside a move (story/pops.ts). */
@@ -116,6 +117,8 @@ export const nearestChapter = (v: number): number => {
 // short on the track, takes as long at the limit.
 const CHAPTER_START = WORLDS.map((_, i) => SEGMENTS.find((x) => x.type === 'hold' && x.i === i)!.start);
 const chapterLen = (i: number): number => (i < CH - 1 ? CHAPTER_START[i + 1]! : TOTAL) - CHAPTER_START[i]!;
+/** each chapter's still share as laid out (a drift's extra included) */
+const HOLD_F = WORLDS.map((_, i) => SEGMENTS.find((x) => x.type === 'hold' && x.i === i)!.len / chapterLen(i));
 
 /** Story progress (0..1) to chapter space. */
 export function toChapters(v: number): number {
@@ -136,13 +139,12 @@ export function fromChapters(c: number): number {
  * before them and out after them.
  */
 export function speedAt(c: number): number {
-  const i = Math.min(CH - 1, Math.floor(c)), f = c - i, h = holdShareOf(i);
+  const i = Math.min(CH - 1, Math.floor(c)), f = c - i, h = HOLD_F[i]!;
   let k = 1;
   if (STACCATO.has(i)) { if (f > h) k *= SCROLL.staccato.speed; }
   else if (i < CH - 1 && f > h) k *= 1 - SCROLL.midSlow * Math.sin(Math.PI * (f - h) / (1 - h));
-  // a world with its own (longer) hold: its transition spans less of the chapter, so it is slowed to take
-  // as long as one of the usual share would
-  if (WORLDS[i]!.holdShare !== undefined && i < CH - 1 && f > h) k *= (1 - h) / (1 - SCROLL.holdShare);
+  // a hold lengthened by a drift: the transition spans less of the chapter, so it is slowed to take as long as it would
+  if (h !== holdShareOf(i) && i < CH - 1 && f > h) k *= (1 - h) / (1 - holdShareOf(i));
   const { ramp, speed } = SCROLL.critical;
   for (const j of CRITICAL) {
     const a = j + SCROLL.holdShare, b = j + 1, w = c < a ? ss(a - ramp, a, c) : c > b ? 1 - ss(b, b + ramp, c) : 1;

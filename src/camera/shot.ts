@@ -50,6 +50,7 @@ export function shot(tr: TransitionDef, a: number, b: number, t: number, heroes:
     const c = trOverHold(a) / (STACCATO.has(a) ? 1 : 1 + SCROLL.midEase), r = t > 0 ? 1 + c * (t - t * t / 2) : run;
     focusA = new Vector3(); down = driftDown(r);
     drift(wa, r, camA.clone(), lookA.clone(), camA, lookA, focusA);
+    focusA.lerpVectors(hA, focusA, down);
   }
   // Act II's montage (Awwwards P7): the camera leaves and lands hard
   let eg = STACCATO.has(a) ? easeQuint(t) : easeCubic(t);
@@ -102,5 +103,5 @@ export function shot(tr: TransitionDef, a: number, b: number, t: number, heroes:
   }
   // drifting, the focus is down the river ahead (not the grain left behind); back on the hero as the move takes over
   const focus = focusA ? focusA.lerp(hero, eg) : undefined;
-  return { pos, look, hero, eg, arc, focus, free: down * (1 - eg) };
+  return { pos, look, hero, eg, arc, focus, free: down * (1 - ss(0, .3, t)) };
 }

@@ -4,7 +4,10 @@ import type { WorldDef } from '../story/types';
 import { meander } from '../worlds/shapes';
 
 /** How far the camera has come down to its line (0 → 1 over the first part of the hold). */
-export const driftDown = (run: number): number => ss(0, .38, Math.max(0, run));
+export const driftDown = (run: number): number => ss(DEAD, .38, run);
+
+/** the first sliver of the hold is the resting shot itself (where a jump lands, timeline/segments.ts SNAP_POINTS) */
+const DEAD = .04;
 
 type Route = readonly (readonly [number, number])[];
 const lengths = new WeakMap<Route, number[]>();
@@ -43,7 +46,7 @@ const p: [number, number] = [0, 0], l: [number, number] = [0, 0];
  * Writes the camera, the look and the focus point into pos, look and focus.
  */
 export function drift(w: WorldDef, run: number, rest: Vector3, restLook: Vector3, pos: Vector3, look: Vector3, focus: Vector3): void {
-  const d = w.drift!, r = Math.max(0, run), u = r <= 1 ? r * r * (2 - r) : r, down = driftDown(r);
+  const d = w.drift!, r = Math.max(0, (run - DEAD) / (1 - DEAD)), u = r <= 1 ? r * r * (2 - r) : r, down = driftDown(run);
   if (d.line === 'meander') {
     const x = rest.x + (d.to - rest.x) * u, ax = x + Math.sign(d.to - rest.x) * d.ahead;
     pos.set(x, d.height, meander(x));

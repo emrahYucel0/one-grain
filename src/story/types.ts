@@ -47,12 +47,10 @@ export interface WorldDef {
    * down to `height` over a line in the world and travels along it, looking `ahead` units on at height `lookY`:
    * the river's meander to x = `to`, or a route of streets (`path`, x/z corners, turned with radius `round`);
    * at the hold's end it keeps its speed into the transition, which then takes over (camera/drift.ts). Off
-   * with motion off.
+   * with motion off. `extra`: screens of scroll the hold gains for it (the transition keeps its length).
    */
-  drift?: { line: 'meander'; to: number; height: number; ahead: number; lookY: number }
-    | { line: 'path'; path: readonly (readonly [number, number])[]; round: number; height: number; ahead: number; lookY: number };
-  /** this world's own share of its chapter that is the still world (timeline/config.ts holdShare) */
-  holdShare?: number;
+  drift?: ({ line: 'meander'; to: number } | { line: 'path'; path: readonly (readonly [number, number])[]; round: number })
+    & { extra: number; height: number; ahead: number; lookY: number };
   /** the last chapter: ending sequence, own nav label, own audio act */
   final?: boolean;
 }
