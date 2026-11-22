@@ -44,11 +44,11 @@ export interface WorldDef {
   wideAnchor: number;
   /**
    * Awwwards P9: the camera does not wait while this world rests. Across its hold, with the scroll, it comes
-   * down onto the water and drifts downstream with it, along the meander, to x = `to`, `height` over the
-   * water, looking `ahead` units on; at the hold's end it keeps its speed into the transition, which then
-   * takes over (camera/drift.ts). Off with motion off.
+   * down to `height` over a line in the world (`line`: the river's meander, or a straight street at z = `z`)
+   * and travels along it to x = `to`, looking `ahead` units on at height `lookY`; at the hold's end it keeps
+   * its speed into the transition, which then takes over (camera/drift.ts). Off with motion off.
    */
-  drift?: { to: number; height: number; ahead: number };
+  drift?: { line: 'meander' | 'street'; z?: number; to: number; height: number; ahead: number; lookY: number };
   /** this world's own share of its chapter that is the still world (timeline/config.ts holdShare) */
   holdShare?: number;
   /** the last chapter: ending sequence, own nav label, own audio act */

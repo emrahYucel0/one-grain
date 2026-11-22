@@ -4,8 +4,9 @@ import type { WorldDef } from '../story/types';
 import { meander } from '../worlds/shapes';
 
 /**
- * Awwwards P9: the river carries the camera (story/types.ts drift). From the resting shot it comes down onto
- * the water and drifts downstream along the meander's line (worlds/shapes.ts), looking on down the bend.
+ * Awwwards P9: the world carries the camera (story/types.ts drift). From the resting shot it comes down to its
+ * line and travels along it, looking on ahead: the river's meander (worlds/shapes.ts), downstream round the
+ * bends, or a straight street (the chip's clock-tree trunk, worlds/chip.ts).
  * `run` is how far through the hold (0 → 1, beyond 1 into the transition): the way downstream eases in from
  * still and leaves at a steady speed (2r² − r³, then straight on); the descent is done by a third of the way.
  * Writes the camera, the look and the focus point into pos, look and focus.
@@ -16,9 +17,10 @@ export const driftDown = (run: number): number => ss(0, .38, Math.max(0, run));
 export function drift(w: WorldDef, run: number, rest: Vector3, restLook: Vector3, pos: Vector3, look: Vector3, focus: Vector3): void {
   const d = w.drift!, r = Math.max(0, run);
   const along = r <= 1 ? r * r * (2 - r) : r;
-  const x = rest.x + (d.to - rest.x) * along, ax = x + d.ahead, down = driftDown(r);
-  pos.set(x, d.height, meander(x));
-  look.set(ax, .1, meander(ax));
+  const line = (x: number): number => (d.line === 'meander' ? meander(x) : d.z ?? 0);
+  const x = rest.x + (d.to - rest.x) * along, ax = x + Math.sign(d.to - rest.x) * d.ahead, down = driftDown(r);
+  pos.set(x, d.height, line(x));
+  look.set(ax, d.lookY, line(ax));
   focus.copy(look);
   pos.lerpVectors(rest, pos, down);
   look.lerpVectors(restLook, look, down);
