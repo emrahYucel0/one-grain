@@ -4,7 +4,7 @@ import { TOUCH } from '../timeline/config';
 import { WORLDS } from './worlds';
 
 /**
- * Awwwards P10: the display, opened. Clicking the display's loupe (ui/loupe.ts) takes the story to a place
+ * Awwwards P10: the display, opened. Only through the loupe: clicking the display's loupe (ui/loupe.ts) takes the story to a place
  * partway into the display → now transition (T_PIN: the light out, the sub-pixels loosened into clusters,
  * the camera close). Resting there, one cluster at a time, chosen at random, glints; clicked (tapped), it
  * bursts and is gone, and the next one glints. The scroll leaves whenever the visitor wants (on into the
@@ -40,6 +40,10 @@ export class Pops {
   private nextAt = 0;
   private count = 0;
   private active = false;
+  /** the visitor came in through the loupe (enter()); scrolling on past the place lets it go, so the story's
+   * own transition plays untouched for everyone who did not */
+  private entered = false;
+  private inside = false;
   private live = false;
   private dirty = true;
   /** the glinting cluster on screen (CSS px), and how far one cell spans there */
@@ -74,6 +78,9 @@ export class Pops {
     if (import.meta.env.DEV) (window as unknown as { __pops: unknown }).__pops = { spot: this.spot, get count() { return self.count; }, get active() { return self.active; }, get glint() { return self.glint; } };
     addEventListener('keydown', (e) => { if (this.active && (e.key === 'Enter' || e.key === ' ') && this.glint >= 0) { e.preventDefault(); this.pop(this.glint); } });
   }
+
+  /** The display's loupe was clicked: the popping opens when the story gets there. */
+  enter(): void { this.entered = true; this.inside = false; }
 
   /** whether any cell is popped or glinting (the grains skip the work otherwise) */
   get on(): boolean { return this.live; }
@@ -128,7 +135,10 @@ export class Pops {
   update(now: number, a: number, hold: number, t: number, camera: PerspectiveCamera, hero: Vector3, fill: number): { on: boolean; fill: number } {
     this.now = now;
     if (fill >= 1) { this.reset(); return { on: false, fill: 0 }; }
-    this.active = a === POP_WORLD && hold < 0 && Math.abs(t - T_PIN) < NEAR;
+    const there = a === POP_WORLD && hold < 0 && Math.abs(t - T_PIN) < NEAR;
+    if (this.entered && there) this.inside = true;
+    else if (this.inside || (this.entered && a !== POP_WORLD && hold !== POP_WORLD)) this.entered = this.inside = false;
+    this.active = there && this.entered;
     if (this.active && this.glint < 0 && now >= this.nextAt) {
       this.glint = this.pick(camera, t, hero); this.glintAt = now; this.dirty = true;
     }

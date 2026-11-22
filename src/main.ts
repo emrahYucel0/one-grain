@@ -113,8 +113,8 @@ function boot(): void {
   // the quarry's stone, held until it breaks: on into the next chapter, at the story's own pace
   loupe.onBreak = (i) => timeline.proceed(Math.min(WORLDS.length - 1, i + 1));
   // Awwwards P10: the display's loupe opens the display; its sub-pixels can be popped there (story/pops.ts)
-  loop.pops = new Pops();
-  loupe.onEnter = (i) => timeline.proceedTo(progressAt(i, T_PIN));
+  const pops = loop.pops = new Pops();
+  loupe.onEnter = (i) => { pops.enter(); timeline.proceedTo(progressAt(i, T_PIN)); };
 
   // words and instruments
   const chapter = new ChapterView($('chapter'), copy, env.touchOnly);
