@@ -54,6 +54,7 @@ export class Pops {
   private press = { x: 0, y: 0, id: -1 };
   private hand = { x: -1e4, y: -1e4 };
   private now = 0;
+  private freshT = 0;
 
   constructor() {
     // eslint-disable-next-line @typescript-eslint/no-this-alias
@@ -169,7 +170,11 @@ export class Pops {
     if (el && this.active !== this.shown.on) { this.shown.on = this.active; el.classList.toggle('on', this.active); }
     const ds = el?.dataset ?? {};
     const line = (this.count >= TELL_AFTER ? ds.tell : this.count > 0 ? ds.again : TOUCH ? ds.tap : ds.click) ?? '';
-    if (this.doEl && line !== this.shown.line) { this.shown.line = line; this.doEl.textContent = line; }
+    if (this.doEl && line !== this.shown.line) {
+      this.shown.line = line; this.doEl.textContent = line;
+      // the line arrives lit for its first seconds, so a quick look does not miss it
+      el?.classList.add('fresh'); clearTimeout(this.freshT); this.freshT = window.setTimeout(() => el?.classList.remove('fresh'), 3200);
+    }
     const over = this.active && this.glint >= 0 && Math.hypot(this.hand.x - this.spot.x, this.hand.y - this.spot.y) <= this.spot.r;
     if (over !== this.shown.over) { this.shown.over = over; document.documentElement.classList.toggle('pop-over', over); }
   }

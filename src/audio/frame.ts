@@ -42,6 +42,8 @@ export class Sound {
   private gate = 1;
   private lastGate = 0;
   private zeroed = true;
+  /** audio time the master came up from 0: the first moments come up quicker (the visitor just asked for sound) */
+  private upAt = -1;
   private lastHold = -1;
   private holdAt = -1;
   private holdSince = -1;
@@ -131,8 +133,8 @@ export class Sound {
         g.linearRampToValueAtTime(0, at + .5); this.zeroed = true;
       }
     } else {
-      if (this.zeroed) { g.cancelScheduledValues(at); g.setValueAtTime(0, at); this.zeroed = false; }
-      e.glide(g, LEVELS.master * gate, gate < this.lastGate ? .7 : .6);
+      if (this.zeroed) { g.cancelScheduledValues(at); g.setValueAtTime(0, at); this.zeroed = false; this.upAt = at; }
+      e.glide(g, LEVELS.master * gate, gate < this.lastGate ? .7 : at - this.upAt < 1.5 ? .22 : .6);
     }
     this.lastGate = gate;
 
