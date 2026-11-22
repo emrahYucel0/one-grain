@@ -17,6 +17,8 @@ export interface SafeArea {
   text: NdcBox | null;
   /** how much the text block counts, 0..1: its opacity, so the correction eases as the text fades */
   textWeight: number;
+  /** how much the whole correction counts, 0..1 (default 1): less while the shot leaves the grain behind (camera/drift.ts) */
+  weight?: number;
 }
 
 /** The shots' own bounds; the text block and the HUD scrim come from the page (ui/text-block.ts). */
@@ -38,17 +40,18 @@ export function keepInSafeArea(camera: PerspectiveCamera, hero: Vector3, area: S
   // the camera turns so the grain's NDC goes from `from` to `to` along one axis (angles, not NDC, add up)
   const yaw = (from: number, to: number, k = 1): void => { camera.rotateY(-k * (Math.atan(from * tanH) - Math.atan(to * tanH))); camera.updateMatrixWorld(); };
   const pitch = (from: number, to: number, k = 1): void => { camera.rotateX(k * (Math.atan(from * tanV) - Math.atan(to * tanV))); camera.updateMatrixWorld(); };
-  if (ndc().z >= 1) return; // behind the camera: nothing to frame
+  const w = area.weight ?? 1;
+  if (w <= 0 || ndc().z >= 1) return; // let go, or behind the camera: nothing to frame
 
   // 1. the screen's bounds (the correction starts where the target is: continuous)
   const X = area.x - EDGE, top = area.top - EDGE, bottom = area.bottom + EDGE;
-  if (Math.abs(p.x) > X) yaw(p.x, Math.sign(p.x) * X);
+  if (Math.abs(p.x) > X) yaw(p.x, Math.sign(p.x) * X, w);
   ndc();
-  if (p.y > top) pitch(p.y, top); else if (p.y < bottom) pitch(p.y, bottom);
+  if (p.y > top) pitch(p.y, top, w); else if (p.y < bottom) pitch(p.y, bottom, w);
 
   // 2. out from under the text block: sideways past its far edge where that stays on screen, else up
   // above it; weighted by the text's opacity
-  const t = area.text, k = area.textWeight;
+  const t = area.text, k = area.textWeight * w;
   if (!t || k <= 0) return;
   ndc();
   if (p.x < t.left || p.x > t.right || p.y < t.bottom || p.y > t.top) return;

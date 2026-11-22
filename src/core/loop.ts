@@ -244,7 +244,7 @@ export class Loop {
     frameShot(stage.camera, S, reduced ? null : this.parallax, towards(wa.wideAnchor, wb.wideAnchor, S.eg));
     // narrow screens: turn just enough to keep the hero grain on screen and clear of the words
     const tb = this.d.textBlock;
-    if (!flags.noSafe) keepInSafeArea(stage.camera, S.hero, { x: SAFE.x, bottom: -SAFE.y, top: tb.top, text: tb.box, textWeight: textOpacity });
+    if (!flags.noSafe) keepInSafeArea(stage.camera, S.hero, { x: SAFE.x, bottom: -SAFE.y, top: tb.top, text: tb.box, textWeight: textOpacity, weight: 1 - (S.free ?? 0) });
     const hp = this.heroNdc.copy(S.hero).project(stage.camera);
     reportHero(hp.x, hp.y, hp.z, heroVisible);
     const grain = towards(wa.grain, wb.grain, S.eg);

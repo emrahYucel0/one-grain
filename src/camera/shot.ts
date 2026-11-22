@@ -5,6 +5,7 @@ import { WORLDS } from '../story/worlds';
 import { SCROLL } from '../timeline/config';
 import { STACCATO, trOverHold } from '../timeline/segments';
 import { CONFINEMENT } from './confinement';
+import { drift, driftDown } from './drift';
 
 /** Where the camera is, what it looks at, and where the hero grain is, partway through a transition. */
 export interface Shot {
@@ -15,8 +16,10 @@ export interface Shot {
   eg: number;
   /** 0 at both ends, 1 midway */
   arc: number;
-  /** what the depth of field focuses on: the hero, or ahead of it while a dolly runs (story/types.ts) */
+  /** what the depth of field focuses on: the hero, or down the river while the camera drifts (camera/drift.ts) */
   focus?: Vector3;
+  /** how far the shot lets the hero grain go (0..1): the safe-area correction counts that much less */
+  free?: number;
 }
 
 const v = (x: number, y: number, z: number): Vector3 => new Vector3(x, y, z);
@@ -39,15 +42,14 @@ export function shot(tr: TransitionDef, a: number, b: number, t: number, heroes:
   const hA = heroes[a]!, hB = heroes[b]!, wa = WORLDS[a]!, wb = WORLDS[b]!;
   // resting cameras as framed for each world's lens (camera/confinement.ts)
   const camA = off(hA, CONFINEMENT[a]!.cam), camB = off(hB, CONFINEMENT[b]!.cam), lookA = off(hA, wa.look), lookB = off(hB, wb.look);
-  // Awwwards P9: a world that moves on while resting (story/types.ts dolly). Across the hold 2r² − r³: in from
-  // still, out at one dolly per hold; the transition starts at that same speed along the scroll (its length
-  // against the hold's, and midEase's start) and slows to nothing, while its own move takes over from camA
-  let dolly: Vector3 | null = null;
-  if (wa.dolly && !reduced) {
-    const c = trOverHold(a) / (STACCATO.has(a) ? 1 : 1 + SCROLL.midEase);
-    const k = t > 0 ? 1 + c * (t - t * t / 2) : run * run * (2 - run);
-    dolly = v(wa.dolly[0], wa.dolly[1], wa.dolly[2]).multiplyScalar(k);
-    camA.add(dolly); lookA.add(dolly);
+  // Awwwards P9: a world the camera drifts through while it rests (camera/drift.ts). Into the transition the
+  // drift goes on at the speed it left the hold with, along the scroll (the transition's length against the
+  // hold's, and midEase's start), slowing to nothing as the transition's own move takes over from camA
+  let focusA: Vector3 | null = null, down = 0;
+  if (wa.drift && !reduced) {
+    const c = trOverHold(a) / (STACCATO.has(a) ? 1 : 1 + SCROLL.midEase), r = t > 0 ? 1 + c * (t - t * t / 2) : run;
+    focusA = new Vector3(); down = driftDown(r);
+    drift(wa, r, camA.clone(), lookA.clone(), camA, lookA, focusA);
   }
   // Act II's montage (Awwwards P7): the camera leaves and lands hard
   let eg = STACCATO.has(a) ? easeQuint(t) : easeCubic(t);
@@ -94,12 +96,11 @@ export function shot(tr: TransitionDef, a: number, b: number, t: number, heroes:
     const subject = v(at[0], at[1] + rise * ss(over[0], over[1], t), at[2]);
     look.lerp(subject, ss(0, .2, t) * (1 - ss(.85, 1, t)));
   }
-  if (tr.cam !== 'cut' && !reduced) {
+  if (tr.cam !== 'cut' && !reduced && !focusA) {
     const toward = camB.clone().sub(camA);
     if (toward.lengthSq() > 1e-4) pos.addScaledVector(toward.normalize(), .6 * (1 - eg) * lean);
   }
-  // the focus keeps its distance as the camera runs on (the sharp band travels downstream with it, not a
-  // blur of everything past a grain now near the lens); back on the hero as the transition takes over
-  const focus = dolly ? hero.clone().addScaledVector(dolly, 1 - eg) : undefined;
-  return { pos, look, hero, eg, arc, focus };
+  // drifting, the focus is down the river ahead (not the grain left behind); back on the hero as the move takes over
+  const focus = focusA ? focusA.lerp(hero, eg) : undefined;
+  return { pos, look, hero, eg, arc, focus, free: down * (1 - eg) };
 }
