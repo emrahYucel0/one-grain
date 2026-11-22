@@ -20,7 +20,9 @@
 //     its circle inside the viewport and clear of the chapter's visible text, the HUD's brand, clock and
 //     controls, the rail, the hero grain's ring, and the scene's main subject (the wafer stack, the display
 //     panel, as the page projects them); smaller on phones; its ring, line and caption hidden from
-//     assistive technology. Where it stays away (no clear spot) the position is reported, not failed.
+//     assistive technology. Where it stays away (no clear spot) the position is reported, not failed. On a
+//     touch screen resting on a chapter whose subject fills the screen (the display panel in portrait) it
+//     may lie over the subject (ui/loupe.ts), and the subject is then not among what it reports avoiding.
 import { readFileSync } from 'node:fs';
 import { createServer } from 'vite';
 import { launch, watchConsole } from './lib/browser.mjs';

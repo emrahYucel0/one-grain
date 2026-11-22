@@ -5,6 +5,7 @@ import { flags, reportLoupe } from '../debug/parity';
 import type { LoupeFrame } from '../render/loupe';
 import { LOUPE, LOUPE_AVOID } from '../story/loupe';
 import { WORLDS } from '../story/worlds';
+import { TOUCH } from '../timeline/config';
 
 /** A box on screen, CSS pixels (left, top, right, bottom). */
 export interface Rect { l: number; t: number; r: number; b: number }
@@ -81,7 +82,7 @@ const intoRect = (x: number, y: number, R: number, q: Rect): number => {
  * Placement: of a ring of candidate spots around the grain (up and to the right preferred, as in v27),
  * and failing those a grid over the screen, the nearest that keeps clear of the chapter's text, the HUD, the rail, the screen's edges, the grain
  * itself and the scene's main subject (the wafer stack, the display panel: a box in world space,
- * projected). Where no spot is clear the loupe stays away. The spot is chosen from the frame alone (no
+ * projected). Where no spot is clear the loupe stays away; on a touch screen it then may lie over the subject. The spot is chosen from the frame alone (no
  * memory), so a position looks the same however it is reached; the lens glides to it.
  */
 export class LoupeView {
@@ -139,6 +140,9 @@ export class LoupeView {
     // a finger that moves is scrolling: the browser takes it (pointercancel), and the hold lets go
     addEventListener('pointercancel', up, { passive: true });
     addEventListener('blur', up);
+    // a finger held on the lens is the hold, not a request for the system's menu (text selection and its
+    // callout are off on touch screens in the stylesheet; the sample label keeps its text selectable)
+    if (TOUCH) addEventListener('contextmenu', (e) => { if (!(e.target as Element | null)?.closest?.('#credits')) e.preventDefault(); });
     document.documentElement.addEventListener('pointerleave', (e) => { if (e.pointerType === 'mouse') { this.hand.x = this.hand.y = -1e4; } });
     // the HUD's clock and controls change size with their words
     const ro = new ResizeObserver(measure);
@@ -210,7 +214,7 @@ export class LoupeView {
     let op = show * onScreen * f.heroLight * cut * f.fade * (flags.parity ? 1 : ss(1.2, 2.6, (f.now - this.start) / 1000));
 
     // where: the clearest nearby spot
-    const blocks = this.obstacles(f);
+    let blocks = this.obstacles(f, true);
     let best = { x: hx, y: hy, cost: Infinity, into: Infinity };
     const W = innerWidth, H = innerHeight;
     const consider = (x: number, y: number): void => {
@@ -223,7 +227,16 @@ export class LoupeView {
       if (cost < best.cost) best = { x, y, cost, into };
     };
     for (const reach of REACH) for (const deg of ANGLES) { const a = deg * Math.PI / 180; consider(hx + Math.cos(a) * reach * R, hy + Math.sin(a) * reach * R); }
-    if (best.into >= .5) for (let y = R + PAD; y <= H - R - PAD; y += GRID) for (let x = R + PAD; x <= W - R - PAD; x += GRID) consider(x, y);
+    const grid = (): void => { for (let y = R + PAD; y <= H - R - PAD; y += GRID) for (let x = R + PAD; x <= W - R - PAD; x += GRID) consider(x, y); };
+    if (best.into >= .5) grid();
+    // on a touch screen a subject that fills a narrow screen (the display panel in portrait) would keep the
+    // lens away altogether, and with it what the lens offers: there it may lie over the subject (still clear
+    // of the text, the HUD, the rail, the edges and the grain), resting on the chapter only
+    if (best.into >= .5 && TOUCH && (f.k < .02 || f.k > .98)) {
+      blocks = this.obstacles(f, false); best = { x: hx, y: hy, cost: Infinity, into: Infinity };
+      for (const reach of REACH) for (const deg of ANGLES) { const a = deg * Math.PI / 180; consider(hx + Math.cos(a) * reach * R, hy + Math.sin(a) * reach * R); }
+      if (best.into >= .5) grid();
+    }
     const clear = best.into < .5;
     const glide = 1 - Math.exp(-f.dt * 9);
     if (op < .005 || !this.cur.placed) { this.avail = clear ? 1 : 0; if (clear) { this.cur.x = best.x; this.cur.y = best.y; this.cur.placed = true; } }
@@ -256,12 +269,12 @@ export class LoupeView {
     return fr;
   }
 
-  /** What the loupe must keep clear of this frame, on screen. */
-  private obstacles(f: LoupeInput): Rect[] {
+  /** What the loupe must keep clear of this frame, on screen (`subject`: the scene's main subject too). */
+  private obstacles(f: LoupeInput, subject: boolean): Rect[] {
     const out = [...this.hud], { box } = this;
     const px = (x: number): number => box.left + (x + 1) / 2 * box.width, py = (y: number): number => box.top + (1 - y) / 2 * box.height;
     if (f.text) out.push({ l: px(f.text.left), t: py(f.text.top), r: px(f.text.right), b: py(f.text.bottom) });
-    for (const [w, weight] of [[f.a, 1 - f.k], [f.b, f.k]] as const) {
+    if (subject) for (const [w, weight] of [[f.a, 1 - f.k], [f.b, f.k]] as const) {
       if (weight <= .01) continue;
       for (const avoid of AVOID[w] ?? []) {
       const q: Rect = { l: Infinity, t: Infinity, r: -Infinity, b: -Infinity };

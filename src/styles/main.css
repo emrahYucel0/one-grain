@@ -472,7 +472,8 @@ html.motion-off .outro-again:hover .ico-again{transform:rotate(-30deg)}
 /* the sample label (the credits): a native dialog over a dimmed stage, made as a specimen label — a thin frame
    inside the card, a ruled sheet of fields (each its name above its value), the grain itself in a loupe as on the
    stage (.loupe), and a scale bar in the corner */
-.credits{width:min(38rem,calc(100vw - 2rem));max-width:none;max-height:calc(100vh - 2rem);max-height:calc(100dvh - 2rem);margin:auto;padding:0;overflow:auto;
+.credits{width:min(38rem,calc(100vw - 2rem));max-width:none;max-height:calc(100vh - 2rem);
+  max-height:calc(100svh - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px) - 2rem);margin:auto;padding:0;overflow:auto;overscroll-behavior:contain;
   border:1px solid rgba(236,227,211,.16);border-radius:4px;background:rgba(9,16,19,.96);color:var(--ink);
   -webkit-backdrop-filter:blur(16px);backdrop-filter:blur(16px);box-shadow:0 30px 90px rgba(0,0,0,.65)}
 .credits::backdrop{background:rgba(4,8,9,.6)}
@@ -514,6 +515,15 @@ dd.sl-num{font-size:1.35rem;line-height:1.1}
   .sl-head{min-height:106px;padding-right:86px}
   .sl-lens{width:70px;height:70px}
   .sl-3{grid-column:span 6}
+}
+
+/* touch screens: a finger held on the stage is the loupe's hold (ui/loupe.ts), never a text selection, the
+   system's callout or a tap's flash; the canvas leaves the vertical pan to the page. The sample label's
+   text stays selectable. */
+@media (pointer:coarse){
+  html{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;-webkit-tap-highlight-color:transparent}
+  #scene{touch-action:pan-y}
+  .credits{-webkit-user-select:text;user-select:text;-webkit-touch-callout:default}
 }
 
 /* ---------- the cursor (Awwwards P1; src/ui/cursor.ts) ----------

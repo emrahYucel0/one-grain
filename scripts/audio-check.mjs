@@ -4,7 +4,8 @@
 //  3. quiet, never silence (Awwwards P7): the middle of the "One day," cut and the ending after its
 //     landing still sound (a low note under the card, the music going on softly), quieter than the hold
 //     before each (the cut ≥ 3 dB, the ending ≥ 6 dB); full again after scrolling back from either. Starting again has its own sound
-//     (audio/frame.ts rewind()): louder than the ending it starts from, the ambience stepped aside
+//     (audio/frame.ts rewind()): louder than the ending it starts from, the ambience stepped aside (slowly: the
+//     ending's bed carries on under the rush as it comes up, so there is no gap)
 //  4. per-world levels: ambience above the music in magma, river, coast, desert and furnace (RMS over
 //     30 s: the ambience is random events and slow swells, and 15 s let a sparse stretch of events
 //     decide; the rule is the same); output peaks below −6 dBFS at every hold

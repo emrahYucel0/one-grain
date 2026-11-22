@@ -104,14 +104,16 @@ export class Sound {
     this.score.act = actOf(cur); this.score.chord = this.score.chordOf(cur);
     e.glide(this.score.padLP.frequency, ACTS[actOf(a)]!.padLP + (ACTS[actOf(b)]!.padLP - ACTS[actOf(a)]!.padLP) * eg, .6);
     // ambience: the world we are approaching from eg .35; the water rush where there is water
-    this.amb.world(slug(eg < .35 ? a : b));
+    // (running back, the ending's ambience stays and fades under the rush: its worlds would flicker past)
+    const rewinding = this.rewindUntil > e.now;
+    if (!rewinding) this.amb.world(slug(eg < .35 ? a : b));
     const bedA = AMB[slug(a)]!.bed ?? 0, bedB = AMB[slug(b)]!.bed ?? 0;
     this.amb.bed(bedA + (bedB - bedA) * ss(.2, .8, eg));
     // the pad breathes: full when a chapter arrives or the story moves, settling lower while resting
-    const rewinding = this.rewindUntil > e.now;
-    e.glide(this.score.padG.gain, rewinding ? .3 : hold >= 0 ? .55 + .45 * (1 - ss(1, 7, holdSec)) : 1, rewinding ? .4 : .8);
-    // the ambience steps aside while the story runs back (its worlds would flicker past)
-    e.glide(e.ambience.gain, rewinding ? 0 : LEVELS.ambience, rewinding ? .25 : 1.2);
+    e.glide(this.score.padG.gain, rewinding ? .3 : hold >= 0 ? .55 + .45 * (1 - ss(1, 7, holdSec)) : 1, rewinding ? 1.2 : .8);
+    // the ambience steps aside while the story runs back, slowly: the ending's low bed carries on under the
+    // rush until it has come up (never a gap, a phone's speaker hears little of the pads)
+    e.glide(e.ambience.gain, rewinding ? 0 : LEVELS.ambience, rewinding ? 1.1 : 1.2);
     this.score.pulse = hold >= 0 && PULSE.has(slug(hold));
 
     // silence: the cut and the end
@@ -159,8 +161,9 @@ export class Sound {
     const N = 48, curve = new Float32Array(N), lvl = new Float32Array(N);
     for (let k = 0; k < N; k++) {
       const x = k / (N - 1), speed = Math.sin(Math.PI * Math.min(1, x * 1.15)) ** 1.5;
-      curve[k] = 260 + 2900 * speed;
-      lvl[k] = .3 * Math.min(1, x / .12) * (x < .85 ? 1 : (1 - x) / .15) * (.35 + .65 * speed);
+      // (its band starts where a phone's speaker hears it, and it comes in within a quarter second)
+      curve[k] = 420 + 2740 * speed;
+      lvl[k] = .3 * Math.min(1, x / .05) * (x < .85 ? 1 : (1 - x) / .15) * (.35 + .65 * speed);
     }
     bp.frequency.setValueCurveAtTime(curve, t, dur);
     const g = ctx.createGain(); g.gain.setValueAtTime(0, t); g.gain.setValueCurveAtTime(lvl, t + .001, dur - .002);

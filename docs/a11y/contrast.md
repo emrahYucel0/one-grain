@@ -5,7 +5,7 @@ background behind it (the text made transparent, its shadow kept), worst 5 % of 
 AAA for body text and titles where the design allows, AA for everything else; large = at least
 24 px, or 18.67 px bold.
 
-- 687 measurements, 0 below AA, 0 body or title blocks below AAA.
+- 688 measurements, 0 below AA, 0 body or title blocks below AAA.
 - Lowest against their AA threshold: 390×844 river sound 4.68; 1440×900 coast rail current 4.76; 390×844 desert sound 4.91; 1440×900 again sound 5.17; 1440×900 desert sound 5.21; 1440×900 quarry sound 5.21; 390×844 again sound 5.35; 1440×900 desert rail current 5.37.
 
 | Viewport | At | Block | Contrast | Size | Level |
@@ -39,7 +39,7 @@ AAA for body text and titles where the design allows, AA for everything else; la
 | 390×844 | granite | chapter figure | 11.88 | normal | AAA |
 | 390×844 | granite | title | 9.72 | large | AAA |
 | 390×844 | granite | body | 10.67 | normal | AAA |
-| 390×844 | granite | loupe caption | 10.45 | normal | AAA |
+| 390×844 | granite | loupe caption | 10.38 | normal | AAA |
 | 390×844 | river | brand | 11.49 | normal | AAA |
 | 390×844 | river | clock | 12.72 | normal | AAA |
 | 390×844 | river | unit | 9.77 | normal | AAA |
@@ -100,8 +100,8 @@ AAA for body text and titles where the design allows, AA for everything else; la
 | 390×844 | quarry | chapter act | 9.94 | normal | AAA |
 | 390×844 | quarry | title | 11.47 | large | AAA |
 | 390×844 | quarry | body | 10.46 | normal | AAA |
-| 390×844 | quarry | loupe caption | 9.56 | normal | AAA |
-| 390×844 | quarry | act II figure | 5.86 | large | AAA |
+| 390×844 | quarry | loupe caption | 9.54 | normal | AAA |
+| 390×844 | quarry | act II figure | 5.88 | large | AAA |
 | 390×844 | quarry | act II figure unit | 12.73 | large | AAA |
 | 390×844 | quarry | act II figure label | 6.55 | normal | AA |
 | 390×844 | furnace | brand | 12.91 | normal | AAA |
@@ -174,7 +174,7 @@ AAA for body text and titles where the design allows, AA for everything else; la
 | 390×844 | chip | body | 11.09 | normal | AAA |
 | 390×844 | chip | micro / footnote | 6.22 | normal | AA |
 | 390×844 | display | brand | 12.34 | normal | AAA |
-| 390×844 | display | clock | 13.71 | large | AAA |
+| 390×844 | display | clock | 13.68 | large | AAA |
 | 390×844 | display | unit | 10.28 | normal | AAA |
 | 390×844 | display | sound | 5.84 | normal | AA |
 | 390×844 | display | motion | 14.97 | normal | AAA |
@@ -187,6 +187,7 @@ AAA for body text and titles where the design allows, AA for everything else; la
 | 390×844 | display | title | 9.45 | large | AAA |
 | 390×844 | display | body | 10.57 | normal | AAA |
 | 390×844 | display | micro / footnote | 6.22 | normal | AA |
+| 390×844 | display | loupe caption | 11.58 | normal | AAA |
 | 390×844 | now | brand | 14.30 | normal | AAA |
 | 390×844 | now | clock | 14.56 | large | AAA |
 | 390×844 | now | sound | 5.73 | normal | AA |
@@ -195,8 +196,8 @@ AAA for body text and titles where the design allows, AA for everything else; la
 | 390×844 | now | body | 11.92 | normal | AAA |
 | 390×844 | now | micro / footnote | 11.92 | normal | AAA |
 | 390×844 | now | ending choice | 12.96 | normal | AAA |
-| 390×844 | now | ending choice | 14.33 | normal | AAA |
-| 390×844 | now | ending choice | 13.88 | normal | AAA |
+| 390×844 | now | ending choice | 13.71 | normal | AAA |
+| 390×844 | now | ending choice | 13.99 | normal | AAA |
 | 1440×900 | loader | brand | 14.16 | normal | AAA |
 | 1440×900 | magma | brand | 13.60 | normal | AAA |
 | 1440×900 | magma | clock | 14.04 | large | AAA |
@@ -444,8 +445,8 @@ AAA for body text and titles where the design allows, AA for everything else; la
 | 1440×900 | now | rail label | 9.65 | normal | AAA |
 | 1440×900 | now | rail label | 14.63 | normal | AAA |
 | 1440×900 | now | rail current | 14.49 | normal | AAA |
-| 1440×900 | now | ending choice | 8.57 | normal | AAA |
-| 1440×900 | now | ending choice | 5.67 | normal | AA |
+| 1440×900 | now | ending choice | 8.58 | normal | AAA |
+| 1440×900 | now | ending choice | 6.46 | normal | AA |
 | 1440×900 | now | ending choice | 7.05 | normal | AAA |
 | 2560×1440 | loader | brand | 14.16 | normal | AAA |
 | 2560×1440 | magma | brand | 13.89 | normal | AAA |
@@ -519,7 +520,7 @@ AAA for body text and titles where the design allows, AA for everything else; la
 | 2560×1440 | coast | rail label | 7.87 | normal | AAA |
 | 2560×1440 | coast | rail label | 8.39 | normal | AAA |
 | 2560×1440 | coast | rail current | 5.56 | normal | AA |
-| 2560×1440 | coast | loupe caption | 8.25 | normal | AAA |
+| 2560×1440 | coast | loupe caption | 8.16 | normal | AAA |
 | 2560×1440 | desert | brand | 11.09 | normal | AAA |
 | 2560×1440 | desert | clock | 11.58 | large | AAA |
 | 2560×1440 | desert | unit | 9.68 | normal | AAA |
@@ -566,7 +567,7 @@ AAA for body text and titles where the design allows, AA for everything else; la
 | 2560×1440 | quarry | rail label | 14.16 | normal | AAA |
 | 2560×1440 | quarry | rail label | 9.34 | normal | AAA |
 | 2560×1440 | quarry | rail current | 13.97 | normal | AAA |
-| 2560×1440 | quarry | loupe caption | 11.02 | normal | AAA |
+| 2560×1440 | quarry | loupe caption | 11.00 | normal | AAA |
 | 2560×1440 | quarry | act II figure | 13.36 | large | AAA |
 | 2560×1440 | quarry | act II figure unit | 12.67 | large | AAA |
 | 2560×1440 | quarry | act II figure label | 13.70 | normal | AAA |
@@ -665,7 +666,7 @@ AAA for body text and titles where the design allows, AA for everything else; la
 | 2560×1440 | chip | rail label | 15.37 | normal | AAA |
 | 2560×1440 | chip | rail current | 15.26 | normal | AAA |
 | 2560×1440 | display | brand | 15.15 | normal | AAA |
-| 2560×1440 | display | clock | 13.75 | large | AAA |
+| 2560×1440 | display | clock | 13.91 | large | AAA |
 | 2560×1440 | display | unit | 10.53 | normal | AAA |
 | 2560×1440 | display | sound | 6.28 | normal | AA |
 | 2560×1440 | display | motion | 15.09 | normal | AAA |
@@ -694,6 +695,6 @@ AAA for body text and titles where the design allows, AA for everything else; la
 | 2560×1440 | now | rail label | 9.65 | normal | AAA |
 | 2560×1440 | now | rail label | 14.69 | normal | AAA |
 | 2560×1440 | now | rail current | 14.50 | normal | AAA |
-| 2560×1440 | now | ending choice | 10.89 | normal | AAA |
-| 2560×1440 | now | ending choice | 6.36 | normal | AA |
-| 2560×1440 | now | ending choice | 10.12 | normal | AAA |
+| 2560×1440 | now | ending choice | 8.45 | normal | AAA |
+| 2560×1440 | now | ending choice | 8.78 | normal | AAA |
+| 2560×1440 | now | ending choice | 9.23 | normal | AAA |

@@ -46,7 +46,8 @@ export class Outro {
       try { await navigator.clipboard.writeText(url); say(attr(share, 'copied')); } catch { say(attr(share, 'failed')); }
     })());
     // html.dialog-open: the dialog is in the top layer, above the drawn cursor, so the system's comes back (ui/cursor.ts)
-    credits.addEventListener('click', () => { if (!dialog.open) { this.root.classList.add('dialog-open'); dialog.showModal(); } });
+    // where the label is taller than the screen it opens at its top, not scrolled to the focused close at its foot
+    credits.addEventListener('click', () => { if (!dialog.open) { this.root.classList.add('dialog-open'); dialog.showModal(); dialog.scrollTop = 0; } });
     // a click on the backdrop (outside the dialog's own box) closes it, as Escape does
     dialog.addEventListener('click', (e) => {
       if (e.target !== dialog) return;

@@ -27,6 +27,8 @@ const GLINT_IN = .35, BURST_S = .9, NEXT_S = .55;
 const TELL_AFTER = 3;
 /** clicks this far (CSS px) from a glinting cluster's centre count (at least) */
 const HIT_PX = 34;
+/** how far a glinting cluster keeps from the HUD (CSS px) */
+const HUD_CLEAR = 56;
 
 const v = new Vector3();
 
@@ -116,6 +118,9 @@ export class Pops {
   private pick(camera: PerspectiveCamera, t: number, hero: Vector3): number {
     const w = innerWidth, h = innerHeight;
     const hp = v.copy(hero).project(camera), hx = (hp.x + 1) / 2 * w, hy = (1 - hp.y) / 2 * h;
+    // the HUD's brand, clock and controls and the rail, with a finger's width round them (a tap meant for a
+    // cluster must not land on a button)
+    const hud = [...document.querySelectorAll('.hud .brand, #time, .controls, #timeline')].map((e) => e.getBoundingClientRect()).filter((r) => r.width && r.height);
     const pool: number[] = [];
     for (let i = 0; i < COLS * ROWS; i++) {
       if (this.popped.has(i)) continue;
@@ -124,6 +129,7 @@ export class Pops {
       const sx = (q.x + 1) / 2 * w, sy = (1 - q.y) / 2 * h;
       if (sx < w * .1 || sx > w * .8 || sy < h * .16 || sy > h * .74) continue;
       if (Math.hypot(sx - hx, sy - hy) < 90) continue;
+      if (hud.some((r) => sx > r.left - HUD_CLEAR && sx < r.right + HUD_CLEAR && sy > r.top - HUD_CLEAR && sy < r.bottom + HUD_CLEAR)) continue;
       pool.push(i);
     }
     return pool.length ? pool[(Math.random() * pool.length) | 0]! : -1;
