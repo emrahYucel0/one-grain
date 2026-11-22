@@ -1,6 +1,7 @@
 import { SHADOW_EVERY } from '../render/shadow';
 import { MathUtils, Vector3 } from 'three';
 import { frameShot } from '../camera/rig';
+import type { Pops } from '../story/pops';
 import { SAFE, keepInSafeArea } from '../camera/safe-area';
 import { CONFINEMENT, towards } from '../camera/confinement';
 import { ss } from './ease';
@@ -143,6 +144,8 @@ export class Loop {
   progressHook: ((now: number) => number | null) | null = null;
   /** set while the story runs back to its start: no loupe */
   rewinding = false;
+  /** Awwwards P10: the display's sub-pixels, popped (story/pops.ts) */
+  pops: Pops | null = null;
   private readonly pullDir = new Vector3();
   private readonly endPos = new Vector3();
   private readonly endLook = new Vector3();
@@ -190,7 +193,7 @@ export class Loop {
     for (const fn of this.listeners.story) fn(info);
     // the final hold (v15): the grain hovers, loses its light (3–5.6 s), then lands among the others
     // (5–6.4 s, a soft ease); under reduced motion it simply becomes matte in place
-    let landed = 0, ringR = 0, ringK = 0, back = 0;
+    let landed = 0, ringR = 0, ringK = 0, back = 0, popFill = 0;
     if (L.hold === WORLDS.length - 1 && this.finalTime >= 0) {
       const ft = this.finalTime;
       info.heroLight = 1 - ss(3, 5.6, ft);
@@ -200,9 +203,12 @@ export class Loop {
         // Awwwards P3: as the grain's light goes, it passes into the sand as a ring (2.6–7.4 s) ...
         const r = ss(2.6, 7.4, ft);
         ringR = 1.4 + r * ENDING_RING; ringK = ss(2.6, 3.2, ft) * (1 - r * r);
+
         // ... and the camera draws back until the sand shows its shape: the screen it was (from 5 s on; framed below)
         back = ss(5, 16, ft);
       }
+      // Awwwards P10: the hollows the popped sub-pixels left fill back once the ring has passed (story/pops.ts)
+      popFill = reduced ? (ft > 7.4 ? 1 : 0) : ss(7.4, 9, ft);
     }
 
     // stage colour per act (the right scrim lighter under a sky); confinement, eased like the camera: lens
@@ -245,6 +251,10 @@ export class Loop {
     // narrow screens: turn just enough to keep the hero grain on screen and clear of the words
     const tb = this.d.textBlock;
     if (!flags.noSafe) keepInSafeArea(stage.camera, S.hero, { x: SAFE.x, bottom: -SAFE.y, top: tb.top, text: tb.box, textWeight: textOpacity, weight: 1 - (S.free ?? 0) });
+    if (this.pops) {
+      const ps = this.pops.update(info.now / 1000, L.hold < 0 ? a : -1, L.hold, t, stage.camera, S.hero, popFill);
+      grains.setPops(this.pops.texture, ps.on, ps.fill);
+    }
     const hp = this.heroNdc.copy(S.hero).project(stage.camera);
     reportHero(hp.x, hp.y, hp.z, heroVisible);
     const grain = towards(wa.grain, wb.grain, S.eg);

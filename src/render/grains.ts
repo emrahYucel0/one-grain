@@ -1,6 +1,6 @@
 import {
   AdditiveBlending, BufferAttribute, BufferGeometry, Color, GLSL3, Matrix4, NormalBlending, Points, ShaderMaterial, Vector2, Vector3, Vector4,
-  type DataTexture, type IUniform,
+  type DataTexture, type IUniform, type Texture,
 } from 'three';
 import { grainShaders, grainShadowShaders } from '../shaders';
 import type { GrainPack, LayerName } from '../sim/pack';
@@ -51,6 +51,7 @@ export class GrainCloud {
       uPLPos: { value: new Vector3() }, uPLCol: { value: new Vector3() }, uPLRange: { value: 1 },
       uCamPos: { value: new Vector3() }, uCamR: { value: new Vector3() }, uCamU: { value: new Vector3() }, uCamB: { value: new Vector3() }, uFogLin: { value: new Vector3() },
       uPatC: { value: new Vector3() }, uPatWorld: { value: WORLDS.findIndex((w) => w.slug === PATTERN.world) }, uPatCells: { value: PATTERN.cells },
+      uPops: { value: null }, uPopOn: { value: 0 }, uPopFill: { value: 0 }, uPopWorld: { value: WORLDS.findIndex((w) => w.slug === 'display') },
       uUseShadow: { value: 0 }, uUseLight: { value: 1 }, uShadow: { value: null }, uKeyView: { value: new Vector3(0, 0, 1) }, uUpView: { value: new Vector3(0, 1, 0) },
       [layerUniform('pos')]: { value: null },
       [layerUniform('surface')]: { value: null },
@@ -126,6 +127,9 @@ export class GrainCloud {
    * ?shadowstride and ?shadowgrow change it for measurements. Applies from the next pack.
    */
   setShadowSubset(stride: number, grow: number): void { this.shadowStride = Math.max(1, Math.round(stride)); this.u.uShadowGrow!.value = grow; }
+
+  /** Awwwards P10 (story/pops.ts): the popped sub-pixels' texture, whether any are live, the ending's refill radius. */
+  setPops(tex: Texture, on: boolean, fill: number): void { this.u.uPops!.value = tex; this.u.uPopOn!.value = on ? 1 : 0; this.u.uPopFill!.value = fill; }
 
   /** Largest grain, in pixels, before the per-grain size factor (9 as v10). */
   setPointMax(px: number): void { this.u.uPointMax!.value = px; }

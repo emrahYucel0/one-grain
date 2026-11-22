@@ -38,6 +38,7 @@ export interface LoupeInput {
 const SHOW = LOUPE.map((l) => !!l.show);
 const DEEP = LOUPE.map((l) => l.deep ?? null);
 const HOLD = LOUPE.map((l) => !!l.hold);
+const ENTER = LOUPE.map((l) => !!l.enter);
 /** the dive in and back out (s) */
 const DIVE_S = 1, SURFACE_S = .6;
 /** how long the stone must be held to break (s), and how fast an unfinished hold lets go */
@@ -105,6 +106,11 @@ export class LoupeView {
   private shown = { cap: '', hint: '', hold: '', over: false };
   /** called once the quarry's stone has been held to breaking, with its chapter */
   onBreak: ((chapter: number) => void) | null = null;
+  /** Awwwards P10: the display's loupe clicked (story/pops.ts) */
+  onEnter: ((chapter: number) => void) | null = null;
+  private click = { at: 0, x: 0, y: 0, armed: false };
+  /** the chapter whose lens enters, while it is live under the hand's reach; -1 none */
+  private enterAt = -1;
   readonly frame: LoupeFrame = { x: 0, y: 0, r: 88, op: 0, a: 0, b: 0, k: 0, time: 0, yaw: 0, tilt: .55, deep: 0, oxy: 1, crack: 0 };
 
   constructor(el: HTMLElement, line: HTMLElement, canvas: HTMLElement, hud: readonly HTMLElement[]) {
@@ -122,9 +128,14 @@ export class LoupeView {
     // the hand: wherever it is (the loupe itself lets every event through to the page, so scrolling over it scrolls)
     const at = (e: PointerEvent): void => { this.hand.x = e.clientX; this.hand.y = e.clientY; this.hand.mouse = e.pointerType === 'mouse'; };
     addEventListener('pointermove', at, { passive: true });
-    addEventListener('pointerdown', (e) => { at(e); if (e.button === 0) { this.hand.down = true; this.hand.downIn = this.inside(); } }, { passive: true });
+    addEventListener('pointerdown', (e) => { at(e); if (e.button === 0) { this.hand.down = true; this.hand.downIn = this.inside(); this.click = { at: performance.now(), x: e.clientX, y: e.clientY, armed: this.hand.downIn }; } }, { passive: true });
     const up = (): void => { this.hand.down = false; this.hand.downIn = false; };
-    addEventListener('pointerup', up, { passive: true });
+    // a click (a tap: short, still) on a lens that enters
+    addEventListener('pointerup', (e) => {
+      const c = this.click;
+      if (c.armed && performance.now() - c.at < 500 && Math.hypot(e.clientX - c.x, e.clientY - c.y) < 12 && this.inside() && this.enterAt >= 0) this.onEnter?.(this.enterAt);
+      c.armed = false; up();
+    }, { passive: true });
     // a finger that moves is scrolling: the browser takes it (pointercancel), and the hold lets go
     addEventListener('pointercancel', up, { passive: true });
     addEventListener('blur', up);
@@ -152,6 +163,7 @@ export class LoupeView {
     this.dive = f.reduced ? want : want ? Math.min(1, this.dive + f.dt / DIVE_S) : Math.max(0, this.dive - f.dt / SURFACE_S);
     this.deep = this.dive * this.dive * (3 - 2 * this.dive);
     // the hold
+    this.enterAt = live && ENTER[at] ? at : -1;
     const holding = live && HOLD[at] && h.down && h.downIn && over && this.broken !== at;
     this.hold = holding ? Math.min(1, this.hold + f.dt / HOLD_S) : Math.max(0, this.hold - f.dt / RELEASE_S);
     if (holding && this.hold >= 1) { this.broken = at; this.hold = 0; this.onBreak?.(at); }
@@ -163,13 +175,14 @@ export class LoupeView {
     // mid-transition, the nearer world's line (the same both ways through, check:reverse)
     const near = at >= 0 ? at : f.k < .5 ? f.a : f.b, nearKind = DEEP[near];
     const hint = nearKind ? (at >= 0 && this.deep > .6 ? ds[nearKind === 'Si' ? 'si' : 'sio2'] : ds[h.mouse ? 'deepMouse' : 'deepTouch']) ?? ''
-      : HOLD[near] ? (this.broken === near ? '' : ds.hold ?? '') : '';
+      : HOLD[near] ? (this.broken === near ? '' : ds.hold ?? '')
+      : ENTER[near] ? ds[h.mouse ? 'enterMouse' : 'enterTouch'] ?? '' : '';
     const holdS = (this.broken >= 0 ? 1 : this.hold).toFixed(3);
     if (cap !== this.shown.cap && this.cap) { this.shown.cap = cap; this.cap.textContent = cap; }
     if (hint !== this.shown.hint && hintEl) { this.shown.hint = hint; hintEl.textContent = hint; }
     if (holdS !== this.shown.hold) { this.shown.hold = holdS; this.el.style.setProperty('--hold', holdS); }
     // the cursor opens over a lens that answers
-    const answers = over && h.mouse && (!!kind || (HOLD[at] && this.broken !== at));
+    const answers = over && h.mouse && (!!kind || (HOLD[at] && this.broken !== at) || ENTER[at]!);
     if (answers !== this.shown.over) { this.shown.over = answers; document.documentElement.classList.toggle('loupe-over', answers); }
     return { deep: this.deep, oxy: kind === 'Si' ? 0 : 1, crack, shake: f.reduced ? 0 : this.hold * this.hold * 3.2 };
   }

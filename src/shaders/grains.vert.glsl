@@ -75,6 +75,46 @@ void main(){
     spec = blend(uSpecA, uSpecB, e);
 #endif
   }
+  // Awwwards P10 (story/pops.ts): the sub-pixels the visitor popped, halfway from the display to the sand: the one
+  // that glints, the burst (out towards the viewer, a flash, gone), and in the sand the hollows they leave, filled
+  // back once the ending's ring has passed. k: how far from the display (0) to the sand (1)
+  float popGlow = 0., popShade = 0.;
+  if (uPopOn > 0. && uFrom == uPopWorld && uTo == uPopWorld + 1) {
+    float k = uRest == 1 ? 0. : uRest == 2 ? 1. : uT;
+    vec4 A0 = grab(uFrom, id), B0 = grab(uTo, id);
+    float back = uPopFill;
+    if (floor(A0.w + .001) == 9.) {
+      vec4 s = texelFetch(uPops, clamp(ivec2(round((A0.xy + vec2(9.9, 5.9)) / .3)), ivec2(0), ivec2(65, 39)), 0);
+      float g = s.g * smoothstep(.2, .3, k) * (1. - smoothstep(.5, .6, k));
+      popGlow += g * (1.1 + .6 * sin(uTime * 6. + R.x * 5.));
+      sz *= 1. + .3 * g;
+      if (s.r > 0.) {
+        float on = smoothstep(.12, .26, k) * (1. - back), fly = 1. - pow(1. - s.r, 3.);
+        p += normalize(vec3(R.x - .5, R.y - .5, .4 + .6 * R.z)) * fly * (.3 + .6 * R.z) * on * uMotion;
+        popGlow += on * (1. - smoothstep(0., .4, s.r)) * 3.;
+        sz *= 1. - on * smoothstep(.2, .95, s.r);
+      }
+    }
+    float sand = smoothstep(.55, .9, k) * (1. - back);
+    if (sand > 0.) {
+      ivec2 c0 = ivec2(round((B0.xy / 1.36 + vec2(9.9, 5.9)) / .3));
+      float dep = 0., rim = 0.;
+      for (int j = -1; j <= 1; j++) for (int i = -1; i <= 1; i++) {
+        ivec2 c = c0 + ivec2(i, j);
+        if (c.x < 0 || c.y < 0 || c.x > 65 || c.y > 39) continue;
+        float b = texelFetch(uPops, c, 0).r;
+        if (b <= 0.) continue;
+        vec2 ctr = (vec2(-9.9, -5.9) + vec2(c) * .3) * 1.36;
+        float d = length(B0.xy - ctr), grow = smoothstep(0., .5, b);
+        dep = max(dep, grow * (1. - smoothstep(.12, .5, d)));
+        rim = max(rim, grow * smoothstep(.4, .55, d) * (1. - smoothstep(.55, .8, d))); // the sand thrown up round it
+      }
+      dep *= sand; rim *= sand * (1. - dep);
+      p.z += rim * .06 - dep * .25;
+      p.xy += normalize(B0.xy - (vec2(-9.9, -5.9) + vec2(c0) * .3) * 1.36 + 1e-4) * dep * .05;
+      popShade = dep - rim * .35;
+    }
+  }
   // resting restlessness: natural matter never quite settles (confinement)
   p += vec3(sin(uTime * 1.3 + R.x * 40.), sin(uTime * 1.1 + R.y * 40.), sin(uTime * 1.7 + R.z * 40.)) * uJitter * uMotion;
   // the ending's last shot: the sand takes the proportions of the screen it is seen on (core/loop.ts)
@@ -88,6 +128,8 @@ void main(){
   n = normalize(n + vec3(0., 1e-4, 0.));
   if (fl > .5 && fl < 2.5) spec = .7 + .25 * blend(uWaterA, uWaterB, e); // water is glossy (more so in the river)
   float em = emission(fl, tn, uTime * uMotion, blend(uRaysA, uRaysB, e), blend(uPixA, uPixB, e)) * (1. - m.fade); // the light goes out (style 21)
+  em += popGlow;
+  c *= 1. - .65 * popShade; // a hollow is in its own shadow, its rim catches the light
   c = glow(c, p, fl, em);
   c = mix(c, vec3(1., .48, .16) * (1.1 + .3 * R.x), m.heat * .75);
   c = mix(c, vec3(.95, .97, 1.), m.whiten * .8);

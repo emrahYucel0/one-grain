@@ -9,6 +9,12 @@ uniform float uLand;   // the final grain landing, 0..1 (its neighbours make roo
 uniform vec3 uLandPos; // where it lands
 uniform vec3 uScreen;  // the final world's sand taking the screen's proportions: x, y scale, how far (Awwwards P4)
 uniform vec2 uRing;    // the grain's last light through the final world's sand: radius, strength (Awwwards P3)
+// Awwwards P10 (story/pops.ts): the display's sub-pixels popped by the visitor. uPops: one texel per sub-pixel
+// cell (66 × 40), r how far its burst has gone (1 gone), g how bright it glints. uPopWorld: the display.
+// uPopFill: 0..1, the sand filled back once the ending's ring has passed
+uniform sampler2D uPops;
+uniform float uPopOn, uPopFill;
+uniform int uPopWorld;
 uniform float uPointMax; // largest grain, in pixels, before the per-grain size factor
 uniform float uSpecA, uSpecB; // each world's gloss
 uniform float uGlowA, uGlowB, uRaysA, uRaysB, uPixA, uPixB, uWaterA, uWaterB; // each world's material look (story/lights.ts)

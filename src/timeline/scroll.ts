@@ -98,6 +98,13 @@ export class ScrollTimeline {
     this.lenis.scrollTo(max * SNAP_POINTS[i]!, { lerp: SCROLL.jumpLerp, force: true });
   }
 
+  /** On to progress v (0..1) at the story's own pace, as proceed() does for a chapter (story/pops.ts: into the display). */
+  proceedTo(v: number): void {
+    const max = document.documentElement.scrollHeight - innerHeight;
+    this.target = -1; this.jumpTo = -1;
+    this.lenis.scrollTo(max * v, { lerp: SCROLL.jumpLerp, force: true });
+  }
+
   /**
    * Back to the start at once (the ending's "Start again", once the story has run back to it, or behind
    * the closed veil with motion off).

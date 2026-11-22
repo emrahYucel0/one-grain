@@ -41,6 +41,14 @@ export const SNAP_POINTS: readonly number[] = WORLDS.map((_, i) => {
   return (h.start + (WORLDS[i]!.drift ? Math.min(h.len / 2, .3) : h.len / 2)) / TOTAL;
 });
 
+/** Progress where transition i is at point t (its own pace, midEase, undone), for a place inside a move (story/pops.ts). */
+export const progressAt = (i: number, t: number): number => {
+  const s = SEGMENTS.find((x) => x.type === 'tr' && x.i === i)!;
+  let u = t;
+  if (!STACCATO.has(i)) for (let k = 0; k < 30; k++) u -= (midEase(u) - t) / (1 + SCROLL.midEase * Math.cos(2 * Math.PI * u));
+  return (s.start + Math.min(1, Math.max(0, u)) * s.len) / TOTAL;
+};
+
 /** Progress at the middle of transition i (used by the parity harness). */
 export const transitionMidpoint = (i: number): number => {
   const s = SEGMENTS.find((x) => x.type === 'tr' && x.i === i)!;

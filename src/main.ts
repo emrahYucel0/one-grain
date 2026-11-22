@@ -15,11 +15,12 @@ import { GrainCloud } from './render/grains';
 import { HeroGrain } from './render/hero';
 import { Pipeline } from './render/pipeline';
 import { SimClient } from './sim/client';
+import { Pops, T_PIN } from './story/pops';
 import { WORLDS } from './story/worlds';
 import { HashRouter } from './timeline/hash';
 import { bindChapterKeys } from './timeline/keys';
 import { ScrollTimeline } from './timeline/scroll';
-import { transitionMidpoint } from './timeline/segments';
+import { progressAt, transitionMidpoint } from './timeline/segments';
 import { ss } from './core/ease';
 import { StoryA11y } from './ui/a11y';
 import { TextBlock } from './ui/text-block';
@@ -111,6 +112,9 @@ function boot(): void {
   const go = (i: number): void => timeline.goTo(i);
   // the quarry's stone, held until it breaks: on into the next chapter, at the story's own pace
   loupe.onBreak = (i) => timeline.proceed(Math.min(WORLDS.length - 1, i + 1));
+  // Awwwards P10: the display's loupe opens the display; its sub-pixels can be popped there (story/pops.ts)
+  loop.pops = new Pops();
+  loupe.onEnter = (i) => timeline.proceedTo(progressAt(i, T_PIN));
 
   // words and instruments
   const chapter = new ChapterView($('chapter'), copy, env.touchOnly);

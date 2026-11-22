@@ -57,6 +57,8 @@ export interface LoupeLook {
    */
   deep?: 'SiO2' | 'Si';
   hold?: boolean;
+  /** Awwwards P10: clicked (tapped), it takes the story into the display, where its sub-pixels can be popped (story/pops.ts) */
+  enter?: boolean;
   pattern: LoupePattern;
   /** body colour, emission colour, the light around it (linear, may exceed 1) */
   colour: Vec3;
@@ -96,7 +98,7 @@ export const LOUPE: readonly LoupeLook[] = [
   // chip: circuits
   L({ shape: 'disc', round: 0, wear: 0, frost: 0, gloss: .8, glass: 0, milk: 0, metal: .7, emission: .45, speckle: 0, panels: .4, sway: true, pattern: 'circuit', colour: [.35, .38, .48], glow: [1, .78, .38], env: [.6, .6, .8] }),
   // display: one pixel: three fine sub-pixels in a black matrix, behind cover glass
-  L({ show: true, shape: 'pixel', round: 0, wear: 0, frost: 0, gloss: .95, glass: 0, milk: 0, metal: 0, emission: 1, speckle: 0, panels: .3, sway: true, pattern: 'subpixels', colour: [.04, .04, .045], glow: [1, 1, 1], env: [.6, .6, .7] }),
+  L({ show: true, enter: true, shape: 'pixel', round: 0, wear: 0, frost: 0, gloss: .95, glass: 0, milk: 0, metal: 0, emission: 1, speckle: 0, panels: .3, sway: true, pattern: 'subpixels', colour: [.04, .04, .045], glow: [1, 1, 1], env: [.6, .6, .7] }),
   // now: sand again
   L({ shape: 'grain', round: 1, wear: .6, frost: 1, gloss: .12, glass: 0, milk: 1, metal: 0, emission: 0, speckle: .6, pattern: 'none', colour: [.9, .76, .58], glow: NONE, env: [.9, .72, .5] }),
 ];
