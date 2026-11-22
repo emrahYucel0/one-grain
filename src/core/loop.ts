@@ -182,7 +182,7 @@ export class Loop {
     const at = transitionOverride();
     const L = at ? locateAt(at.tr, at.t, at.lean) : locate(v), { a, b, tr } = L;
     const t = reduced ? (L.t < .5 ? 0 : 1) : L.t;
-    const S = shot(tr, a, b, t, this.heroes, L.lean, reduced);
+    const S = shot(tr, a, b, t, this.heroes, L.lean, reduced, L.run);
     const wa = WORLDS[a]!, wb = WORLDS[b]!, ca = CONFINEMENT[a]!, cb = CONFINEMENT[b]!;
     const heroVisible = !(tr.cam === 'cut' && t > .2 && t < .8);
     const textOpacity = chapterOpacity(tr, t) * this.d.opening.factor(v, t < .5 ? a : b);
@@ -280,7 +280,7 @@ export class Loop {
     pipeline.render({
       grains: stage.scene, overlay: stage.overlay, camera: cam, shadows: shadows && !overdraw, shadowEvery, clear: stageColour.fogLinear, direct: overdraw,
       sky: layers.on('sky') ? this.skyFrame : null, loupe,
-      post: { bloom: layers.on('bloom'), dof: layers.on('dof'), grade: layers.on('grade'), near: cam.near, far: cam.far, focus: cam.position.distanceTo(S.hero), dofScale: this.rigState.dof * (tr.cam === 'zoom' ? 1 - .85 * S.arc : 1), time, grainMoves: !reduced },
+      post: { bloom: layers.on('bloom'), dof: layers.on('dof'), grade: layers.on('grade'), near: cam.near, far: cam.far, focus: cam.position.distanceTo(S.focus ?? S.hero), dofScale: this.rigState.dof * (tr.cam === 'zoom' ? 1 - .85 * S.arc : 1), time, grainMoves: !reduced },
     });
     reportHeroRendered(S.hero, cam);
     timer.tick();

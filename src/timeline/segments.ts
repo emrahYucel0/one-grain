@@ -65,14 +65,19 @@ export interface Located {
    * at 1 in the transition, where the shot fades it out with the move. 0 on the last hold.
    */
   lean: number;
+  /**
+   * How far through the hold, linearly (0 → 1), and 1 in the transition: the camera's own run through a
+   * world that moves on while resting (story/types.ts dolly). 0 on the last hold.
+   */
+  run: number;
 }
 
 export function locate(v: number): Located {
   const s = Math.min(TOTAL - 1e-6, Math.max(0, v * TOTAL));
   const seg = SEGMENTS.find((x) => s >= x.start && s < x.start + x.len) ?? last;
-  if (seg.type === 'tr') { const u = (s - seg.start) / seg.len; return { a: seg.i, b: seg.i + 1, t: STACCATO.has(seg.i) ? u : midEase(u), tr: TRANSITIONS[seg.i]!, hold: -1, lean: 1 }; }
-  if (seg.i === CH - 1) return { a: CH - 2, b: CH - 1, t: 1, tr: TRANSITIONS[CH - 2]!, hold: CH - 1, lean: 0 };
-  return { a: seg.i, b: seg.i + 1, t: 0, tr: TRANSITIONS[seg.i]!, hold: seg.i, lean: ss(0, 1, (s - seg.start) / seg.len) };
+  if (seg.type === 'tr') { const u = (s - seg.start) / seg.len; return { a: seg.i, b: seg.i + 1, t: STACCATO.has(seg.i) ? u : midEase(u), tr: TRANSITIONS[seg.i]!, hold: -1, lean: 1, run: 1 }; }
+  if (seg.i === CH - 1) return { a: CH - 2, b: CH - 1, t: 1, tr: TRANSITIONS[CH - 2]!, hold: CH - 1, lean: 0, run: 0 };
+  return { a: seg.i, b: seg.i + 1, t: 0, tr: TRANSITIONS[seg.i]!, hold: seg.i, lean: ss(0, 1, (s - seg.start) / seg.len), run: (s - seg.start) / seg.len };
 }
 
 /**
@@ -81,8 +86,14 @@ export function locate(v: number): Located {
  */
 export function locateAt(trIndex: number, t: number, lean: number): Located {
   const hold = t === 0 ? trIndex : t === 1 ? trIndex + 1 : -1;
-  return { a: trIndex, b: trIndex + 1, t, tr: TRANSITIONS[trIndex]!, hold, lean };
+  return { a: trIndex, b: trIndex + 1, t, tr: TRANSITIONS[trIndex]!, hold, lean, run: t === 0 ? lean : 1 };
 }
+
+/** Chapter i's transition against its hold, in scroll length (to carry a speed across the seam). */
+export const trOverHold = (i: number): number => {
+  const h = SEGMENTS.find((x) => x.type === 'hold' && x.i === i)!, tr = SEGMENTS.find((x) => x.type === 'tr' && x.i === i);
+  return tr ? tr.len / h.len : 0;
+};
 
 /** The chapter whose snap point is nearest to progress v. */
 export const nearestChapter = (v: number): number => {

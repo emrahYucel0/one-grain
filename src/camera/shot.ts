@@ -2,7 +2,8 @@ import { Vector3 } from 'three';
 import { easeCubic, easeQuint, ss } from '../core/ease';
 import type { TransitionDef, Vec3 } from '../story/types';
 import { WORLDS } from '../story/worlds';
-import { STACCATO } from '../timeline/segments';
+import { SCROLL } from '../timeline/config';
+import { STACCATO, trOverHold } from '../timeline/segments';
 import { CONFINEMENT } from './confinement';
 
 /** Where the camera is, what it looks at, and where the hero grain is, partway through a transition. */
@@ -14,6 +15,8 @@ export interface Shot {
   eg: number;
   /** 0 at both ends, 1 midway */
   arc: number;
+  /** what the depth of field focuses on: the hero, or ahead of it while a dolly runs (story/types.ts) */
+  focus?: Vector3;
 }
 
 const v = (x: number, y: number, z: number): Vector3 => new Vector3(x, y, z);
@@ -32,10 +35,20 @@ const WATCH_HERO = new Set(['crackdrop', 'zoom', 'pullback', 'beam', 'breakfall'
  * orbits around an axis, or cuts. While resting, the camera already leans towards the next move
  * (lean, from timeline/segments.ts) and the lean fades out as the move runs, so there is no seam.
  */
-export function shot(tr: TransitionDef, a: number, b: number, t: number, heroes: readonly Vector3[], lean = 0, reduced = false): Shot {
+export function shot(tr: TransitionDef, a: number, b: number, t: number, heroes: readonly Vector3[], lean = 0, reduced = false, run = 0): Shot {
   const hA = heroes[a]!, hB = heroes[b]!, wa = WORLDS[a]!, wb = WORLDS[b]!;
   // resting cameras as framed for each world's lens (camera/confinement.ts)
   const camA = off(hA, CONFINEMENT[a]!.cam), camB = off(hB, CONFINEMENT[b]!.cam), lookA = off(hA, wa.look), lookB = off(hB, wb.look);
+  // Awwwards P9: a world that moves on while resting (story/types.ts dolly). Across the hold 2r² − r³: in from
+  // still, out at one dolly per hold; the transition starts at that same speed along the scroll (its length
+  // against the hold's, and midEase's start) and slows to nothing, while its own move takes over from camA
+  let dolly: Vector3 | null = null;
+  if (wa.dolly && !reduced) {
+    const c = trOverHold(a) / (STACCATO.has(a) ? 1 : 1 + SCROLL.midEase);
+    const k = t > 0 ? 1 + c * (t - t * t / 2) : run * run * (2 - run);
+    dolly = v(wa.dolly[0], wa.dolly[1], wa.dolly[2]).multiplyScalar(k);
+    camA.add(dolly); lookA.add(dolly);
+  }
   // Act II's montage (Awwwards P7): the camera leaves and lands hard
   let eg = STACCATO.has(a) ? easeQuint(t) : easeCubic(t);
   if (tr.cam === 'cut') eg = t < .5 ? 0 : 1; else if (tr.cam === 'slide') eg = ss(0, 1, t); else if (tr.cam === 'zoom') eg = easeQuint(t);
@@ -85,5 +98,8 @@ export function shot(tr: TransitionDef, a: number, b: number, t: number, heroes:
     const toward = camB.clone().sub(camA);
     if (toward.lengthSq() > 1e-4) pos.addScaledVector(toward.normalize(), .6 * (1 - eg) * lean);
   }
-  return { pos, look, hero, eg, arc };
+  // the focus keeps its distance as the camera runs on (the sharp band travels downstream with it, not a
+  // blur of everything past a grain now near the lens); back on the hero as the transition takes over
+  const focus = dolly ? hero.clone().addScaledVector(dolly, 1 - eg) : undefined;
+  return { pos, look, hero, eg, arc, focus };
 }

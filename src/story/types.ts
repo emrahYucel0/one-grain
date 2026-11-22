@@ -42,6 +42,12 @@ export interface WorldDef {
    * bottom edge (crops from the top), 1 the top edge (crops from the bottom), .5 crops evenly.
    */
   wideAnchor: number;
+  /**
+   * Awwwards P9: the camera does not wait while this world rests. Across its hold, with the scroll, camera and
+   * look move on together by this much (world units), easing in; at the hold's end they keep their speed into
+   * the transition, which then takes over (camera/shot.ts). Off with motion off.
+   */
+  dolly?: Vec3;
   /** the last chapter: ending sequence, own nav label, own audio act */
   final?: boolean;
 }
